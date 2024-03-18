@@ -23,8 +23,8 @@ programs_list='git zsh neofetch vim btop tmux neovim lf chafa alacritty zellij w
 special_snowflake_list='neovim/nvim'
 
 dotfiles_list='.gitconfig .gitignore_global .zshrc .vimrc .config/btop/btop.conf .tmux.conf .config/nvim/init.lua .config/lf/lfrc .config/lf/previewer.sh .config/alacritty/alacritty.toml .config/zellij/config.kdl .config/wezterm/wezterm.lua'
-nerd_font='RobotoMono'
-nerd_font_package='roboto-mono'
+nerd_font='GeistMono'
+nerd_font_package='geist-mono'
 
 # Change .gitconfig file after cloning or updating the repo
 change_gitconfig() {

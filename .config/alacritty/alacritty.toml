@@ -65,7 +65,7 @@ opacity = 0.6  # Default: 1.0
 blur = true  # Default: false
 
 # Startup mode
-startup_mode = "Windowed"  # Default: "Windowed"
+startup_mode = "Maximized"  # Default: "Windowed"
 
 # Window title
 title = "Alacritty"  # Default: "Alacritty"
@@ -104,7 +104,7 @@ multiplier = 3  # Default: 3
 [font]
 
 # Normal font style
-normal = { family = "RobotoMono Nerd Font Mono", style = "Regular" }  # Default for Linux/BSD: "monospace", Regular
+normal = { family = "GeistMono Nerd Font", style = "Regular" }
 
 # Bold font style
 bold = { style = "Bold" }  # Inherits family from normal, Default style: Bold
@@ -116,7 +116,7 @@ italic = { style = "Italic" }  # Inherits family from normal, Default style: Ita
 bold_italic = { style = "Bold Italic" }  # Inherits family from normal, Default style: Bold Italic
 
 # Font size in points
-size = 11.5  # Default: 12
+size = 14
 
 # Offset is extra space around each character
 offset = { x = 1, y = 0 }  # Default: x = 0, y = 0
