@@ -8,8 +8,8 @@
 
 {
 # If you fork the repo, then these variables make it easy to change this script for your own Github
-username="EnocFlores"
-email="EnocFlores@github.com"
+username="cperalt"
+email="cperalt@github.com"
 
 # Note the architecture, OS, and device of user
 arch=$(uname -m)
