@@ -22,6 +22,7 @@ programs_list='git zsh neofetch vim btop tmux neovim lf chafa alacritty zellij w
 # ! TESTING ! A method to use dirname and basename to install programs that have a different package name than their command name, so far it is just one so not investing the time to get this working yet, just an idea
 special_snowflake_list='neovim/nvim'
 
+
 dotfiles_list='.gitconfig .gitignore_global .zshrc .vimrc .config/btop/btop.conf .tmux.conf .config/nvim/init.lua .config/lf/lfrc .config/lf/previewer.sh .config/alacritty/alacritty.toml .config/zellij/config.kdl .config/wezterm/wezterm.lua'
 nerd_font='GeistMono'
 nerd_font_package='geist-mono'
