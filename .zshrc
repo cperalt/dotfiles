@@ -389,6 +389,7 @@ fi
 
 # === EnocFlores (git base repo) ======= #
 alias cdEF="cd ~/Development/EnocFlores"
+alias cdCP="cd ~/Development/cperalt"
 alias cdTEST="cd ~/Development/Test"
 alias cd.="cd ~/dotfiles"
 

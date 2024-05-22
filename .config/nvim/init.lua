@@ -79,110 +79,7 @@ require('lazy').setup({
 -- Use alternative copilot that uses    --
 -- lua that is better optimized         --
 ------------------------------------------
-  {
-    "zbirenbaum/copilot.lua",
-    cmd = "Copilot",
-    event = "InsertEnter",
-    config = function()
-      require('copilot').setup({
-        panel = {
-          enabled = true,
-          auto_refresh = false,
-          keymap = {
-            jump_prev = "[[",
-            jump_next = "]]",
-            accept = "<CR>",
-            refresh = "gr",
-            open = "<M-CR>"
-          },
-          layout = {
-            position = "bottom", -- | top | left | right
-            ratio = 0.4
-          },
-        },
-        suggestion = {
-          enabled = true,
-          auto_trigger = true,
-          debounce = 75,
-          keymap = {
-            accept = "<C-c>",
-            accept_word = false,
-            accept_line = false,
-            next = "<C-v>",
-            prev = "<C-x>",
-            dismiss = "<C-]>",
-          },
-        },
-        filetypes = {
-          ["*"] = true,
-          ["."] = true,
-          yaml = true,
-          markdown = true,
-          help = false,
-          gitcommit = false,
-          gitrebase = false,
-          hgcommit = false,
-          -- svn = false,
-          -- cvs = false,
-        },
-        copilot_node_command = 'node', -- Node.js version must be > 18.x
-        server_opts_overrides = {},
-      })
-      -- require("copilot.suggestion").toggle_auto_trigger()
-    end,
-  },
 
-------------------------------------------
--- Use new version of CopilotChat that  --
--- is now written in lua                --
-------------------------------------------
-  {
-    "CopilotC-Nvim/CopilotChat.nvim",
-    branch = "canary",
-    dependencies = {
-      { "zbirenbaum/copilot.lua" }, -- or github/copilot.vim
-      { "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
-    },
-    opts = {
-      debug = true, -- Enable debugging
-      -- See Configuration section for rest
-      mappings = {
-        complete = {
-          detail = 'Use @<Tab> or /<Tab> for options.',
-          insert ='<Tab>',
-        },
-        close = {
-          normal = 'q',
-          insert = '<C-c>'
-        },
-        reset = {
-          normal ='<C-r>',
-          insert = '<C-r>'
-        },
-        submit_prompt = {
-          normal = '<CR>',
-          insert = '<C-m>'
-        },
-        accept_diff = {
-          normal = '<C-y>',
-          insert = '<C-y>'
-        },
-        yank_diff = {
-          normal = 'gy',
-        },
-        show_diff = {
-          normal = 'gd'
-        },
-        show_system_prompt = {
-          normal = 'gp'
-        },
-        show_user_selection = {
-          normal = 'gs'
-        },
-      },
-    },
-    -- See Commands section for default commands if you want to lazy load on them
-  },
   -- {
   --   "CopilotC-Nvim/CopilotChat.nvim",
   --   opts = {
@@ -240,6 +137,13 @@ require('lazy').setup({
   --   },
   -- },
 
+  {
+    "folke/tokyonight.nvim",
+    lazy = false,
+    priority = 1000,
+    opts = {},
+  },
+  'mattn/emmet-vim',
   -- Git related plugins
   'tpope/vim-fugitive',
   'tpope/vim-rhubarb',
@@ -897,7 +801,58 @@ cmp.setup {
   },
 }
 
-vim.api.nvim_command('silent! delcommand CopilotAuth')
+-- vim.api.nvim_command('silent! delcommand CopilotAuth')
+require("tokyonight").setup({
+  -- your configuration comes here
+  -- or leave it empty to use the default settings
+  style = "moon", -- The theme comes in three styles, `storm`, `moon`, a darker variant `night` and `day`
+  light_style = "moon", -- The theme is used when the background is set to light
+  transparent = false, -- Enable this to disable setting the background color
+  terminal_colors = true, -- Configure the colors used when opening a `:terminal` in [Neovim](https://github.com/neovim/neovim)
+  styles = {
+    -- Style to be applied to different syntax groups
+    -- Value is any valid attr-list value for `:help nvim_set_hl`
+    comments = { italic = true },
+    keywords = { italic = true },
+    functions = {},
+    variables = {},
+    -- Background styles. Can be "dark", "transparent" or "normal"
+    sidebars = "dark", -- style for sidebars, see below
+    floats = "dark", -- style for floating windows
+  },
+  sidebars = { "qf", "help" }, -- Set a darker background on sidebar-like windows. For example: `["qf", "vista_kind", "terminal", "packer"]`
+  day_brightness = 0.3, -- Adjusts the brightness of the colors of the **Day** style. Number between 0 and 1, from dull to vibrant colors
+  hide_inactive_statusline = false, -- Enabling this option, will hide inactive statuslines and replace them with a thin border instead. Should work with the standard **StatusLine** and **LuaLine**.
+  dim_inactive = false, -- dims inactive windows
+  lualine_bold = false, -- When `true`, section headers in the lualine theme will be bold
+
+  --- You can override specific color groups to use other groups or a hex color
+  --- function will be called with a ColorScheme table
+  ---@param colors ColorScheme
+  on_colors = function(colors) end,
+
+  --- You can override specific highlights to use other groups or a hex color
+  --- function will be called with a Highlights and ColorScheme table
+  ---@param highlights Highlights
+  ---@param colors ColorScheme
+  on_highlights = function(highlights, colors) end,
+})
+vim.cmd[[colorscheme tokyonight]]
+
+-- Have copilot work in all filetypes ----
+-- vim.g.copilot_filetypes = {
+--     ['*'] = true,
+-- }
+
+-- Accept copilot suggested code ---------
+-- vim.keymap.set('i', '<C-c>', 'copilot#Accept(\"<CR>\")', {
+--   expr = true,
+--   replace_keycodes = false
+-- })
+
+-- Still working on this, doesn't work  --
+-- vim.g.copilot_map = '<C-y>'
+-- vim.g.copilot_no_tab_map = true
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et

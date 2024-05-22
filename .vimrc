@@ -38,7 +38,7 @@ silent! endwhile
 " === Theme & Colors =================== "
 
 " === Set colorscheme to ron =========== "
-colorscheme ron
+colorscheme slate
 
 " ====================================== "
 " === There is some differences that === "
@@ -504,6 +504,7 @@ if filereadable(expand('~/.vim/autoload/plug.vim'))
 
     " Plug in nerdcommenter to comment with gc
     Plug 'preservim/nerdcommenter'
+    Plug 'tpope/vim-surround'
 
     " Initialize plugin system
     " - Automatically executes `filetype plugin indent on` and `syntax enable`.

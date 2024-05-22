@@ -9,7 +9,7 @@
 {
 testing=1
 # If you fork the repo, then these variables make it easy to change this script for your own Github, make sure to replace this with your actual Github username
-username="EnocFlores"
+username="cperalt"
 email="${username}@users.noreply.github.com"
 
 # Note the architecture, OS, device, and current path of the user
@@ -25,8 +25,8 @@ programs_list='curl git jq zsh chafa neofetch vim btop tmux neovim lf cava alacr
 special_snowflake_list='curl/curl git/git jq/jq zsh/zsh chafa/chafa neofetch/neofetch vim/vim btop/btop tmux/tmux neovim/nvim lf/lf alacritty/alacritty zellij/zellij wezterm/wezterm'
 
 dotfiles_list='.gitconfig .gitignore_global .zshrc .vimrc .config/btop/btop.conf .config/btop/themes/perox-enurple.theme .tmux.conf .config/nvim/init.lua .config/lf/lfrc .config/lf/previewer.sh .config/cava/config .config/alacritty/alacritty.toml .config/zellij/config.kdl .config/wezterm/wezterm.lua'
-nerd_font='RobotoMono'
-nerd_font_package='roboto-mono'
+nerd_font='GeistMono'
+nerd_font_package='geist-mono'
 
 setup="desktop"
 
