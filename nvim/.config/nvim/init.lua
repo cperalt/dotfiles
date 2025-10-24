@@ -357,6 +357,7 @@ else
 
   require("carlos.core")
   require("carlos.lazy")
+  require("carlos.lsp")
   require("nvim-ts-autotag").setup({
     opts = {
       -- Defaults
