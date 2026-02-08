@@ -1,8 +1,5 @@
 {
-    "global": {
-        "check_for_updates_on_startup": false,
-        "show_in_menu_bar": false
-    },
+    "global": { "show_in_menu_bar": false },
     "profiles": [
         {
             "complex_modifications": {
@@ -164,6 +161,7 @@
                     },
                     {
                         "description": "Change command + h/j/k/l to Arrows",
+                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": {
