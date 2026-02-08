@@ -360,3 +360,8 @@ run = '''
 	shell 'ya emit cd "$(git rev-parse --show-toplevel)"'
 '''
 desc = "Go to the root directory of the git repository"
+
+
+[[mgr.prepend_keymap]]
+on  = "y"
+run = [ "shell -- echo %s | pbcopy -i -selection clipboard -t text/uri-list", "yank" ]

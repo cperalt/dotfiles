@@ -1,5 +1,12 @@
 [plugin]
 deps = []
 
-[flavor]
-deps = [{ use = "tkapias/nightfly", rev = "599b8ad" }, { use = "yazi-rs/flavors:catppuccin-mocha", rev = "fc8eeaa" }]
+[[flavor.deps]]
+use = "tkapias/nightfly"
+rev = "599b8ad"
+hash = "79f760d46e08b2f3708516d1d026e3fa"
+
+[[flavor.deps]]
+use = "yazi-rs/flavors:catppuccin-mocha"
+rev = "ca61658"
+hash = "8eabb4e88096f10905a6df62cfaadbf4"
