@@ -214,7 +214,8 @@ run = "move-node-to-workspace S"
 
 
 [[on-window-detected]]
-if.app-id = 'com.exafunction.windsurf'
+# if.app-id = 'com.exafunction.windsurf'
+if.app-id = 'com.todesktop.230313mzl4w4u92'
 # if.app-id = 'com.microsoft.VSCode'
 run = "move-node-to-workspace V"
 
@@ -237,3 +238,11 @@ run = [ "layout floating", "move-node-to-workspace 1" ]
 [[on-window-detected]]
 if.app-id = 'com.okta.mobile'
 run = "move-node-to-workspace 1"
+
+[[on-window-detected]]
+if.app-id = 'com.microsoft.teams2'
+run = "move-node-to-workspace Z"
+
+[[on-window-detected]]
+if.app-id = 'company.thebrowser.dia'
+run = "move-node-to-workspace B"
