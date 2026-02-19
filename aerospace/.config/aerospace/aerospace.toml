@@ -246,3 +246,8 @@ run = "move-node-to-workspace Z"
 [[on-window-detected]]
 if.app-id = 'company.thebrowser.dia'
 run = "move-node-to-workspace B"
+
+[[on-window-detected]]
+if.app-id = 'com.jetbrains.datagrip'
+run = "move-node-to-workspace D"
+
