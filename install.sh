@@ -77,6 +77,9 @@ backup_and_link "$DOTFILES/aerospace/.config/aerospace"  "$HOME/.config/aerospac
 backup_and_link "$DOTFILES/yazi/.config/yazi"            "$HOME/.config/yazi"
 backup_and_link "$DOTFILES/karabiner/.config/karabiner"  "$HOME/.config/karabiner"
 
+# Application Support symlinks (file-level to avoid symlinking runtime state)
+backup_and_link "$DOTFILES/lazygit/config.yml"  "$HOME/Library/Application Support/lazygit/config.yml"
+
 # --- Step 5: Tmux Plugin Manager ---
 TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [[ ! -d "$TPM_DIR" ]]; then

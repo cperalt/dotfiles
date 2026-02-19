@@ -100,7 +100,7 @@ eval $(thefuck --alias)
 eval $(thefuck --alias fk)
 
 # --- Alias ---
-alias lg="lazygit"
+# alias lg="lazygit"
 
 # === Git (shortened git commands) ===== #
 # alias gc= "git checkout"
@@ -163,3 +163,22 @@ function y() {
 
 # Added by Windsurf
 export PATH="/Users/cperaltarayon/.codeium/windsurf/bin:$PATH"
+unalias lg 2>/dev/null
+
+lg() {
+    local start_dir="$PWD"
+    lazygit "$@"
+
+    # Read the most recent repo from lazygit's state file
+    local state_file="${HOME}/Library/Application Support/lazygit/state.yml"
+    if [[ -f "$state_file" ]]; then
+        # Extract the first entry under recentrepos (the last repo lazygit was in)
+        local new_dir
+        new_dir=$(awk '/^recentrepos:/{found=1; next} found && /^    - /{gsub(/^    - /,""); print; exit}' "$state_file")
+
+        if [[ -n "$new_dir" && -d "$new_dir" && "$new_dir" != "$start_dir" ]]; then
+            cd "$new_dir"
+            /Applications/Cursor.app/Contents/Resources/app/bin/cursor -r .
+        fi
+    fi
+}
