@@ -20,6 +20,7 @@ else
   fi
 fi
 
+# These are specific to my workflow, change prefix as desired
 WT_NAME="$(basename "$WORKTREE_PATH")"
 SESSION="mpos-${WT_NAME}"
 
@@ -28,6 +29,10 @@ CURRENT_SESSION=""
 if [ -n "${TMUX:-}" ]; then
   CURRENT_SESSION="$(tmux display-message -p '#S')"
 fi
+
+# Commands below are to make sure process are terminated before switching to new
+# session, was running into high cpu load consumption by servers running in
+# previos tmxu tree session, would not terminate, 
 
 # Recursively collect all descendant PIDs of a given PID
 get_descendants() {
@@ -94,6 +99,7 @@ tmux send-keys -t "$SESSION:lazygit" "lazygit" Enter
 # Create Servers window with 6 panes (3x2 grid)
 tmux new-window -t "$SESSION" -n "Servers" -c "$WORKTREE_PATH"
 
+# place your own commands as desired, create panes as desired
 COMMANDS=(
   "npm run start:admin-ui"
   "npm run start:admin-api"
