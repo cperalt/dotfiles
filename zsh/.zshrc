@@ -137,6 +137,8 @@ function y() {
 
 # Added by Windsurf
 export PATH="/Users/cperaltarayon/.codeium/windsurf/bin:$PATH"
+# --- Mise (runtime/env manager) ---
+eval "$(mise activate zsh)"
 unalias lg 2>/dev/null
 
 lg() {
