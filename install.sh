@@ -76,6 +76,7 @@ backup_and_link "$DOTFILES/nvim/.config/nvim"           "$HOME/.config/nvim"
 backup_and_link "$DOTFILES/aerospace/.config/aerospace"  "$HOME/.config/aerospace"
 backup_and_link "$DOTFILES/yazi/.config/yazi"            "$HOME/.config/yazi"
 backup_and_link "$DOTFILES/karabiner/.config/karabiner"  "$HOME/.config/karabiner"
+backup_and_link "$DOTFILES/mise/.config/mise"              "$HOME/.config/mise"
 
 # Application Support symlinks (file-level to avoid symlinking runtime state)
 backup_and_link "$DOTFILES/lazygit/config.yml"  "$HOME/Library/Application Support/lazygit/config.yml"
