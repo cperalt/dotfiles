@@ -111,8 +111,8 @@ alias ga="git add ."
 alias gc='f() { git commit -m $1 };f'
 # === SOMETHING USEFUL TO WORK ON ====== #
 # alias gdelete="git branch -d `git branch --list 'FRONT-*'`"
-alias glist='f() { git branch --list $2 };f'
-alias gittree="git log --all --decorate --oneline --graph"
+alias gittree="git worktree list"
+alias gitaddtree="git worktree add"
 
 # === NPM (shortened npm commands) ===== #
 alias nrd="npm run dev"
@@ -141,8 +141,15 @@ unalias lg 2>/dev/null
 
 lg() {
     local start_dir="$PWD"
+    #
+    # # Auto-pull the main worktree before launching lazygit
+    # _lg_pull_main_worktree
+    #
     lazygit "$@"
 
+    # # Auto-pull main worktree again after exiting (picks up any remote changes)
+    # _lg_pull_main_worktree
+    #
     # Read the most recent repo from lazygit's state file
     local state_file="${HOME}/Library/Application Support/lazygit/state.yml"
     if [[ -f "$state_file" ]]; then
@@ -152,7 +159,37 @@ lg() {
 
         if [[ -n "$new_dir" && -d "$new_dir" && "$new_dir" != "$start_dir" ]]; then
             cd "$new_dir"
-            /Applications/Cursor.app/Contents/Resources/app/bin/cursor -r .
+            /Applications/Cursor.app/Contents/Resources/app/bin/cursor .
         fi
     fi
 }
+
+# # Find and fast-forward pull the main/master worktree in a bare repo setup
+# _lg_pull_main_worktree() {
+#     local git_common_dir main_wt_path main_branch
+#
+#     # Detect the shared git dir (works from any worktree)
+#     git_common_dir=$(git rev-parse --git-common-dir 2>/dev/null) || return 0
+#
+#     # Only act on bare repo setups (common worktree pattern)
+#     if ! git rev-parse --is-bare-repository 2>/dev/null | grep -q true; then
+#         # Not in the bare repo root — check if the common dir points to a bare repo
+#         [[ "$git_common_dir" == *.git ]] || [[ -f "$git_common_dir/HEAD" ]] || return 0
+#     fi
+#
+#     # Find which branch is main/master
+#     for candidate in main master; do
+#         if git show-ref --verify --quiet "refs/heads/$candidate" 2>/dev/null; then
+#             main_branch="$candidate"
+#             break
+#         fi
+#     done
+#     [[ -n "$main_branch" ]] || return 0
+#
+#     # Find the worktree checked out on the main branch
+#     main_wt_path=$(git worktree list 2>/dev/null | grep "\[$main_branch\]" | awk '{print $1}')
+#     [[ -n "$main_wt_path" && -d "$main_wt_path" ]] || return 0
+#
+#     # Fast-forward only — safe, never creates merge commits
+#     git -C "$main_wt_path" pull --ff-only --quiet 2>/dev/null
+# }
