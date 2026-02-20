@@ -27,3 +27,17 @@ customCommands:
         key: "Name"
         initialValue: ""
     command: "git worktree add ../{{ .Form.Name }} {{ .SelectedLocalBranch.Name }} -b {{ .Form.Name }}"
+
+  # Open worktree in MPOS tmux session (from worktrees view)
+  - key: "<c-o>"
+    context: "worktrees"
+    description: "Open worktree in MPOS tmux session"
+    command: "~/.dotfiles/scripts/wt-open.sh {{ .SelectedWorktree.Path }}"
+    output: "terminal"
+
+  # Open worktree in MPOS tmux session (from branches view)
+  - key: "<c-o>"
+    context: "localBranches"
+    description: "Open worktree in MPOS tmux session"
+    command: "~/.dotfiles/scripts/wt-open.sh {{ .SelectedLocalBranch.Name }}"
+    output: "terminal"
