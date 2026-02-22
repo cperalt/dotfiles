@@ -41,22 +41,6 @@ config.macos_window_background_blur = 10
 -- 	timeout_milliseconds = 1000, -- time after pressing Ctrl+A to wait for the next key
 -- }
 --
--- -- Custom keybindings using the leader:
--- config.keys = {
--- 	-- Ctrl+A then |  -> vertical split (one above the other)
--- 	{
--- 		key = "|",
--- 		mods = "LEADER",
--- 		action = wezterm.action.SplitHorizontal({ domain = "CurrentPaneDomain" }),
--- 	},
---
--- 	-- Ctrl+A then -  -> horizontal split (side by side)
--- 	{
--- 		key = "-",
--- 		mods = "LEADER",
--- 		action = wezterm.action.SplitVertical({ domain = "CurrentPaneDomain" }),
--- 	},
--- }
 
 -- and finally, return the configuration to wezterm
 return config
