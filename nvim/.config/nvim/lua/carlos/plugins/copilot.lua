@@ -20,7 +20,7 @@ return {
         },
       },
       suggestion = {
-        enabled = false,
+        enabled = true,
         auto_trigger = true,
         debounce = 75,
         keymap = {
@@ -44,9 +44,7 @@ return {
         -- svn = false,
         -- cvs = false,
       },
-      copilot_node_command = vim.fn.expand("$HOME") .. "/.nvm/versions/node/v22.9.0/bin/node",
       server_opts_overrides = {},
-      copilot_model = "gpt-4o-copilot",
     })
     -- require("copilot.suggestion").toggle_auto_trigger()
   end,
