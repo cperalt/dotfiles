@@ -36,50 +36,33 @@ info "Installing Homebrew packages from Brewfile..."
 brew bundle --file="$DOTFILES/Brewfile"
 success "Homebrew packages installed"
 
-# --- Step 4: Symlinks ---
-backup_and_link() {
-    local src="$1"
-    local dest="$2"
+# --- Step 4: Symlinks via GNU Stow ---
+STOW_PACKAGES=(zsh tmux wezterm nvim aerospace yazi karabiner mise)
 
-    # Ensure parent directory exists
-    mkdir -p "$(dirname "$dest")"
+info "Creating symlinks with stow..."
+for pkg in "${STOW_PACKAGES[@]}"; do
+    info "Stowing $pkg..."
+    stow -d "$DOTFILES" -t "$HOME" --adopt "$pkg"
+done
+# Reset any adopted files back to the repo version
+git -C "$DOTFILES" checkout -- .
+success "Stow packages linked"
 
-    # Already the correct symlink
-    if [[ -L "$dest" ]] && [[ "$(readlink "$dest")" == "$src" ]]; then
-        success "Already linked: $dest"
-        return
-    fi
-
-    # Back up existing file/directory/symlink
-    if [[ -e "$dest" ]] || [[ -L "$dest" ]]; then
+# lazygit targets ~/Library/Application Support/ instead of $HOME, so link manually
+LAZYGIT_DEST="$HOME/Library/Application Support/lazygit/config.yml"
+LAZYGIT_SRC="$DOTFILES/lazygit/config.yml"
+mkdir -p "$(dirname "$LAZYGIT_DEST")"
+if [[ -L "$LAZYGIT_DEST" ]] && [[ "$(readlink "$LAZYGIT_DEST")" == "$LAZYGIT_SRC" ]]; then
+    success "Already linked: $LAZYGIT_DEST"
+else
+    if [[ -e "$LAZYGIT_DEST" ]] && [[ ! -L "$LAZYGIT_DEST" ]]; then
         mkdir -p "$BACKUP_DIR"
-        local backup_name
-        backup_name="$(basename "$dest")-$(date +%Y%m%d%H%M%S)"
-        mv "$dest" "$BACKUP_DIR/$backup_name"
-        warn "Backed up existing $dest to $BACKUP_DIR/$backup_name"
+        mv "$LAZYGIT_DEST" "$BACKUP_DIR/lazygit-config.yml-$(date +%Y%m%d%H%M%S)"
+        warn "Backed up existing lazygit config"
     fi
-
-    ln -s "$src" "$dest"
-    success "Linked: $dest -> $src"
-}
-
-info "Creating symlinks..."
-
-# Home directory dotfiles
-backup_and_link "$DOTFILES/zsh/.zshrc"           "$HOME/.zshrc"
-backup_and_link "$DOTFILES/zsh/.p10k.zsh"        "$HOME/.p10k.zsh"
-backup_and_link "$DOTFILES/tmux/.tmux.conf"      "$HOME/.tmux.conf"
-backup_and_link "$DOTFILES/wezterm/.wezterm.lua"  "$HOME/.wezterm.lua"
-
-# .config directory symlinks
-backup_and_link "$DOTFILES/nvim/.config/nvim"           "$HOME/.config/nvim"
-backup_and_link "$DOTFILES/aerospace/.config/aerospace"  "$HOME/.config/aerospace"
-backup_and_link "$DOTFILES/yazi/.config/yazi"            "$HOME/.config/yazi"
-backup_and_link "$DOTFILES/karabiner/.config/karabiner"  "$HOME/.config/karabiner"
-backup_and_link "$DOTFILES/mise/.config/mise"              "$HOME/.config/mise"
-
-# Application Support symlinks (file-level to avoid symlinking runtime state)
-backup_and_link "$DOTFILES/lazygit/config.yml"  "$HOME/Library/Application Support/lazygit/config.yml"
+    ln -sf "$LAZYGIT_SRC" "$LAZYGIT_DEST"
+    success "Linked: $LAZYGIT_DEST -> $LAZYGIT_SRC"
+fi
 
 # --- Step 5: Tmux Plugin Manager ---
 TPM_DIR="$HOME/.tmux/plugins/tpm"
