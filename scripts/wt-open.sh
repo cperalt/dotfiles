@@ -175,9 +175,6 @@ tmux send-keys -t "$SESSION:lazygit" "lazygit" Enter
 # Create Servers window and start all dev servers
 start_servers "$SESSION" "$WORKTREE_PATH"
 
-# Open Cursor IDE at the worktree
-/Applications/Cursor.app/Contents/Resources/app/bin/cursor "$WORKTREE_PATH"
-
 # Select lazygit window
 tmux select-window -t "$SESSION:lazygit"
 
