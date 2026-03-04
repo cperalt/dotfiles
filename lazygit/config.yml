@@ -36,3 +36,12 @@ customCommands:
     description: "Open worktree in MPOS tmux session"
     command: "~/.dotfiles/scripts/wt-open.sh {{ .SelectedLocalBranch.Name }}"
     output: "terminal"
+
+  # Remove worktree and kill its tmux session
+  - key: "D"
+    context: "worktrees"
+    description: "Remove worktree and kill tmux session"
+    prompts:
+      - type: "confirm"
+        title: "Remove worktree '{{ .SelectedWorktree.Name }}' and kill its tmux session?"
+    command: "tmux kill-session -t mpos-{{ .SelectedWorktree.Name }} 2>/dev/null; git worktree remove {{ .SelectedWorktree.Path }} --force"

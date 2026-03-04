@@ -91,10 +91,6 @@ start_servers() {
   local commands=(
     "npm run start:admin-ui"
     "npm run start:admin-api"
-    "npm run start:borrower-portal-ui"
-    "npm run start:borrower-portal-api"
-    "npm run start:api"
-    "npm run start:ui"
   )
 
   # Pane 0 already exists, send first command
@@ -108,37 +104,11 @@ start_servers() {
   done
 }
 
-# --- Teardown current session's servers and docker ---
-
-# Kill servers in all other mpos-* sessions (but keep the sessions alive)
-for s in $(tmux list-sessions -F '#S' 2>/dev/null | grep '^mpos-' || true); do
-  if [ "$s" != "$CURRENT_SESSION" ]; then
-    kill_servers "$s"
-  fi
-done
-
-# Kill Servers window in current session (stop servers before starting new ones)
+# --- Teardown current session's servers and docker (free ports/CPU) ---
 if [ -n "$CURRENT_SESSION" ] && [[ "$CURRENT_SESSION" == mpos-* ]]; then
   kill_servers "$CURRENT_SESSION"
-fi
-
-# Stop Docker containers from the current worktree so ports are freed
-if [ -n "$CURRENT_SESSION" ] && [[ "$CURRENT_SESSION" == mpos-* ]]; then
   CURRENT_WT="$(tmux display-message -t "$CURRENT_SESSION" -p '#{pane_current_path}' 2>/dev/null)" || true
   stop_docker "$CURRENT_WT"
-fi
-
-# --- If target session already exists, spin up its servers and switch ---
-if tmux has-session -t "$SESSION" 2>/dev/null; then
-  echo "Session '$SESSION' already exists — starting servers and switching."
-  start_servers "$SESSION" "$WORKTREE_PATH"
-  tmux select-window -t "$SESSION:lazygit"
-  if [ -n "${TMUX:-}" ]; then
-    tmux switch-client -t "$SESSION"
-  else
-    tmux attach-session -t "$SESSION"
-  fi
-  exit 0
 fi
 
 # --- First time setup for a new worktree ---

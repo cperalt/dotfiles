@@ -161,7 +161,6 @@ lg() {
 
         if [[ -n "$new_dir" && -d "$new_dir" && "$new_dir" != "$start_dir" ]]; then
             cd "$new_dir"
-            /Applications/Cursor.app/Contents/Resources/app/bin/cursor .
         fi
     fi
 }
