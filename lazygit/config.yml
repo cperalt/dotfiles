@@ -20,13 +20,8 @@ customCommands:
   # Create worktree from selected branch (when in branches view)
   - key: "N"
     context: "localBranches"
-    description: "Create new worktree from selected branch"
-    prompts:
-      - type: "input"
-        title: "Create a new worktree from {{ .SelectedLocalBranch.Name }} with what name?"
-        key: "Name"
-        initialValue: ""
-    command: "git worktree add ../{{ .Form.Name }} {{ .SelectedLocalBranch.Name }} -b {{ .Form.Name }}"
+    description: "Create worktree for selected branch"
+    command: "git worktree add ../{{ .SelectedLocalBranch.Name }} {{ .SelectedLocalBranch.Name }}"
 
   # Open worktree in MPOS tmux session (from worktrees view)
   - key: "<c-o>"
