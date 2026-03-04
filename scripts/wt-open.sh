@@ -72,11 +72,10 @@ kill_servers() {
   tmux kill-window -t "$sess:Servers" 2>/dev/null || true
 }
 
-# Kill all other mpos-* sessions (kill their servers first, then the session)
+# Kill servers in all other mpos-* sessions (but keep the sessions alive)
 for s in $(tmux list-sessions -F '#S' 2>/dev/null | grep '^mpos-' || true); do
   if [ "$s" != "$CURRENT_SESSION" ]; then
     kill_servers "$s"
-    tmux kill-session -t "$s" 2>/dev/null || true
   fi
 done
 
@@ -85,11 +84,49 @@ if [ -n "$CURRENT_SESSION" ] && [[ "$CURRENT_SESSION" == mpos-* ]]; then
   kill_servers "$CURRENT_SESSION"
 fi
 
+# Stop Docker containers from the current worktree so ports are freed for the new one
+if [ -n "$CURRENT_SESSION" ] && [[ "$CURRENT_SESSION" == mpos-* ]]; then
+  CURRENT_WT="$(tmux display-message -t "$CURRENT_SESSION" -p '#{pane_current_path}' 2>/dev/null)" || true
+  if [ -n "$CURRENT_WT" ] && [ -f "$CURRENT_WT/docker-compose.yml" ]; then
+    echo "Stopping Docker containers from previous worktree..."
+    (cd "$CURRENT_WT" && docker-compose down --rmi all --volumes 2>/dev/null) || true
+  fi
+fi
+
+# If the target session already exists, just switch to it
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+  echo "Session '$SESSION' already exists — switching to it."
+  if [ -n "${TMUX:-}" ]; then
+    tmux switch-client -t "$SESSION"
+  else
+    tmux attach-session -t "$SESSION"
+  fi
+  exit 0
+fi
+
+# Resolve the main worktree path (first listed worktree)
+MAIN_WT="$(git worktree list --porcelain | awk '/^worktree / { print substr($0, 10); exit }')"
+
+# Copy migrations-index from main so esbuild can resolve the import in dev mode
+if [ -f "$MAIN_WT/db/migrations-index.ts" ] && [ ! -f "$WORKTREE_PATH/db/migrations-index.ts" ]; then
+  echo "Copying db/migrations-index.ts from main worktree..."
+  cp "$MAIN_WT/db/migrations-index.ts" "$WORKTREE_PATH/db/migrations-index.ts"
+fi
+
+# Symlink .claude dir to main worktree so settings/skills stay in sync
+if [ -d "$MAIN_WT/.claude" ] && [ ! -e "$WORKTREE_PATH/.claude" ]; then
+  echo "Symlinking .claude/ to main worktree..."
+  ln -s "$MAIN_WT/.claude" "$WORKTREE_PATH/.claude"
+fi
+
 # Run npm install if node_modules is missing
 if [ ! -d "$WORKTREE_PATH/node_modules" ]; then
   echo "node_modules not found — running npm install..."
   (cd "$WORKTREE_PATH" && npm install)
   echo "npm install complete."
+  echo "Warming up Nx Daemon (building project graph)..."
+  (cd "$WORKTREE_PATH" && npx nx reset 2>/dev/null; npx nx show projects > /dev/null 2>&1)
+  echo "Nx Daemon ready."
 fi
 
 # Create new session with lazygit window
@@ -125,13 +162,9 @@ done
 # Select lazygit window
 tmux select-window -t "$SESSION:lazygit"
 
-# Switch to the new session, then kill the old one
+# Switch to the new session (keep the old session alive)
 if [ -n "${TMUX:-}" ]; then
   tmux switch-client -t "$SESSION"
-  # Kill the old session now that we've switched away
-  if [ -n "$CURRENT_SESSION" ] && [ "$CURRENT_SESSION" != "$SESSION" ] && [[ "$CURRENT_SESSION" == mpos-* ]]; then
-    tmux kill-session -t "$CURRENT_SESSION" 2>/dev/null || true
-  fi
 else
   tmux attach-session -t "$SESSION"
 fi
