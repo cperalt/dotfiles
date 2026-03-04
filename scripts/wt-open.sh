@@ -32,7 +32,7 @@ fi
 
 # Commands below are to make sure process are terminated before switching to new
 # session, was running into high cpu load consumption by servers running in
-# previos tmxu tree session, would not terminate, 
+# previos tmxu tree session, would not terminate,
 
 # Recursively collect all descendant PIDs of a given PID
 get_descendants() {
@@ -72,6 +72,44 @@ kill_servers() {
   tmux kill-window -t "$sess:Servers" 2>/dev/null || true
 }
 
+# Stop Docker containers for a given worktree path
+stop_docker() {
+  local wt_path="$1"
+  if [ -n "$wt_path" ] && [ -f "$wt_path/docker-compose.yml" ]; then
+    echo "Stopping Docker containers from $wt_path..."
+    (cd "$wt_path" && docker-compose down --rmi all --volumes 2>/dev/null) || true
+  fi
+}
+
+# Create Servers window with 6 panes (3x2 grid) in the given session
+start_servers() {
+  local sess="$1"
+  local wt="$2"
+
+  tmux new-window -t "$sess" -n "Servers" -c "$wt"
+
+  local commands=(
+    "npm run start:admin-ui"
+    "npm run start:admin-api"
+    "npm run start:borrower-portal-ui"
+    "npm run start:borrower-portal-api"
+    "npm run start:api"
+    "npm run start:ui"
+  )
+
+  # Pane 0 already exists, send first command
+  tmux send-keys -t "$sess:Servers.0" "${commands[0]}" Enter
+
+  # Create panes 1-5
+  for i in 1 2 3 4 5; do
+    tmux split-window -t "$sess:Servers" -c "$wt"
+    tmux send-keys -t "$sess:Servers.$i" "${commands[$i]}" Enter
+    tmux select-layout -t "$sess:Servers" tiled
+  done
+}
+
+# --- Teardown current session's servers and docker ---
+
 # Kill servers in all other mpos-* sessions (but keep the sessions alive)
 for s in $(tmux list-sessions -F '#S' 2>/dev/null | grep '^mpos-' || true); do
   if [ "$s" != "$CURRENT_SESSION" ]; then
@@ -84,18 +122,17 @@ if [ -n "$CURRENT_SESSION" ] && [[ "$CURRENT_SESSION" == mpos-* ]]; then
   kill_servers "$CURRENT_SESSION"
 fi
 
-# Stop Docker containers from the current worktree so ports are freed for the new one
+# Stop Docker containers from the current worktree so ports are freed
 if [ -n "$CURRENT_SESSION" ] && [[ "$CURRENT_SESSION" == mpos-* ]]; then
   CURRENT_WT="$(tmux display-message -t "$CURRENT_SESSION" -p '#{pane_current_path}' 2>/dev/null)" || true
-  if [ -n "$CURRENT_WT" ] && [ -f "$CURRENT_WT/docker-compose.yml" ]; then
-    echo "Stopping Docker containers from previous worktree..."
-    (cd "$CURRENT_WT" && docker-compose down --rmi all --volumes 2>/dev/null) || true
-  fi
+  stop_docker "$CURRENT_WT"
 fi
 
-# If the target session already exists, just switch to it
+# --- If target session already exists, spin up its servers and switch ---
 if tmux has-session -t "$SESSION" 2>/dev/null; then
-  echo "Session '$SESSION' already exists — switching to it."
+  echo "Session '$SESSION' already exists — starting servers and switching."
+  start_servers "$SESSION" "$WORKTREE_PATH"
+  tmux select-window -t "$SESSION:lazygit"
   if [ -n "${TMUX:-}" ]; then
     tmux switch-client -t "$SESSION"
   else
@@ -103,6 +140,8 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
   fi
   exit 0
 fi
+
+# --- First time setup for a new worktree ---
 
 # Resolve the main worktree path (first listed worktree)
 MAIN_WT="$(git worktree list --porcelain | awk '/^worktree / { print substr($0, 10); exit }')"
@@ -133,28 +172,8 @@ fi
 tmux new-session -d -s "$SESSION" -c "$WORKTREE_PATH" -n "lazygit"
 tmux send-keys -t "$SESSION:lazygit" "lazygit" Enter
 
-# Create Servers window with 6 panes (3x2 grid)
-tmux new-window -t "$SESSION" -n "Servers" -c "$WORKTREE_PATH"
-
-# place your own commands as desired, create panes as desired
-COMMANDS=(
-  "npm run start:admin-ui"
-  "npm run start:admin-api"
-  "npm run start:borrower-portal-ui"
-  "npm run start:borrower-portal-api"
-  "npm run start:api"
-  "npm run start:ui"
-)
-
-# Pane 0 already exists, send first command
-tmux send-keys -t "$SESSION:Servers.0" "${COMMANDS[0]}" Enter
-
-# Create panes 1-5
-for i in 1 2 3 4 5; do
-  tmux split-window -t "$SESSION:Servers" -c "$WORKTREE_PATH"
-  tmux send-keys -t "$SESSION:Servers.$i" "${COMMANDS[$i]}" Enter
-  tmux select-layout -t "$SESSION:Servers" tiled
-done
+# Create Servers window and start all dev servers
+start_servers "$SESSION" "$WORKTREE_PATH"
 
 # Open Cursor IDE at the worktree
 /Applications/Cursor.app/Contents/Resources/app/bin/cursor "$WORKTREE_PATH"
