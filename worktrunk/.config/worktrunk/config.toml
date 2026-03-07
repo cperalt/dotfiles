@@ -12,11 +12,8 @@ migrations = "[ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{
 # Symlink .claude dir and all CLAUDE.md files from main worktree
 claude = """
 [ -d {{ primary_worktree_path }}/.claude ] && [ ! -e {{ worktree_path }}/.claude ] && ln -s {{ primary_worktree_path }}/.claude {{ worktree_path }}/.claude || true
-for f in $(find {{ primary_worktree_path }} -name 'CLAUDE.md' -not -path '*/node_modules/*' 2>/dev/null); do
-  rel="${f#{{ primary_worktree_path }}/}"
-  target="{{ worktree_path }}/$rel"
-  mkdir -p "$(dirname "$target")"
-  [ ! -e "$target" ] && ln -s "$f" "$target" || true
+for f in CLAUDE.md apps/ui/CLAUDE.md apps/api/CLAUDE.md apps/admin-ui/CLAUDE.md apps/admin-api/CLAUDE.md apps/borrower-portal-ui/CLAUDE.md apps/borrower-portal-api/CLAUDE.md apps/partner-api/CLAUDE.md apps/jobs-api/CLAUDE.md apps/marketing-decision-api/CLAUDE.md; do
+  [ -f {{ primary_worktree_path }}/"$f" ] && [ ! -e {{ worktree_path }}/"$f" ] && ln -s {{ primary_worktree_path }}/"$f" {{ worktree_path }}/"$f" || true
 done
 """
 # Create tmux session with Servers window (6 empty panes, tiled) — don't switch
@@ -36,6 +33,7 @@ fi
 [post-switch]
 # Switch to the worktree's tmux session if it exists
 tmux = """
+[ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
 SESSION="mpos-{{ branch | sanitize }}"
 if tmux has-session -t "$SESSION" 2>/dev/null; then
   if [ -n "${TMUX:-}" ]; then

@@ -106,8 +106,19 @@ eval $(thefuck --alias fk)
 
 # --- Alias ---
 # alias lg="lazygit"
-alias wtn="wt switch --create"
+alias wtn="wt switch --create --no-cd"
 alias wtr="wt remove"
+alias wtl="wt list"
+alias wts="wt switch --no-cd"
+
+# Create worktree and launch claude with a prompt in its tmux session
+# Usage: wtnc my-branch 'Fix the login bug'
+wtnc() {
+  local branch="$1"
+  shift
+  WT_SKIP_TMUX_SWITCH=1 wt switch --create --no-cd "$branch"
+  tmux send-keys -t "mpos-${branch}" "claude '$*'" Enter
+}
 alias gs="git status"
 
 # === NPM (shortened npm commands) ===== #
