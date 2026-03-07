@@ -26,6 +26,11 @@ bindkey '^[[B' history-search-forward
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
+# Edit command line in $EDITOR with Ctrl+X Ctrl+E
+autoload -Uz edit-command-line
+zle -N edit-command-line
+bindkey '^X^E' edit-command-line
+
 # ---- Eza (better ls) -----
 
 alias ls="eza --icons=always"
@@ -101,24 +106,18 @@ eval $(thefuck --alias fk)
 
 # --- Alias ---
 # alias lg="lazygit"
-
-# === Git (shortened git commands) ===== #
-# alias gc= "git checkout"
-alias gd= "git diff"
+alias wtn="wt switch --create"
+alias wtr="wt remove"
 alias gs="git status"
-alias gb="git branch"
-alias ga="git add ."
-alias gc='f() { git commit -m $1 };f'
-# === SOMETHING USEFUL TO WORK ON ====== #
-# alias gdelete="git branch -d `git branch --list 'FRONT-*'`"
-alias gittree="git worktree list"
-alias gitaddtree="git worktree add"
 
 # === NPM (shortened npm commands) ===== #
 alias nrd="npm run dev"
 alias nrl="npm run dev:live"
 
 
+
+# Source sensitive env vars and aliases
+[[ -f "${HOME}/.dotfiles/zsh/.env.zsh" ]] && source "${HOME}/.dotfiles/zsh/.env.zsh"
 
 # Silence powerlevel10k I/O Warning
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
