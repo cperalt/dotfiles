@@ -194,3 +194,6 @@ lg() {
 #     # Fast-forward only — safe, never creates merge commits
 #     git -C "$main_wt_path" pull --ff-only --quiet 2>/dev/null
 # }
+
+autoload -Uz compinit && compinit
+if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
