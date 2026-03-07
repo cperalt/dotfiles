@@ -10,7 +10,8 @@ local config = wezterm.config_builder()
 config.color_scheme = "Catppuccin Mocha"
 
 -- config.font = wezterm.font("MesloLGS Nerd Font Mono")
-config.font = wezterm.font("JetBrains Mono")
+-- config.font = wezterm.font("JetBrains Mono")
+config.font = wezterm.font("Maple Mono NF")
 config.font_size = 13
 
 config.enable_tab_bar = false
