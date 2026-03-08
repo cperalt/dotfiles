@@ -37,7 +37,7 @@ brew bundle --file="$DOTFILES/Brewfile"
 success "Homebrew packages installed"
 
 # --- Step 4: Symlinks via GNU Stow ---
-STOW_PACKAGES=(zsh tmux wezterm nvim aerospace yazi karabiner mise)
+STOW_PACKAGES=(zsh tmux wezterm ghostty nvim aerospace yazi karabiner mise gh-dash)
 
 info "Creating symlinks with stow..."
 for pkg in "${STOW_PACKAGES[@]}"; do
@@ -64,7 +64,16 @@ else
     success "Linked: $LAZYGIT_DEST -> $LAZYGIT_SRC"
 fi
 
-# --- Step 5: Tmux Plugin Manager ---
+# --- Step 5: GitHub CLI extensions ---
+info "Installing gh extensions..."
+if ! gh extension list 2>/dev/null | grep -q "dlvhdr/gh-dash"; then
+    gh extension install dlvhdr/gh-dash
+    success "gh-dash installed"
+else
+    success "gh-dash already installed"
+fi
+
+# --- Step 6: Tmux Plugin Manager ---
 TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [[ ! -d "$TPM_DIR" ]]; then
     info "Installing tmux plugin manager (tpm)..."
