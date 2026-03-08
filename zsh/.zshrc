@@ -21,8 +21,9 @@ setopt hist_ignore_dups
 setopt hist_verify
 
 # completion using arrow keys (based on history)
-bindkey '^[[A' history-search-backward
-bindkey '^[[B' history-search-forward
+# Use up-line-or-search instead of history-search-backward to allow multiline editing
+bindkey '^[[A' up-line-or-search
+bindkey '^[[B' down-line-or-search
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
@@ -207,3 +208,6 @@ lg() {
 
 autoload -Uz compinit && compinit
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
+
+# To customize prompt, run `p10k configure` or edit ~/.dotfiles/zsh/.p10k.zsh.
+[[ ! -f ~/.dotfiles/zsh/.p10k.zsh ]] || source ~/.dotfiles/zsh/.p10k.zsh
