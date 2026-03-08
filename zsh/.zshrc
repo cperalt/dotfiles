@@ -116,7 +116,7 @@ alias wts="wt switch --no-cd"
 wtnc() {
   local branch="$1"
   shift
-  WT_SKIP_TMUX_SWITCH=1 wt switch --create --no-cd "$branch"
+  WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch --create --no-cd "$branch"
   tmux send-keys -t "mpos-${branch}" "claude '$*'" Enter
 }
 alias gs="git status"
