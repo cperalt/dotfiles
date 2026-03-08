@@ -106,7 +106,6 @@ eval $(thefuck --alias)
 eval $(thefuck --alias fk)
 
 # --- Alias ---
-# alias lg="lazygit"
 alias wtn="wt switch --create --no-cd"
 alias wtr="wt remove"
 alias wtl="wt list"
@@ -114,6 +113,9 @@ alias wts="wt switch --no-cd"
 alias zshrc="nvim ~/.zshrc"
 alias boo="nvim ~/.dotfiles/ghostty/.config/ghostty/config"
 alias tmx="nvim ~/.tmux.conf"
+alias gs="git status"
+alias nrd="npm run dev"
+alias nrl="npm run dev:live"
 
 # Create worktree and launch claude with a prompt in its tmux session
 # Usage: wtnc my-branch 'Fix the login bug'
@@ -123,13 +125,6 @@ wtnc() {
   WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch --create --no-cd "$branch"
   tmux send-keys -t "mpos-${branch}" "claude '$*'" Enter
 }
-alias gs="git status"
-
-# === NPM (shortened npm commands) ===== #
-alias nrd="npm run dev"
-alias nrl="npm run dev:live"
-
-
 
 # Source sensitive env vars and aliases
 [[ -f "${HOME}/.dotfiles/zsh/.env.zsh" ]] && source "${HOME}/.dotfiles/zsh/.env.zsh"
@@ -178,36 +173,6 @@ lg() {
         fi
     fi
 }
-
-# # Find and fast-forward pull the main/master worktree in a bare repo setup
-# _lg_pull_main_worktree() {
-#     local git_common_dir main_wt_path main_branch
-#
-#     # Detect the shared git dir (works from any worktree)
-#     git_common_dir=$(git rev-parse --git-common-dir 2>/dev/null) || return 0
-#
-#     # Only act on bare repo setups (common worktree pattern)
-#     if ! git rev-parse --is-bare-repository 2>/dev/null | grep -q true; then
-#         # Not in the bare repo root — check if the common dir points to a bare repo
-#         [[ "$git_common_dir" == *.git ]] || [[ -f "$git_common_dir/HEAD" ]] || return 0
-#     fi
-#
-#     # Find which branch is main/master
-#     for candidate in main master; do
-#         if git show-ref --verify --quiet "refs/heads/$candidate" 2>/dev/null; then
-#             main_branch="$candidate"
-#             break
-#         fi
-#     done
-#     [[ -n "$main_branch" ]] || return 0
-#
-#     # Find the worktree checked out on the main branch
-#     main_wt_path=$(git worktree list 2>/dev/null | grep "\[$main_branch\]" | awk '{print $1}')
-#     [[ -n "$main_wt_path" && -d "$main_wt_path" ]] || return 0
-#
-#     # Fast-forward only — safe, never creates merge commits
-#     git -C "$main_wt_path" pull --ff-only --quiet 2>/dev/null
-# }
 
 autoload -Uz compinit && compinit
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
