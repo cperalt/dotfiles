@@ -34,7 +34,7 @@ bindkey '^X^E' edit-command-line
 
 # ---- Eza (better ls) -----
 
-alias ls="eza --icons=always"
+alias ls="eza --icons=always -a"
 
 # ---- Zoxide (better cd) ----
 eval "$(zoxide init zsh)"
@@ -111,6 +111,9 @@ alias wtn="wt switch --create --no-cd"
 alias wtr="wt remove"
 alias wtl="wt list"
 alias wts="wt switch --no-cd"
+alias zshrc="nvim ~/.zshrc"
+alias boo="nvim ~/.dotfiles/ghostty/.config/ghostty/config"
+alias tmx="nvim ~/.tmux.conf"
 
 # Create worktree and launch claude with a prompt in its tmux session
 # Usage: wtnc my-branch 'Fix the login bug'
