@@ -15,3 +15,6 @@ window-padding-x = 10
 window-padding-y = 6
 
 shell-integration-features = no-cursor
+
+# Send ESC+Enter for Shift+Enter so Claude Code detects newlines inside tmux
+keybind = shift+enter=text:\x1b\x0d
