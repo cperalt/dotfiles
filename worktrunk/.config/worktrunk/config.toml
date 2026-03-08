@@ -4,19 +4,19 @@ worktree-path = "{{ repo_path }}/../{{ branch | sanitize }}"
 
 [post-create]
 # Symlink node_modules from main worktree (shared deps, no install needed)
-deps = "ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules"
+symNodeModules = "ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules"
 # Copy nx cache from main worktree (uses reflinks on APFS)
-copy = "wt step copy-ignored"
+copyIgnore = "wt step copy-ignored"
 # Copy migrations-index from main so esbuild can resolve the import in dev mode
 migrations = "[ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{ primary_worktree_path }}/db/migrations-index.ts {{ worktree_path }}/db/migrations-index.ts || true"
 # Symlink .claude dir and all CLAUDE.md files from main worktree
-claude = """
+claudeFilesSymlink = """
 [ -d {{ primary_worktree_path }}/.claude ] && [ ! -e {{ worktree_path }}/.claude ] && ln -s {{ primary_worktree_path }}/.claude {{ worktree_path }}/.claude || true
 for f in CLAUDE.md apps/ui/CLAUDE.md apps/api/CLAUDE.md apps/admin-ui/CLAUDE.md apps/admin-api/CLAUDE.md apps/borrower-portal-ui/CLAUDE.md apps/borrower-portal-api/CLAUDE.md apps/partner-api/CLAUDE.md apps/jobs-api/CLAUDE.md apps/marketing-decision-api/CLAUDE.md; do
   [ -f {{ primary_worktree_path }}/"$f" ] && [ ! -e {{ worktree_path }}/"$f" ] && ln -s {{ primary_worktree_path }}/"$f" {{ worktree_path }}/"$f" || true
 done
 """
-# Create tmux session with Servers window (6 empty panes, tiled) — don't switch
+# Create tmux session with Servers window (6 empty panes, tiled)
 tmux = """
 SESSION="mpos-{{ branch | sanitize }}"
 if ! tmux has-session -t "$SESSION" 2>/dev/null; then
@@ -30,18 +30,97 @@ if ! tmux has-session -t "$SESSION" 2>/dev/null; then
 fi
 """
 
+[post-start]
+# Start servers in background (staggered to avoid Nx daemon contention)
+servers = """
+[ -n "${WT_SKIP_SERVERS:-}" ] && exit 0
+SESSION="mpos-{{ branch | sanitize }}"
+tmux send-keys -t "$SESSION:Servers.0" "adminUI" Enter
+sleep 3
+tmux send-keys -t "$SESSION:Servers.1" "adminAPI" Enter
+sleep 2
+tmux send-keys -t "$SESSION:Servers.2" "justUI" Enter
+sleep 2
+tmux send-keys -t "$SESSION:Servers.3" "justAPI" Enter
+sleep 2
+tmux send-keys -t "$SESSION:Servers.4" "bpUI" Enter
+sleep 2
+tmux send-keys -t "$SESSION:Servers.5" "bpAPI" Enter
+"""
+
 [post-switch]
-# Switch to the worktree's tmux session if it exists
-tmux = """
+# Switch tmux session (instant, separate background process)
+switchTmux = """
 [ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
 SESSION="mpos-{{ branch | sanitize }}"
 if tmux has-session -t "$SESSION" 2>/dev/null; then
+  tmux select-window -t "$SESSION:0"
   if [ -n "${TMUX:-}" ]; then
     tmux switch-client -t "$SESSION"
   else
     tmux attach-session -t "$SESSION"
   fi
 fi
+"""
+# Kill old servers and start new ones (separate background process)
+servers = """
+[ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
+SESSION="mpos-{{ branch | sanitize }}"
+
+# Recursively kill all descendants of each pane in other sessions
+kill_tree() {
+  local pid="$1"
+  for child in $(pgrep -P "$pid" 2>/dev/null); do
+    kill_tree "$child"
+  done
+  kill -9 "$pid" 2>/dev/null || true
+}
+
+for s in $(tmux list-sessions -F '#S' 2>/dev/null | grep '^mpos-' || true); do
+  [ "$s" = "$SESSION" ] && continue
+  if tmux list-windows -t "$s" -F '#W' 2>/dev/null | grep -q '^Servers$'; then
+    for pid in $(tmux list-panes -t "$s:Servers" -F '#{pane_pid}' 2>/dev/null); do
+      kill_tree "$pid"
+    done
+    tmux kill-window -t "$s:Servers" 2>/dev/null || true
+  fi
+done
+
+# Start servers in target session if Servers window is missing
+if ! tmux list-windows -t "$SESSION" -F '#W' 2>/dev/null | grep -q '^Servers$'; then
+  tmux new-window -d -t "$SESSION" -n "Servers" -c {{ worktree_path }}
+  for i in 1 2 3 4 5; do
+    tmux split-window -d -t "$SESSION:Servers" -c {{ worktree_path }}
+    tmux select-layout -t "$SESSION:Servers" tiled
+  done
+  tmux send-keys -t "$SESSION:Servers.0" "adminUI" Enter
+  sleep 3
+  tmux send-keys -t "$SESSION:Servers.1" "adminAPI" Enter
+  sleep 2
+  tmux send-keys -t "$SESSION:Servers.2" "justUI" Enter
+  sleep 2
+  tmux send-keys -t "$SESSION:Servers.3" "justAPI" Enter
+  sleep 2
+  tmux send-keys -t "$SESSION:Servers.4" "bpUI" Enter
+  sleep 2
+  tmux send-keys -t "$SESSION:Servers.5" "bpAPI" Enter
+fi
+"""
+
+[pre-remove]
+# Kill entire server process trees before removing the worktree
+killServers = """
+kill_tree() {
+  local pid="$1"
+  for child in $(pgrep -P "$pid" 2>/dev/null); do
+    kill_tree "$child"
+  done
+  kill -9 "$pid" 2>/dev/null || true
+}
+SESSION="mpos-{{ branch | sanitize }}"
+for pid in $(tmux list-panes -t "$SESSION:Servers" -F '#{pane_pid}' 2>/dev/null); do
+  kill_tree "$pid"
+done
 """
 
 [post-remove]
