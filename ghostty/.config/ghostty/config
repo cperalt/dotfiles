@@ -1,0 +1,13 @@
+theme = tokyonight
+font-family = Maple Mono NF
+font-size = 12
+macos-titlebar-style = hidden
+clipboard-read = allow
+clipboard-write = allow
+confirm-close-surface = false
+cursor-style = block
+cursor-style-blink = true
+custom-shader = shaders/cursor_blaze.glsl
+custom-shader = cursor_smear.glsl
+custom-shader-animation = always
+mouse-hide-while-typing = true
