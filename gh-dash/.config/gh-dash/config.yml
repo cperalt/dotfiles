@@ -76,7 +76,13 @@ defaults:
         width: 20
         hidden: true
   refetchIntervalMinutes: 30
-keybindings: {}
+keybindings:
+  prs:
+    - key: P
+      command: >
+        branch=$(gh pr view {{.PrNumber}} --json headRefName -q .headRefName) &&
+        WT_REVIEW_ONLY=1 WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch pr:{{.PrNumber}} --no-cd &&
+        tmux send-keys -t "mpos-$branch" "claude '/review-pr {{.PrNumber}}'" Enter
 repoPaths: {}
 theme:
   ui:
