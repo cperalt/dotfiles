@@ -4,11 +4,11 @@ worktree-path = "{{ repo_path }}/../{{ branch | sanitize }}"
 
 [post-create]
 # Symlink node_modules from main worktree (shared deps, no install needed)
-symNodeModules = "ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules"
+symNodeModules = "[ -n \"${WT_REVIEW_ONLY:-}\" ] && exit 0; ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules"
 # Copy nx cache from main worktree (uses reflinks on APFS)
-copyIgnore = "wt step copy-ignored"
+copyIgnore = "[ -n \"${WT_REVIEW_ONLY:-}\" ] && exit 0; wt step copy-ignored"
 # Copy migrations-index from main so esbuild can resolve the import in dev mode
-migrations = "[ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{ primary_worktree_path }}/db/migrations-index.ts {{ worktree_path }}/db/migrations-index.ts || true"
+migrations = "[ -n \"${WT_REVIEW_ONLY:-}\" ] && exit 0; [ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{ primary_worktree_path }}/db/migrations-index.ts {{ worktree_path }}/db/migrations-index.ts || true"
 # Symlink .claude dir and all CLAUDE.md files from main worktree
 claudeFilesSymlink = """
 [ -d {{ primary_worktree_path }}/.claude ] && [ ! -e {{ worktree_path }}/.claude ] && ln -s {{ primary_worktree_path }}/.claude {{ worktree_path }}/.claude || true
