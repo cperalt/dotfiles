@@ -83,6 +83,11 @@ keybindings:
         branch=$(gh pr view {{.PrNumber}} --json headRefName -q .headRefName) &&
         WT_REVIEW_ONLY=1 WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch pr:{{.PrNumber}} --no-cd &&
         tmux send-keys -t "mpos-$branch" "claude '/review-pr {{.PrNumber}}'" Enter
+    - key: U
+      command: >
+        branch=$(gh pr view {{.PrNumber}} --json headRefName -q .headRefName) &&
+        WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch "$branch" --no-cd &&
+        tmux send-keys -t "mpos-$branch" "claude '/address-comments {{.PrNumber}}'" Enter
 repoPaths: {}
 theme:
   ui:
