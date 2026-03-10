@@ -50,7 +50,7 @@ tmux send-keys -t "$SESSION:Servers.5" "bpAPI" Enter
 
 [post-switch]
 # Switch tmux session (instant, separate background process)
-switchTmux = """
+switchTmuxSesh = """
 [ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
 SESSION="mpos-{{ branch | sanitize }}"
 if tmux has-session -t "$SESSION" 2>/dev/null; then
@@ -63,7 +63,7 @@ if tmux has-session -t "$SESSION" 2>/dev/null; then
 fi
 """
 # Kill old servers and start new ones (separate background process)
-servers = """
+killRespawnServers = """
 [ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
 SESSION="mpos-{{ branch | sanitize }}"
 
