@@ -4,7 +4,14 @@ worktree-path = "{{ repo_path }}/../{{ branch | sanitize }}"
 
 [post-create]
 # Symlink node_modules from main worktree (shared deps, no install needed)
-symNodeModules = "[ -n \"${WT_REVIEW_ONLY:-}\" ] && exit 0; ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules"
+# For PR review flow (WT_REVIEW_ONLY), do a real npm ci instead of symlinking
+symNodeModules = """
+if [ -n "${WT_REVIEW_ONLY:-}" ]; then
+  cd {{ worktree_path }} && npm ci
+  exit 0
+fi
+ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules
+"""
 # Copy nx cache from main worktree (uses reflinks on APFS)
 copyIgnore = "[ -n \"${WT_REVIEW_ONLY:-}\" ] && exit 0; wt step copy-ignored"
 # Copy migrations-index from main so esbuild can resolve the import in dev mode
