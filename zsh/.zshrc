@@ -107,7 +107,7 @@ eval $(thefuck --alias fk)
 
 # --- Alias ---
 alias wtn="wt switch --create --no-cd"
-alias wtr="wt remove"
+alias wtr="wt remove -D"
 alias wtl="wt list"
 alias wts="wt switch --no-cd"
 alias zshrc="nvim ~/.zshrc"
