@@ -116,6 +116,8 @@ alias tmx="nvim ~/.tmux.conf"
 alias gs="git status"
 alias nrd="npm run dev"
 alias nrl="npm run dev:live"
+alias ghd="gh dash"
+alias dot="cd ~/.dotfiles"
 
 # Create worktree and launch claude with a prompt in its tmux session
 # Usage: wtnc my-branch 'Fix the login bug'
