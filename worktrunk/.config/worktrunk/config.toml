@@ -4,12 +4,9 @@ worktree-path = "{{ repo_path }}/../{{ branch | sanitize }}"
 
 [post-create]
 # Symlink node_modules from main worktree (shared deps, no install needed)
-# For PR review flow (WT_REVIEW_ONLY), do a real npm ci instead of symlinking
+# PR review flow skips this — npm ci runs in post-start background instead
 symNodeModules = """
-if [ -n "${WT_REVIEW_ONLY:-}" ]; then
-  cd {{ worktree_path }} && npm ci
-  exit 0
-fi
+[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0
 ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules
 """
 # Copy nx cache from main worktree (uses reflinks on APFS)
@@ -38,6 +35,13 @@ fi
 """
 
 [post-start]
+# For PR review flow, run npm ci in the background on Servers.0 pane
+# Claude starts immediately on window 0 while deps install in parallel
+reviewDeps = """
+[ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
+SESSION="mpos-{{ branch | sanitize }}"
+tmux send-keys -t "$SESSION:Servers.0" "cd {{ worktree_path }} && npm ci" Enter
+"""
 # Start servers in background (staggered to avoid Nx daemon contention)
 servers = """
 [ -n "${WT_SKIP_SERVERS:-}" ] && exit 0
