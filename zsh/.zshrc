@@ -120,8 +120,8 @@ alias nrd="npm run dev"
 alias nrl="npm run dev:live"
 alias ghd="gh dash"
 alias dot="cd ~/.dotfiles"
-alias cld="claude"
-alias clc="claude --continue"
+alias cc="claude"
+alias cccc"Claude --continue"
 
 # Create worktree and launch claude with a prompt in its tmux session
 # Usage: wtnc my-branch 'Fix the login bug'
