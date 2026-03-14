@@ -111,7 +111,8 @@ alias wtn="wt switch --create"
 alias wtr="wt remove -D"
 alias wtl="wt list"
 alias wts="wt switch"
-alias zshrc="nvim ~/.zshrc"
+alias zsh="nvim ~/.zshrc"
+alias zshr="source ~/.zshrc"
 alias boo="nvim ~/.dotfiles/ghostty/.config/ghostty/config"
 alias tmx="nvim ~/.tmux.conf"
 alias gs="git status"
@@ -119,6 +120,8 @@ alias nrd="npm run dev"
 alias nrl="npm run dev:live"
 alias ghd="gh dash"
 alias dot="cd ~/.dotfiles"
+alias cld="claude"
+alias clc="claude --continue"
 
 # Create worktree and launch claude with a prompt in its tmux session
 # Usage: wtnc my-branch 'Fix the login bug'
@@ -136,7 +139,7 @@ wtac() {
   local branch
   branch="$(gh pr view "$pr" --json headRefName -q .headRefName)"
   WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch "$branch"
-  tmux send-keys -t "mpos-${branch}" "claude '/address-comments ${pr}'" Enter
+  tmux send-keys -t "mpos-${branch}" "claude --model claude-sonnet-4-6 '/address-comments ${pr}'" Enter
 }
 
 # Source sensitive env vars and aliases
