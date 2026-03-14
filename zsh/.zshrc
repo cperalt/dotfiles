@@ -7,6 +7,7 @@ fi
 
 export PATH="${HOMEBREW_PREFIX}/opt/openssl/bin:$PATH"
 source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
+export ENABLE_LSP_TOOL=1
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -106,10 +107,10 @@ eval $(thefuck --alias)
 eval $(thefuck --alias fk)
 
 # --- Alias ---
-alias wtn="wt switch --create --no-cd"
+alias wtn="wt switch --create"
 alias wtr="wt remove -D"
 alias wtl="wt list"
-alias wts="wt switch --no-cd"
+alias wts="wt switch"
 alias zshrc="nvim ~/.zshrc"
 alias boo="nvim ~/.dotfiles/ghostty/.config/ghostty/config"
 alias tmx="nvim ~/.tmux.conf"
@@ -124,8 +125,18 @@ alias dot="cd ~/.dotfiles"
 wtnc() {
   local branch="$1"
   shift
-  WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch --create --no-cd "$branch"
+  WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch --create "$branch"
   tmux send-keys -t "mpos-${branch}" "claude '$*'" Enter
+}
+
+# Address PR review comments in an existing worktree's tmux session
+# Usage: wtac 123
+wtac() {
+  local pr="$1"
+  local branch
+  branch="$(gh pr view "$pr" --json headRefName -q .headRefName)"
+  WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch "$branch"
+  tmux send-keys -t "mpos-${branch}" "claude '/address-comments ${pr}'" Enter
 }
 
 # Source sensitive env vars and aliases
