@@ -51,6 +51,20 @@ return {
         },
         lualine_x = {
           {
+            function()
+              local ok, claude = pcall(require, "claudecode")
+              if ok and claude.is_claude_connected() then
+                return "Claude"
+              end
+              return ""
+            end,
+            cond = function()
+              local ok, claude = pcall(require, "claudecode")
+              return ok and claude.is_claude_connected()
+            end,
+            color = { fg = C.mauve },
+          },
+          {
             lazy_status.updates,
             cond = lazy_status.has_updates,
             color = { fg = C.peach },
