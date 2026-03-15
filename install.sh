@@ -37,7 +37,7 @@ brew bundle --file="$DOTFILES/Brewfile"
 success "Homebrew packages installed"
 
 # --- Step 4: Symlinks via GNU Stow ---
-STOW_PACKAGES=(zsh tmux wezterm ghostty nvim aerospace yazi karabiner mise gh-dash)
+STOW_PACKAGES=(zsh tmux wezterm ghostty nvim aerospace yazi karabiner mise)
 
 info "Creating symlinks with stow..."
 for pkg in "${STOW_PACKAGES[@]}"; do
@@ -66,11 +66,15 @@ fi
 
 # --- Step 5: GitHub CLI extensions ---
 info "Installing gh extensions..."
-if ! gh extension list 2>/dev/null | grep -q "dlvhdr/gh-dash"; then
-    gh extension install dlvhdr/gh-dash
-    success "gh-dash installed"
+if command -v gh &>/dev/null; then
+    if ! gh extension list 2>/dev/null | grep -q "dlvhdr/gh-dash"; then
+        gh extension install dlvhdr/gh-dash
+        success "gh-dash installed"
+    else
+        success "gh-dash already installed"
+    fi
 else
-    success "gh-dash already installed"
+    warn "gh not installed or not authenticated — skipping gh-dash"
 fi
 
 # --- Step 6: Tmux Plugin Manager ---
@@ -83,7 +87,7 @@ else
     success "tpm already installed"
 fi
 
-# --- Step 6: fzf-git.sh ---
+# --- Step 7: fzf-git.sh ---
 FZF_GIT_DIR="$HOME/fzf-git.sh"
 if [[ ! -d "$FZF_GIT_DIR" ]]; then
     info "Cloning fzf-git.sh..."
@@ -93,7 +97,7 @@ else
     success "fzf-git.sh already present"
 fi
 
-# --- Step 7: .env.zsh template ---
+# --- Step 8: .env.zsh template ---
 ENV_FILE="$DOTFILES/zsh/.env.zsh"
 if [[ ! -f "$ENV_FILE" ]]; then
     info "Creating .env.zsh template..."
@@ -110,7 +114,7 @@ else
     success ".env.zsh already exists"
 fi
 
-# --- Step 8: Default shell ---
+# --- Step 9: Default shell ---
 ZSH_PATH="$(brew --prefix)/bin/zsh"
 if [[ "$SHELL" != "$ZSH_PATH" ]]; then
     if ! grep -qF "$ZSH_PATH" /etc/shells; then
