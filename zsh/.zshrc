@@ -121,7 +121,7 @@ alias nrl="npm run dev:live"
 alias ghd="gh dash"
 alias dot="cd ~/.dotfiles"
 alias cc="claude"
-alias ccc="Claude --continue"
+alias ccc="claude --continue"
 alias nv="nvim"
 
 # Create worktree and launch claude with a prompt in its tmux session
