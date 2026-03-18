@@ -107,7 +107,7 @@ eval $(thefuck --alias)
 eval $(thefuck --alias fk)
 
 # --- Alias ---
-alias wtn="wt switch --create"
+alias wtn="WT_SKIP_SERVERS=1 wt switch --create"
 alias wtr="wt remove -D"
 alias wtl="wt list"
 alias wts="wt switch"
