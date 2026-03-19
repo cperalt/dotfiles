@@ -17,13 +17,6 @@ ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules
 copyIgnore = "[ -n \"${WT_REVIEW_ONLY:-}\" ] && exit 0; wt step copy-ignored"
 # Copy migrations-index from main so esbuild can resolve the import in dev mode
 migrations = "[ -n \"${WT_REVIEW_ONLY:-}\" ] && exit 0; [ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{ primary_worktree_path }}/db/migrations-index.ts {{ worktree_path }}/db/migrations-index.ts || true"
-# Symlink .claude dir and all CLAUDE.md files from main worktree
-claudeFilesSymlink = """
-[ -d {{ primary_worktree_path }}/.claude ] && [ ! -e {{ worktree_path }}/.claude ] && ln -s {{ primary_worktree_path }}/.claude {{ worktree_path }}/.claude || true
-for f in CLAUDE.md apps/ui/CLAUDE.md apps/api/CLAUDE.md apps/admin-ui/CLAUDE.md apps/admin-api/CLAUDE.md apps/borrower-portal-ui/CLAUDE.md apps/borrower-portal-api/CLAUDE.md apps/partner-api/CLAUDE.md apps/jobs-api/CLAUDE.md apps/marketing-decision-api/CLAUDE.md; do
-  [ -f {{ primary_worktree_path }}/"$f" ] && [ ! -e {{ worktree_path }}/"$f" ] && ln -s {{ primary_worktree_path }}/"$f" {{ worktree_path }}/"$f" || true
-done
-"""
 # Create tmux session with Servers window (6 empty panes, tiled)
 tmux = """
 SESSION="mpos-{{ branch | sanitize }}"
