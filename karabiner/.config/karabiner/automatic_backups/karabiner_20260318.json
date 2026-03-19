@@ -8,108 +8,6 @@
             "complex_modifications": {
                 "rules": [
                     {
-                        "description": "SpaceFN: Space+[hjkl] to Left, Down, Up, Right",
-                        "manipulators": [
-                            {
-                                "conditions": [
-                                    {
-                                        "name": "spacefn_mode",
-                                        "type": "variable_if",
-                                        "value": 1
-                                    }
-                                ],
-                                "from": {
-                                    "key_code": "h",
-                                    "modifiers": { "optional": ["any"] }
-                                },
-                                "to": [{ "key_code": "left_arrow" }],
-                                "type": "basic"
-                            },
-                            {
-                                "conditions": [
-                                    {
-                                        "name": "spacefn_mode",
-                                        "type": "variable_if",
-                                        "value": 1
-                                    }
-                                ],
-                                "from": {
-                                    "key_code": "j",
-                                    "modifiers": { "optional": ["any"] }
-                                },
-                                "to": [{ "key_code": "down_arrow" }],
-                                "type": "basic"
-                            },
-                            {
-                                "conditions": [
-                                    {
-                                        "name": "spacefn_mode",
-                                        "type": "variable_if",
-                                        "value": 1
-                                    }
-                                ],
-                                "from": {
-                                    "key_code": "k",
-                                    "modifiers": { "optional": ["any"] }
-                                },
-                                "to": [{ "key_code": "up_arrow" }],
-                                "type": "basic"
-                            },
-                            {
-                                "conditions": [
-                                    {
-                                        "name": "spacefn_mode",
-                                        "type": "variable_if",
-                                        "value": 1
-                                    }
-                                ],
-                                "from": {
-                                    "key_code": "l",
-                                    "modifiers": { "optional": ["any"] }
-                                },
-                                "to": [{ "key_code": "right_arrow" }],
-                                "type": "basic"
-                            }
-                        ]
-                    },
-                    {
-                        "description": "SpaceFN: Space enables SpaceFN mode (see: https://geekhack.org/index.php?topic=51069.0 & https://spacelauncherapp.com)",
-                        "manipulators": [
-                            {
-                                "conditions": [
-                                    {
-                                        "name": "_spacefn_mode",
-                                        "type": "variable_if",
-                                        "value": 0
-                                    }
-                                ],
-                                "from": { "key_code": "spacebar" },
-                                "parameters": {
-                                    "basic.to_delayed_action_delay_milliseconds": 300,
-                                    "basic.to_if_alone_timeout_milliseconds": 150,
-                                    "basic.to_if_held_down_threshold_milliseconds": 150
-                                },
-                                "to_delayed_action": { "to_if_canceled": [{ "key_code": "spacebar" }] },
-                                "to_if_alone": [
-                                    {
-                                        "halt": true,
-                                        "key_code": "spacebar"
-                                    }
-                                ],
-                                "to_if_held_down": [
-                                    {
-                                        "set_variable": {
-                                            "key_up_value": 0,
-                                            "name": "spacefn_mode",
-                                            "value": 1
-                                        }
-                                    }
-                                ],
-                                "type": "basic"
-                            }
-                        ]
-                    },
-                    {
                         "description": "Change Control + h/j/k/l to Arrows",
                         "enabled": false,
                         "manipulators": [
@@ -266,7 +164,6 @@
                     },
                     {
                         "description": "Change command + h/j/k/l to Arrows",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": {
@@ -366,7 +263,6 @@
                     },
                     {
                         "description": "Numeric Keypad Trigger [Tab as trigger key]",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "from": { "key_code": "tab" },
@@ -420,7 +316,6 @@
                     },
                     {
                         "description": "Numeric Keypad Mode [spacebar as 0]",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
@@ -864,7 +759,6 @@
                     },
                     {
                         "description": "Numeric Keypad Mode [Optional] Trigger + right_control to keypad_period",
-                        "enabled": false,
                         "manipulators": [
                             {
                                 "conditions": [
