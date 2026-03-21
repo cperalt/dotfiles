@@ -18,6 +18,14 @@ return {
     vim.api.nvim_create_autocmd({ "BufEnter", "BufWritePost", "InsertLeave" }, {
       group = lint_augroup,
       callback = function()
+        -- Search upward from buffer file to find a venv pylint
+        local bufdir = vim.fn.expand("%:p:h")
+        local venv_pylint = vim.fn.findfile(".venv/bin/pylint", bufdir .. ";")
+        if venv_pylint ~= "" then
+          lint.linters.pylint.cmd = vim.fn.fnamemodify(venv_pylint, ":p")
+        else
+          lint.linters.pylint.cmd = "pylint"
+        end
         lint.try_lint()
       end,
     })
