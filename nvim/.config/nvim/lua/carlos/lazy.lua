@@ -27,4 +27,9 @@ require("lazy").setup({
   change_detection = {
     notify = false,
   },
+  performance = {
+    rtp = {
+      paths = { "/Applications/Ghostty.app/Contents/Resources/nvim/site" },
+    },
+  },
 })
