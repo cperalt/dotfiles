@@ -5,6 +5,9 @@
 #     # pager: ydiff -p cat -s --wrap --width={{columnWidth}}
 #     useConfig: false
 
+os:
+  editPreset: "nvim"
+
 git:
   autoFetch: false
 
