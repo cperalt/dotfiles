@@ -6,7 +6,7 @@
 #     useConfig: false
 
 os:
-  editPreset: "nvim"
+  editPreset: "nvim-remote"
 
 git:
   autoFetch: false
