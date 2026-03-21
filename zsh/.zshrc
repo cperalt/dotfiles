@@ -193,6 +193,19 @@ if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)
 [[ ! -f ~/.dotfiles/zsh/.p10k.zsh ]] || source ~/.dotfiles/zsh/.p10k.zsh
 
 
+# ---- Zsh Vi Mode Cursor Color ----
+function zle-keymap-select {
+  if [[ $KEYMAP == vicmd ]]; then
+    printf '\033]12;#9ECE6A\007' # normal mode — green
+  else
+    printf '\033]12;#bb9af7\007' # insert mode — purple (default)
+  fi
+}
+function zle-line-init {
+  printf '\033]12;#bb9af7\007'   # start in insert mode color
+}
+zle -N zle-keymap-select
+zle -N zle-line-init
 
 # ---- Zoxide (better cd) ----
 eval "$(zoxide init zsh)"
