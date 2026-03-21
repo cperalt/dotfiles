@@ -37,11 +37,6 @@ bindkey '^X^E' edit-command-line
 
 alias ls="eza --icons=always -a"
 
-# ---- Zoxide (better cd) ----
-eval "$(zoxide init zsh)"
-
-alias cd="z"
-
 # ---- FZF -----
 
 # Set up fzf key bindings and fuzzy completion
@@ -196,3 +191,10 @@ if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)
 
 # To customize prompt, run `p10k configure` or edit ~/.dotfiles/zsh/.p10k.zsh.
 [[ ! -f ~/.dotfiles/zsh/.p10k.zsh ]] || source ~/.dotfiles/zsh/.p10k.zsh
+
+
+
+# ---- Zoxide (better cd) ----
+eval "$(zoxide init zsh)"
+
+alias cd="z"
