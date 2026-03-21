@@ -130,6 +130,15 @@ for pid in $(tmux list-panes -t "$SESSION:Servers" -F '#{pane_pid}' 2>/dev/null)
   kill_tree "$pid"
 done
 """
+# Kill any Neovim instances running in the worktree (prevents orphaned LSP servers)
+killNvim = """
+for pid in $(ps -eo pid,comm | awk '/nvim/{print $1}'); do
+  cwd=$(lsof -p "$pid" 2>/dev/null | awk '$4=="cwd"{print $NF}')
+  case "$cwd" in
+    {{ worktree_path }}*) kill "$pid" 2>/dev/null || true ;;
+  esac
+done
+"""
 
 [post-remove]
 # Kill the tmux session for the removed worktree
