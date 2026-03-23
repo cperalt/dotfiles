@@ -40,12 +40,76 @@ success "Homebrew packages installed"
 STOW_PACKAGES=(zsh tmux wezterm ghostty nvim aerospace yazi karabiner mise)
 
 info "Creating symlinks with stow..."
+
+# Check for conflicts first
+CONFLICTS=()
+for pkg in "${STOW_PACKAGES[@]}"; do
+    # Dry-run — capture output; `|| true` prevents pipefail from aborting on stow's non-zero exit
+    stow_output=$(stow -d "$DOTFILES" -t "$HOME" -n "$pkg" 2>&1 || true)
+
+    if ! echo "$stow_output" | grep -q "WARNING\|ERROR"; then
+        continue
+    fi
+
+    # Extract conflicting files from the captured output
+    while IFS= read -r line; do
+        if [[ "$line" =~ existing\ target\ is ]]; then
+            conflict=$(echo "$line" | awk -F': ' '{print $2}')
+            CONFLICTS+=("$conflict")
+        fi
+    done <<< "$stow_output"
+done
+
+# If conflicts exist, prompt user
+if [[ ${#CONFLICTS[@]} -gt 0 ]]; then
+    warn "Found ${#CONFLICTS[@]} conflicting config file(s):"
+    for conflict in "${CONFLICTS[@]}"; do
+        echo "  - $conflict"
+    done
+    echo ""
+    echo "Options:"
+    echo "  1) Backup existing configs and use repo versions (recommended)"
+    echo "  2) Keep existing configs and skip stow (you'll need to merge manually)"
+    echo "  3) Abort installation"
+    echo ""
+    read -p "Choose [1/2/3]: " -n 1 -r choice
+    echo ""
+
+    case $choice in
+        1)
+            info "Backing up existing configs to $BACKUP_DIR..."
+            mkdir -p "$BACKUP_DIR"
+            for conflict in "${CONFLICTS[@]}"; do
+                if [[ -e "$HOME/$conflict" ]] && [[ ! -L "$HOME/$conflict" ]]; then
+                    backup_name="$(basename "$conflict")-$(date +%Y%m%d%H%M%S)"
+                    cp -a "$HOME/$conflict" "$BACKUP_DIR/$backup_name"
+                    warn "Backed up: $conflict → $BACKUP_DIR/$backup_name"
+                    rm -f "$HOME/$conflict"
+                fi
+            done
+            success "Backups created"
+            ;;
+        2)
+            warn "Skipping stow - you'll need to manually merge configs"
+            echo "Run 'stow -d $DOTFILES -t \$HOME <package>' when ready"
+            exit 0
+            ;;
+        3)
+            error "Installation aborted"
+            exit 1
+            ;;
+        *)
+            error "Invalid choice - aborting"
+            exit 1
+            ;;
+    esac
+fi
+
+# Now stow packages (no --adopt needed, conflicts resolved)
 for pkg in "${STOW_PACKAGES[@]}"; do
     info "Stowing $pkg..."
-    stow -d "$DOTFILES" -t "$HOME" --adopt "$pkg"
+    stow -d "$DOTFILES" -t "$HOME" "$pkg"
 done
-# Reset any adopted files back to the repo version
-git -C "$DOTFILES" checkout -- .
 success "Stow packages linked"
 
 # lazygit targets ~/Library/Application Support/ instead of $HOME, so link manually

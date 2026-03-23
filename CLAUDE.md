@@ -64,3 +64,9 @@ Theme: Catppuccin Mocha (consistent across nvim, tmux, wezterm, yazi).
 
 `scripts/tmux-reload-zsh.sh` — reloads zsh config in all tmux panes.
 `scripts/tmux-pane-status.sh` — outputs status info for the tmux status bar.
+
+Scripts are **not a stow package** — they are referenced by their full repo path (e.g. `~/.dotfiles/scripts/tmux-pane-status.sh`) and work in-place once the repo is cloned.
+
+## install.sh Notes
+
+- `install.sh` clones the repo via SSH (`git@github.com`). On a fresh machine, SSH keys must be configured before running the script, otherwise the clone step will fail. This is a known limitation — set up your SSH key first, or clone manually via HTTPS then run the rest of the script.
