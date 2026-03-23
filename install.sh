@@ -167,7 +167,16 @@ else
     success "fzf-git.sh already present"
 fi
 
-# --- Step 8: .env.zsh template ---
+# --- Step 8: Mise runtimes ---
+if command -v mise &>/dev/null; then
+    info "Installing mise runtimes..."
+    mise install
+    success "Mise runtimes installed"
+else
+    warn "mise not found — skipping runtime install"
+fi
+
+# --- Step 9: .env.zsh template ---
 ENV_FILE="$DOTFILES/zsh/.env.zsh"
 if [[ ! -f "$ENV_FILE" ]]; then
     info "Creating .env.zsh template..."
@@ -184,7 +193,7 @@ else
     success ".env.zsh already exists"
 fi
 
-# --- Step 9: Default shell ---
+# --- Step 10: Default shell ---
 ZSH_PATH="$(brew --prefix)/bin/zsh"
 if [[ ! -f "$ZSH_PATH" ]]; then
     warn "Homebrew zsh not found at $ZSH_PATH — skipping shell change"
