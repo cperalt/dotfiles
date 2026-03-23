@@ -51,10 +51,15 @@ for pkg in "${STOW_PACKAGES[@]}"; do
         continue
     fi
 
-    # Extract conflicting files from the captured output
+    # Extract conflicting files from the captured output (two possible formats):
+    # 1. "existing target is not owned by stow: .zshrc"
+    # 2. "cannot stow X over existing target .p10k.zsh since ..."
     while IFS= read -r line; do
-        if [[ "$line" =~ existing\ target\ is ]]; then
-            conflict=$(echo "$line" | awk -F': ' '{print $2}')
+        if [[ "$line" =~ "existing target is not owned by stow: " ]]; then
+            conflict=$(echo "$line" | awk -F': ' '{print $NF}' | xargs)
+            CONFLICTS+=("$conflict")
+        elif [[ "$line" =~ "over existing target" ]]; then
+            conflict=$(echo "$line" | sed -E 's/.*over existing target ([^ ]+) since.*/\1/' | xargs)
             CONFLICTS+=("$conflict")
         fi
     done <<< "$stow_output"
