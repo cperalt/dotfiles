@@ -85,11 +85,12 @@ if [[ ${#CONFLICTS[@]} -gt 0 ]]; then
             info "Backing up existing configs to $BACKUP_DIR..."
             mkdir -p "$BACKUP_DIR"
             for conflict in "${CONFLICTS[@]}"; do
-                if [[ -e "$HOME/$conflict" ]] && [[ ! -L "$HOME/$conflict" ]]; then
+                target="$HOME/$conflict"
+                # -L catches symlinks (even dangling ones); -e catches regular files/dirs
+                if [[ -L "$target" ]] || [[ -e "$target" ]]; then
                     backup_name="$(basename "$conflict")-$(date +%Y%m%d%H%M%S)"
-                    cp -a "$HOME/$conflict" "$BACKUP_DIR/$backup_name"
+                    mv "$target" "$BACKUP_DIR/$backup_name"
                     warn "Backed up: $conflict → $BACKUP_DIR/$backup_name"
-                    rm -f "$HOME/$conflict"
                 fi
             done
             success "Backups created"
