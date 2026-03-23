@@ -186,7 +186,9 @@ fi
 
 # --- Step 9: Default shell ---
 ZSH_PATH="$(brew --prefix)/bin/zsh"
-if [[ "$SHELL" != "$ZSH_PATH" ]]; then
+if [[ ! -f "$ZSH_PATH" ]]; then
+    warn "Homebrew zsh not found at $ZSH_PATH — skipping shell change"
+elif [[ "$SHELL" != "$ZSH_PATH" ]]; then
     if ! grep -qF "$ZSH_PATH" /etc/shells; then
         info "Adding Homebrew zsh to /etc/shells (requires sudo)..."
         echo "$ZSH_PATH" | sudo tee -a /etc/shells >/dev/null

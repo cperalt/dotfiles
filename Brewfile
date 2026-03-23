@@ -37,6 +37,7 @@ brew "yarn"
 brew "yazi"
 brew "yq"
 brew "zoxide"
+brew "zsh"
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 
