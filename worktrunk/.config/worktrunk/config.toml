@@ -32,12 +32,12 @@ fi
 """
 
 [post-start]
-# For PR review flow, run npm ci in the background on Servers.0 pane
+# For PR review flow, run bun install in the background on Servers.0 pane
 # Claude starts immediately on window 0 while deps install in parallel
 reviewDeps = """
 [ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
 SESSION="mpos-{{ branch | sanitize }}"
-tmux send-keys -t "$SESSION:Servers.0" "cd {{ worktree_path }} && npm ci" Enter
+tmux send-keys -t "$SESSION:Servers.0" "cd {{ worktree_path }} && bun install" Enter
 """
 # Start servers in background (staggered to avoid Nx daemon contention)
 servers = """
