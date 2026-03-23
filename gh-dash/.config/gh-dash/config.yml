@@ -3,6 +3,8 @@ prSections:
     filters: is:open author:@me
   - title: All Pull Requests
     filters: is:open
+  - title: Closed Prs Me
+    filters: is:closed author:@me
   - title: Involved
     filters: is:open involves:@me -author:@me
 issuesSections:
