@@ -208,4 +208,6 @@ zle -N zle-keymap-select
 zle -N zle-line-init
 
 # ---- Zoxide (better cd) ----
-eval "$(zoxide init zsh --cmd cd)"
+eval "$(zoxide init zsh)"
+
+alias cd="z"
