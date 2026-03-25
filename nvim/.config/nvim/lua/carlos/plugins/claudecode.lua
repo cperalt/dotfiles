@@ -4,6 +4,7 @@ return {
   config = function()
     require("claudecode").setup({
       auto_start = true,
+      focus_after_send = true,
       terminal = {
         provider = "none",
       },
