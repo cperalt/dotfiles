@@ -6,7 +6,7 @@ worktree-path = "{{ repo_path }}/../{{ branch | sanitize }}"
 # tmux sessions handle navigation — use --cd to override when needed
 no-cd = true
 
-[post-create]
+[pre-start]
 # Symlink node_modules from main worktree (shared deps, no install needed)
 # PR review flow skips this — npm ci runs in post-start background instead
 symNodeModules = """
