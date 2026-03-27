@@ -1,10 +1,24 @@
+local function send_and_focus_claude()
+  vim.cmd("ClaudeCodeSend")
+  local pane = vim.fn.system(
+    "tmux list-panes -F '#{pane_index}:#{pane_current_command}' | grep -i claude | cut -d: -f1 | head -1 | tr -d '\n'"
+  )
+  if pane == "" then
+    pane = vim.fn.system(
+      "tmux list-panes -F '#{pane_index}:#{pane_current_command}' | grep -iv 'nvim\\|vim' | cut -d: -f1 | head -1 | tr -d '\n'"
+    )
+  end
+  if pane ~= "" then
+    vim.fn.system("tmux select-pane -t " .. pane)
+  end
+end
+
 return {
   "coder/claudecode.nvim",
   lazy = false,
   config = function()
     require("claudecode").setup({
       auto_start = true,
-      focus_after_send = true,
       terminal = {
         provider = "none",
       },
@@ -17,7 +31,7 @@ return {
   keys = {
     { "<leader>c", nil, desc = "Claude Code" },
     { "<leader>cb", "<cmd>ClaudeCodeAdd %<cr>", desc = "Add current buffer" },
-    { "<leader>cs", "<cmd>ClaudeCodeSend<cr>", mode = "v", desc = "Send to Claude" },
+    { "<leader>cs", send_and_focus_claude, mode = "v", desc = "Send to Claude" },
     {
       "<leader>cs",
       "<cmd>ClaudeCodeTreeAdd<cr>",
