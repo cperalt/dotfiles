@@ -22,6 +22,9 @@ tmux = """
 SESSION="mpos-{{ branch | sanitize }}"
 if ! tmux has-session -t "$SESSION" 2>/dev/null; then
   tmux new-session -d -s "$SESSION" -c {{ worktree_path }}
+  # Split window 0: left pane (25%) for Claude, right pane (75%) for work
+  tmux split-window -h -t "$SESSION:0.0" -l 75% -c {{ worktree_path }}
+  tmux select-pane -t "$SESSION:0.1"
   tmux new-window -t "$SESSION" -n "Servers" -c {{ worktree_path }}
   for i in 1 2 3 4 5; do
     tmux split-window -t "$SESSION:Servers" -c {{ worktree_path }}
@@ -32,6 +35,16 @@ fi
 """
 
 [post-start]
+# Start nvim on the right pane (0.1) and index + Claude on the left pane (0.0)
+editor = """
+SESSION="mpos-{{ branch | sanitize }}"
+tmux send-keys -t "$SESSION:0.1" "nvim" Enter
+"""
+claude = """
+[ -n "${WT_SKIP_CLAUDE:-}" ] && exit 0
+SESSION="mpos-{{ branch | sanitize }}"
+tmux send-keys -t "$SESSION:0.0" "claude" Enter
+"""
 # For PR review flow, run bun install in the background on Servers.0 pane
 # Claude starts immediately on window 0 while deps install in parallel
 reviewDeps = """
