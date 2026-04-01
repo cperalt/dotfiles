@@ -32,6 +32,8 @@ After install, manual steps: `prefix + I` in tmux for plugins, open Neovim for l
 | `karabiner/.config/karabiner`   | `$HOME/.config/karabiner`                   |
 | `mise/.config/mise`             | `$HOME/.config/mise`                        |
 | `lazygit/config.yml`            | `~/Library/Application Support/lazygit/`    |
+| `pi/.pi/agent/settings.json`   | `~/.pi/agent/settings.json`                 |
+| `pi/.pi/agent/extensions/`     | `~/.pi/agent/extensions/`                   |
 
 ## Neovim Architecture
 

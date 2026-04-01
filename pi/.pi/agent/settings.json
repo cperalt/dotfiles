@@ -1,0 +1,9 @@
+{
+  "lastChangelogVersion": "0.64.0",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.4",
+  "defaultThinkingLevel": "medium",
+  "showHardwareCursor": true,
+  "npmCommand": ["mise", "exec", "node@22", "--", "npm"],
+  "packages": ["https://github.com/carderne/pi-nvim"]
+}

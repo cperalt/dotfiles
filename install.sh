@@ -38,14 +38,20 @@ success "Homebrew packages installed"
 
 # --- Step 4: Symlinks via GNU Stow ---
 STOW_PACKAGES=(zsh tmux wezterm ghostty nvim aerospace yazi karabiner mise)
+# Packages that must use --no-folding because they share a target dir with unmanaged files
+STOW_NO_FOLD_PACKAGES=(pi)
 
 info "Creating symlinks with stow..."
 
 # Check for conflicts first
 CONFLICTS=()
-for pkg in "${STOW_PACKAGES[@]}"; do
+for pkg in "${STOW_PACKAGES[@]}" "${STOW_NO_FOLD_PACKAGES[@]}"; do
+    extra_flags=""
+    if printf '%s\n' "${STOW_NO_FOLD_PACKAGES[@]}" | grep -qx "$pkg"; then
+        extra_flags="--no-folding"
+    fi
     # Dry-run — capture output; `|| true` prevents pipefail from aborting on stow's non-zero exit
-    stow_output=$(stow -d "$DOTFILES" -t "$HOME" -n "$pkg" 2>&1 || true)
+    stow_output=$(stow -d "$DOTFILES" -t "$HOME" -n $extra_flags "$pkg" 2>&1 || true)
 
     if ! echo "$stow_output" | grep -q "WARNING\|ERROR"; then
         continue
@@ -115,6 +121,10 @@ fi
 for pkg in "${STOW_PACKAGES[@]}"; do
     info "Stowing $pkg..."
     stow -d "$DOTFILES" -t "$HOME" "$pkg"
+done
+for pkg in "${STOW_NO_FOLD_PACKAGES[@]}"; do
+    info "Stowing $pkg (no-folding)..."
+    stow -d "$DOTFILES" -t "$HOME" --no-folding "$pkg"
 done
 success "Stow packages linked"
 

@@ -1,0 +1,92 @@
+/**
+ * Custom Status Footer
+ *
+ * Replaces the default footer with a Claude Code–style status line.
+ */
+
+import type { AssistantMessage } from "@mariozechner/pi-ai";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
+import { basename } from "node:path";
+
+export default function (pi: ExtensionAPI) {
+  let turnCount = 0;
+
+  pi.on("session_start", async (_event, ctx) => {
+    const theme = ctx.ui.theme;
+
+    ctx.ui.notify("custom footer loaded", "info");
+    ctx.ui.setStatus("status-demo", theme.fg("dim", "Ready"));
+    ctx.ui.setWidget("status-demo-debug", [
+      theme.fg("accent", "Status debug widget active"),
+    ]);
+
+    ctx.ui.setFooter((tui, theme, footerData) => {
+      const unsub = footerData.onBranchChange(() => tui.requestRender());
+
+      return {
+        dispose: unsub,
+        invalidate() {},
+        render(width: number): string[] {
+          let totalCost = 0;
+          for (const entry of ctx.sessionManager.getBranch()) {
+            if (entry.type === "message" && entry.message.role === "assistant") {
+              const message = entry.message as AssistantMessage;
+              totalCost += message.usage.cost.total;
+            }
+          }
+
+          const contextUsage = ctx.getContextUsage();
+          const contextPct = contextUsage?.percentage ?? 0;
+          const thinking = pi.getThinkingLevel();
+          const branch = footerData.getGitBranch() ?? "no-branch";
+          const model = ctx.model?.id ?? "no-model";
+          const cwd = basename(ctx.cwd);
+          const statuses = Array.from(footerData.getExtensionStatuses().values()).join(" ");
+
+          const branchPart = theme.fg("accent", branch);
+          const cwdPart = theme.fg("dim", cwd);
+          const thinkingPart = theme.fg("muted", thinking);
+          const modelPart = theme.fg("accent", model);
+
+          const contextColor =
+            contextPct >= 90
+              ? "error"
+              : contextPct >= 70
+                ? "warning"
+                : "success";
+          const contextPart = theme.fg(contextColor, `${Math.round(contextPct)}%`);
+          const costPart = theme.fg("warning", `$${totalCost.toFixed(2)}`);
+
+          const left = statuses || theme.fg("dim", "idle");
+          const right = [
+            cwdPart,
+            branchPart,
+            thinkingPart,
+            modelPart,
+            contextPart,
+            costPart,
+          ].join(theme.fg("dim", " | "));
+
+          const pad = " ".repeat(Math.max(1, width - visibleWidth(left) - visibleWidth(right)));
+          return [truncateToWidth(left + pad + right, width)];
+        },
+      };
+    });
+  });
+
+  pi.on("turn_start", async (_event, ctx) => {
+    turnCount++;
+    const theme = ctx.ui.theme;
+    const spinner = theme.fg("accent", "●");
+    const text = theme.fg("dim", ` Turn ${turnCount}...`);
+    ctx.ui.setStatus("status-demo", spinner + text);
+  });
+
+  pi.on("turn_end", async (_event, ctx) => {
+    const theme = ctx.ui.theme;
+    const check = theme.fg("success", "✓");
+    const text = theme.fg("dim", ` Turn ${turnCount} complete`);
+    ctx.ui.setStatus("status-demo", check + text);
+  });
+}
