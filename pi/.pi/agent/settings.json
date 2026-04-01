@@ -3,7 +3,9 @@
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.4",
   "defaultThinkingLevel": "medium",
+  "hideThinkingBlock": true,
   "showHardwareCursor": true,
   "npmCommand": ["mise", "exec", "node@22", "--", "npm"],
-  "packages": ["https://github.com/carderne/pi-nvim"]
+  "packages": ["https://github.com/carderne/pi-nvim"],
+  "theme": "tokyo-night"
 }
