@@ -33,7 +33,7 @@ export default function (pi: ExtensionAPI) {
           }
 
           const contextUsage = ctx.getContextUsage();
-          const contextPct = contextUsage?.percentage ?? 0;
+          const contextPct = contextUsage?.percent ?? (contextUsage as { percentage?: number } | undefined)?.percentage ?? null;
           const thinking = pi.getThinkingLevel();
           const branch = footerData.getGitBranch() ?? "no-branch";
           const model = ctx.model?.id ?? "no-model";
@@ -46,12 +46,17 @@ export default function (pi: ExtensionAPI) {
           const modelPart = theme.fg("accent", model);
 
           const contextColor =
-            contextPct >= 90
-              ? "error"
-              : contextPct >= 70
-                ? "warning"
-                : "success";
-          const contextPart = theme.fg(contextColor, `${Math.round(contextPct)}%`);
+            contextPct === null
+              ? "dim"
+              : contextPct >= 90
+                ? "error"
+                : contextPct >= 70
+                  ? "warning"
+                  : "success";
+          const contextPart = theme.fg(
+            contextColor,
+            contextPct === null ? "--%" : `${Math.round(contextPct)}%`,
+          );
           const costPart = theme.fg("warning", `$${totalCost.toFixed(2)}`);
 
           const left = statuses || theme.fg("dim", "idle");
