@@ -21,6 +21,13 @@ return {
           end,
         }),
       },
+      -- Only scan files that look like test files; prevents neotest from
+      -- trying to parse XML stubs and other non-JS/TS files in __tests__ dirs
+      -- which causes a tight error loop (high CPU + memory leak).
+      is_test_file = function(file_path)
+        return file_path:match("[_%.]test%.[jt]sx?$") ~= nil
+          or file_path:match("[_%.]spec%.[jt]sx?$") ~= nil
+      end,
     })
 
     local keymap = vim.keymap
