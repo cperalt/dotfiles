@@ -8,6 +8,7 @@ fi
 export PATH="${HOMEBREW_PREFIX}/opt/openssl/bin:$PATH"
 source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 export ENABLE_LSP_TOOL=1
+export ENABLE_TOOL_SEARCH=true
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
@@ -59,6 +60,11 @@ _fzf_compgen_path() {
 _fzf_compgen_dir() {
   fd --type=d --hidden --exclude .git . "$1"
 }
+
+
+
+# Cursor cli neeeded
+export PATH="$HOME/.local/bin:$PATH"
 
 
 # --- setup fzf theme ---
@@ -124,8 +130,8 @@ alias nv="nvim"
 wtnc() {
   local branch="$1"
   shift
-  WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch --create "$branch"
-  tmux send-keys -t "mpos-${branch}" "claude '$*'" Enter
+  WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch --create "$branch"
+  tmux send-keys -t "mpos-${branch}:0.0" "claude '$*'" Enter
 }
 
 # Address PR review comments in an existing worktree's tmux session
@@ -134,8 +140,8 @@ wtac() {
   local pr="$1"
   local branch
   branch="$(gh pr view "$pr" --json headRefName -q .headRefName)"
-  WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch "$branch"
-  tmux send-keys -t "mpos-${branch}" "claude --model claude-sonnet-4-6 '/address-comments ${pr}'" Enter
+  WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch "$branch"
+  tmux send-keys -t "mpos-${branch}:0.0" "claude --model claude-sonnet-4-6 '/address-comments ${pr}'" Enter
 }
 
 # Source sensitive env vars and aliases
@@ -193,20 +199,22 @@ if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)
 [[ ! -f ~/.dotfiles/zsh/.p10k.zsh ]] || source ~/.dotfiles/zsh/.p10k.zsh
 
 
-# ---- Zsh Vi Mode Cursor Color ----
+# ---- Zsh Vi Mode Cursor Color + Shape ----
 function zle-keymap-select {
   if [[ $KEYMAP == vicmd ]]; then
-    printf '\033]12;#9ECE6A\007' # normal mode — green
+    printf '\033[1 q'            # blinking block — normal mode
+    printf '\033]12;#9ECE6A\007' # color: green
   else
-    printf '\033]12;#bb9af7\007' # insert mode — purple (default)
+    printf '\033[5 q'            # blinking bar — insert mode
+    printf '\033]12;#bb9af7\007' # color: purple (default)
   fi
 }
 function zle-line-init {
-  printf '\033]12;#bb9af7\007'   # start in insert mode color
+  printf '\033[5 q'            # start each line in insert mode: blinking bar
+  printf '\033]12;#bb9af7\007' # color: purple
 }
 zle -N zle-keymap-select
 zle -N zle-line-init
-
 # ---- Zoxide (better cd) ----
 eval "$(zoxide init zsh)"
 

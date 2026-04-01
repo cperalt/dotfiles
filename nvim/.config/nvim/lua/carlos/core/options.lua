@@ -56,3 +56,10 @@ vim.api.nvim_create_autocmd("FileChangedShellPost", {
     vim.notify("File changed on disk. Buffer reloaded.", vim.log.levels.WARN)
   end,
 })
+
+-- Reset cursor to blinking block on exit so the terminal/shell gets the right cursor back
+vim.api.nvim_create_autocmd("VimLeave", {
+  callback = function()
+    vim.opt.guicursor = "a:block-blinkon500-blinkoff500"
+  end,
+})
