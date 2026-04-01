@@ -7,6 +7,9 @@ return {
     "windwp/nvim-ts-autotag",
   },
   config = function()
+    -- Map filetype "tf" → terraform parser (Neovim detects .tf files as "tf", not "terraform")
+    vim.treesitter.language.register("terraform", "tf")
+
     require("nvim-treesitter").install({
       "json",
       "javascript",
