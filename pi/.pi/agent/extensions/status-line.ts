@@ -15,11 +15,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
     const theme = ctx.ui.theme;
 
-    ctx.ui.notify("custom footer loaded", "info");
     ctx.ui.setStatus("status-demo", theme.fg("dim", "Ready"));
-    ctx.ui.setWidget("status-demo-debug", [
-      theme.fg("accent", "Status debug widget active"),
-    ]);
 
     ctx.ui.setFooter((tui, theme, footerData) => {
       const unsub = footerData.onBranchChange(() => tui.requestRender());
