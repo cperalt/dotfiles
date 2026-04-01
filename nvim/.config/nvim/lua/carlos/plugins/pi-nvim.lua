@@ -1,5 +1,5 @@
 return {
-  dir = "/tmp/pi-nvim",
+  dir = "~/code/pi-nvim",
   config = function()
     require("pi-nvim").setup({
       context_format = "reference", -- send @file:L1-L10 refs instead of embedding contents
