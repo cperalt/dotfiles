@@ -69,6 +69,18 @@ Theme: Catppuccin Mocha (consistent across nvim, tmux, wezterm, yazi).
 
 Scripts are **not a stow package** — they are referenced by their full repo path (e.g. `~/.dotfiles/scripts/tmux-pane-status.sh`) and work in-place once the repo is cloned.
 
+## Pi Mono (Stow with `--no-folding`)
+
+The `pi` stow package manages `~/.pi/agent/settings.json` and `~/.pi/agent/extensions/`. It uses `--no-folding` because the target directory contains unmanaged files (`auth.json`, `sessions/`, `git/`) that must not be touched.
+
+**After adding or removing files in `pi/.pi/agent/extensions/`**, you must re-stow for the new symlinks to appear at runtime:
+
+```bash
+stow -d ~/.dotfiles -t "$HOME" --no-folding -R pi
+```
+
+Pi auto-discovers extensions from `~/.pi/agent/extensions/*.ts`. If a new extension file exists in the repo but hasn't been re-stowed, pi won't see it.
+
 ## install.sh Notes
 
 - `install.sh` clones the repo via SSH (`git@github.com`). On a fresh machine, SSH keys must be configured before running the script, otherwise the clone step will fail. This is a known limitation — set up your SSH key first, or clone manually via HTTPS then run the rest of the script.
