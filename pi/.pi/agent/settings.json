@@ -5,7 +5,21 @@
   "defaultThinkingLevel": "medium",
   "hideThinkingBlock": true,
   "showHardwareCursor": true,
-  "npmCommand": ["mise", "exec", "node@22", "--", "npm"],
-  "packages": ["https://github.com/carderne/pi-nvim"],
-  "theme": "tokyo-night"
+  "npmCommand": [
+    "mise",
+    "exec",
+    "node@22",
+    "--",
+    "npm"
+  ],
+  "packages": [
+    "https://github.com/carderne/pi-nvim"
+  ],
+  "theme": "tokyo-night",
+  "powerline": "compact",
+  "enabledModels": [
+    "claude-opus-4-6",
+    "claude-sonnet-4-6",
+    "gpt-5.4"
+  ]
 }
