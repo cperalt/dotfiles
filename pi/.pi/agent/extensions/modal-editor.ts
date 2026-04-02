@@ -17,7 +17,7 @@
 
 import { execFileSync } from "node:child_process";
 import { CustomEditor, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { matchesKey, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
+import { CURSOR_MARKER, matchesKey, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 
 type Mode = "normal" | "insert";
 type PendingOp = "g" | "d" | "c" | "y" | null;
@@ -57,9 +57,27 @@ const DIRECT_KEYS: Record<string, string | null> = {
   y: null,
 };
 
+const CURSOR_BLOCK = "\x1b[1 q";
+const CURSOR_BEAM = "\x1b[5 q";
+
+function writeToTerminal(sequence: string): void {
+  if (process.stdout.isTTY) process.stdout.write(sequence);
+}
+
 class ModalEditor extends CustomEditor {
   private mode: Mode = "insert";
   private pending: PendingOp = null;
+
+  public syncCursorShape(): void {
+    writeToTerminal(this.mode === "insert" ? CURSOR_BEAM : CURSOR_BLOCK);
+  }
+
+  private setMode(mode: Mode): void {
+    if (this.mode === mode) return;
+    this.mode = mode;
+    this.syncCursorShape();
+    this.invalidate();
+  }
 
   private get internal(): any {
     return this as any;
@@ -338,13 +356,13 @@ class ModalEditor extends CustomEditor {
     const nextLine = Math.min(line, lines.length - 1);
     this.setCursor({ line: Math.max(0, nextLine), col: change ? this.firstNonBlankCol(Math.max(0, nextLine)) : 0 });
     this.invalidate();
-    if (change) this.mode = "insert";
+    if (change) this.setMode("insert");
   }
 
   private changeRange(range: Range): void {
     const deleted = this.deleteRange(range);
     if (deleted) this.writeClipboard(deleted);
-    this.mode = "insert";
+    this.setMode("insert");
   }
 
   private deleteByMotion(motion: MotionKey): void {
@@ -382,7 +400,7 @@ class ModalEditor extends CustomEditor {
     lines.splice(line + 1, 0, "");
     state.cursorLine = line + 1;
     state.cursorCol = 0;
-    this.mode = "insert";
+    this.setMode("insert");
     this.emitChange();
   }
 
@@ -394,7 +412,7 @@ class ModalEditor extends CustomEditor {
     lines.splice(line, 0, "");
     state.cursorLine = line;
     state.cursorCol = 0;
-    this.mode = "insert";
+    this.setMode("insert");
     this.emitChange();
   }
 
@@ -421,7 +439,7 @@ class ModalEditor extends CustomEditor {
       this.setCursor({ line: state.cursorLine, col: state.cursorCol + 1 });
     }
     this.insertTextAtCursor(clip);
-    this.mode = "normal";
+    this.setMode("normal");
   }
 
   private undo(): void {
@@ -488,7 +506,7 @@ class ModalEditor extends CustomEditor {
     if (matchesKey(data, "escape")) {
       this.clearPending();
       if (this.mode === "insert") {
-        this.mode = "normal";
+        this.setMode("normal");
       } else {
         super.handleInput(data);
       }
@@ -503,17 +521,17 @@ class ModalEditor extends CustomEditor {
     if (this.handlePending(data)) return;
 
     if (data in DIRECT_KEYS) {
-      if (data === "i") this.mode = "insert";
+      if (data === "i") this.setMode("insert");
       else if (data === "a") {
         const cur = this.getCursorPos();
         if (cur.col < this.lineText().length) this.setCursor({ line: cur.line, col: cur.col + 1 });
-        this.mode = "insert";
+        this.setMode("insert");
       } else if (data === "I") {
         this.moveFirstNonBlank();
-        this.mode = "insert";
+        this.setMode("insert");
       } else if (data === "A") {
         this.moveLineEnd();
-        this.mode = "insert";
+        this.setMode("insert");
       } else if (data === "o") this.openBelow();
       else if (data === "O") this.openAbove();
       else if (data === "w") this.moveWordForward(false);
@@ -549,6 +567,16 @@ class ModalEditor extends CustomEditor {
     const lines = super.render(width);
     if (lines.length === 0) return lines;
 
+    // pi-tui's Editor always renders a virtual inverse-video cursor.
+    // Keep the hardware cursor marker for IME/cursor positioning, but strip
+    // the fake cursor so DECSCUSR-controlled cursor shapes are the only cursor
+    // visible in insert/normal mode.
+    for (let i = 0; i < lines.length; i++) {
+      lines[i] = lines[i]!
+        .replace(`${CURSOR_MARKER}\x1b[7m \x1b[0m`, CURSOR_MARKER)
+        .replace(new RegExp(`${CURSOR_MARKER}\\x1b\\[7m([\\s\\S])\\x1b\\[0m`, "g"), `${CURSOR_MARKER}$1`);
+    }
+
     const pending = this.pending ? ` ${this.pending}` : "";
     const label = `${this.mode === "normal" ? " NORMAL" : " INSERT"}${pending} `;
     const last = lines.length - 1;
@@ -561,6 +589,10 @@ class ModalEditor extends CustomEditor {
 
 export default function (pi: ExtensionAPI) {
   pi.on("session_start", (_event, ctx) => {
-    ctx.ui.setEditorComponent((tui, theme, kb) => new ModalEditor(tui, theme, kb));
+    ctx.ui.setEditorComponent((tui, theme, kb) => {
+      const editor = new ModalEditor(tui, theme, kb);
+      editor.syncCursorShape();
+      return editor;
+    });
   });
 }
