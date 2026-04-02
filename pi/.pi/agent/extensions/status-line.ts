@@ -39,11 +39,13 @@ export default function (pi: ExtensionAPI) {
           const model = ctx.model?.id ?? "no-model";
           const cwd = basename(ctx.cwd);
           const statuses = Array.from(footerData.getExtensionStatuses().values()).join(" ");
+          const sessionName = pi.getSessionName();
 
           const branchPart = theme.fg("accent", branch);
           const cwdPart = theme.fg("dim", cwd);
           const thinkingPart = theme.fg("muted", thinking);
           const modelPart = theme.fg("accent", model);
+          const sessionPart = sessionName ? theme.fg("accent", sessionName) : "";
 
           const contextColor =
             contextPct === null
@@ -59,7 +61,7 @@ export default function (pi: ExtensionAPI) {
           );
           const costPart = theme.fg("warning", `$${totalCost.toFixed(2)}`);
 
-          const left = statuses || theme.fg("dim", "idle");
+          const left = sessionPart || "";
           const right = [
             cwdPart,
             branchPart,
