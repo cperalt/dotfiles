@@ -61,7 +61,10 @@ export default function (pi: ExtensionAPI) {
           );
           const costPart = theme.fg("warning", `$${totalCost.toFixed(2)}`);
 
-          const left = sessionPart || "";
+          const leftParts: string[] = [];
+          if (sessionPart) leftParts.push(sessionPart);
+          if (statuses !== "") leftParts.push(statuses);
+          const left = leftParts.join(theme.fg("dim", " | "));
           const right = [
             cwdPart,
             branchPart,

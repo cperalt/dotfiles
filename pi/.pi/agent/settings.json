@@ -12,8 +12,8 @@
     "--",
     "npm"
   ],
-  "packages": [
-    "https://github.com/carderne/pi-nvim"
+  "extensions": [
+    "/Users/cperaltarayon/code/pi-nvim/extension.ts"
   ],
   "theme": "tokyo-night-minimal-tools",
   "powerline": "compact",
