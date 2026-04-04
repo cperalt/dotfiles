@@ -277,7 +277,7 @@
                         ]
                     },
                     {
-                        "description": "SpaceFN: Space+o to *",
+                        "description": "SpaceFN: Space+o to 0",
                         "manipulators": [
                             {
                                 "conditions": [
@@ -291,7 +291,7 @@
                                     "key_code": "o",
                                     "modifiers": { "optional": ["any"] }
                                 },
-                                "to": [{ "key_code": "keypad_asterisk" }],
+                                "to": [{ "key_code": "0" }],
                                 "type": "basic"
                             }
                         ]
