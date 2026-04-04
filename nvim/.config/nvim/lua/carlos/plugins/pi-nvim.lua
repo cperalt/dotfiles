@@ -3,7 +3,11 @@ return {
   config = function()
     require("pi-nvim").setup({
       context_format = "reference", -- send @file:L1-L10 refs instead of embedding contents
-      show_popup = false,           -- no floating dialog, just notifications
+      show_popup = false,            -- no floating dialog, just notifications
+      live_context = {
+        enabled = true,              -- auto-inject current nvim file/selection into pi prompts
+        include_buffer_text = false, -- keep live context lightweight; manual commands can still send full contents
+      },
     })
   end,
   keys = {
