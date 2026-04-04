@@ -1,11 +1,16 @@
 /**
- * Compact renderer overrides for search-style built-in tools.
+ * Minimal renderer overrides for built-in tools.
  *
- * Keeps the default UI for mutating tools like edit/write, while compacting
- * tools that often dump a lot of text: read, grep, find, and ls.
+ * Goals:
+ * - Claude Code-like compact tool headers
+ * - Single status dot that changes with tool state
+ * - Keep built-in execution behavior
+ * - Keep built-in result renderers unless we intentionally compact them
  */
 
 import type {
+  BashToolDetails,
+  EditToolDetails,
   ExtensionAPI,
   FindToolDetails,
   GrepToolDetails,
@@ -13,10 +18,13 @@ import type {
   ReadToolDetails,
 } from "@mariozechner/pi-coding-agent";
 import {
+  createBashTool,
+  createEditTool,
   createFindTool,
   createGrepTool,
   createLsTool,
   createReadTool,
+  createWriteTool,
 } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 
@@ -24,10 +32,36 @@ function countNonEmptyLines(text: string) {
   return text.split("\n").filter((line) => line.trim().length > 0).length;
 }
 
+function truncate(text: string, max = 80) {
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+}
+
+function firstNonEmptyLine(text: string) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+}
+
+function dot(theme: any, context: any) {
+  if (!context.executionStarted || context.isPartial) {
+    return theme.fg("text", "⏺");
+  }
+  return context.isError ? theme.fg("error", "⏺") : theme.fg("success", "⏺");
+}
+
+function renderHeader(theme: any, context: any, label: string, detail: string) {
+  let text = `${dot(theme, context)} `;
+  text += theme.fg("toolTitle", label);
+  if (detail) {
+    text += theme.fg("muted", `(${detail})`);
+  }
+  return new Text(text, 0, 0);
+}
+
 export default function (pi: ExtensionAPI) {
   const cwd = process.cwd();
 
-  // --- Read tool: show path and line count ---
   const originalRead = createReadTool(cwd);
   pi.registerTool({
     name: "read",
@@ -39,16 +73,11 @@ export default function (pi: ExtensionAPI) {
       return originalRead.execute(toolCallId, params, signal, onUpdate);
     },
 
-    renderCall(args, theme, _context) {
-      let text = theme.fg("toolTitle", theme.bold("read "));
-      text += theme.fg("accent", args.path);
-      if (args.offset || args.limit) {
-        const parts: string[] = [];
-        if (args.offset) parts.push(`offset=${args.offset}`);
-        if (args.limit) parts.push(`limit=${args.limit}`);
-        text += theme.fg("dim", ` (${parts.join(", ")})`);
-      }
-      return new Text(text, 0, 0);
+    renderCall(args, theme, context) {
+      const parts = [args.path];
+      if (args.offset) parts.push(`offset=${args.offset}`);
+      if (args.limit) parts.push(`limit=${args.limit}`);
+      return renderHeader(theme, context, "Read", parts.join(", "));
     },
 
     renderResult(result, { expanded, isPartial }, theme, _context) {
@@ -89,7 +118,6 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  // --- Grep tool: compact match count ---
   const originalGrep = createGrepTool(cwd);
   pi.registerTool({
     name: "grep",
@@ -101,16 +129,11 @@ export default function (pi: ExtensionAPI) {
       return originalGrep.execute(toolCallId, params, signal, onUpdate);
     },
 
-    renderCall(args, theme, _context) {
-      let text = theme.fg("toolTitle", theme.bold("grep "));
-      text += theme.fg("accent", args.pattern);
-      if (args.path) {
-        text += theme.fg("dim", ` in ${args.path}`);
-      }
-      if (args.glob) {
-        text += theme.fg("dim", ` (${args.glob})`);
-      }
-      return new Text(text, 0, 0);
+    renderCall(args, theme, context) {
+      const parts = [args.pattern];
+      if (args.path) parts.push(`in ${args.path}`);
+      if (args.glob) parts.push(args.glob);
+      return renderHeader(theme, context, "Grep", parts.join(", "));
     },
 
     renderResult(result, { expanded, isPartial }, theme, _context) {
@@ -142,7 +165,6 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  // --- Find tool: compact result count ---
   const originalFind = createFindTool(cwd);
   pi.registerTool({
     name: "find",
@@ -154,13 +176,10 @@ export default function (pi: ExtensionAPI) {
       return originalFind.execute(toolCallId, params, signal, onUpdate);
     },
 
-    renderCall(args, theme, _context) {
-      let text = theme.fg("toolTitle", theme.bold("find "));
-      text += theme.fg("accent", args.pattern);
-      if (args.path) {
-        text += theme.fg("dim", ` in ${args.path}`);
-      }
-      return new Text(text, 0, 0);
+    renderCall(args, theme, context) {
+      const parts = [args.pattern];
+      if (args.path) parts.push(`in ${args.path}`);
+      return renderHeader(theme, context, "Find", parts.join(", "));
     },
 
     renderResult(result, { expanded, isPartial }, theme, _context) {
@@ -192,7 +211,6 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  // --- Ls tool: compact entry count ---
   const originalLs = createLsTool(cwd);
   pi.registerTool({
     name: "ls",
@@ -204,13 +222,10 @@ export default function (pi: ExtensionAPI) {
       return originalLs.execute(toolCallId, params, signal, onUpdate);
     },
 
-    renderCall(args, theme, _context) {
-      let text = theme.fg("toolTitle", theme.bold("ls "));
-      text += theme.fg("accent", args.path);
-      if (args.limit) {
-        text += theme.fg("dim", ` (limit=${args.limit})`);
-      }
-      return new Text(text, 0, 0);
+    renderCall(args, theme, context) {
+      const parts = [args.path ?? "."];
+      if (args.limit) parts.push(`limit=${args.limit}`);
+      return renderHeader(theme, context, "Ls", parts.join(", "));
     },
 
     renderResult(result, { expanded, isPartial }, theme, _context) {
@@ -239,6 +254,92 @@ export default function (pi: ExtensionAPI) {
       }
 
       return new Text(text, 0, 0);
+    },
+  });
+
+  const originalBash = createBashTool(cwd);
+  pi.registerTool({
+    name: "bash",
+    label: "bash",
+    description: originalBash.description,
+    parameters: originalBash.parameters,
+
+    async execute(toolCallId, params, signal, onUpdate) {
+      return originalBash.execute(toolCallId, params, signal, onUpdate);
+    },
+
+    renderCall(args, theme, context) {
+      return renderHeader(theme, context, "Bash", truncate(args.command, 88));
+    },
+
+    renderResult(result, _options, theme, _context) {
+      const content = result.content[0];
+      const details = result.details as BashToolDetails | undefined;
+      if (content?.type !== "text") return new Text("", 0, 0);
+
+      const lineCount = countNonEmptyLines(content.text);
+      let text = theme.fg("success", `${lineCount} lines`);
+      if (details?.truncation?.truncated) {
+        text += theme.fg("warning", " [truncated]");
+      }
+
+      const preview = firstNonEmptyLine(content.text);
+      if (preview) {
+        text += `\n${theme.fg("dim", truncate(preview, 120))}`;
+      }
+
+      return new Text(text, 0, 0);
+    },
+  });
+
+  const originalEdit = createEditTool(cwd);
+  pi.registerTool({
+    name: "edit",
+    label: "edit",
+    description: originalEdit.description,
+    parameters: originalEdit.parameters,
+
+    async execute(toolCallId, params, signal, onUpdate) {
+      return originalEdit.execute(toolCallId, params, signal, onUpdate);
+    },
+
+    renderCall(args, theme, context) {
+      const count = args.edits?.length ?? 0;
+      return renderHeader(theme, context, "Edit", `${args.path}, ${count} change${count === 1 ? "" : "s"}`);
+    },
+
+    renderResult(result, _options, theme, _context) {
+      const details = result.details as EditToolDetails | undefined;
+      if (!details?.diff) {
+        return new Text(theme.fg("success", "Applied"), 0, 0);
+      }
+
+      const added = details.diff.split("\n").filter((line) => line.startsWith("+") && !line.startsWith("+++"))
+        .length;
+      const removed = details.diff
+        .split("\n")
+        .filter((line) => line.startsWith("-") && !line.startsWith("---")).length;
+
+      let text = theme.fg("success", "Applied");
+      text += theme.fg("muted", ` (+${added} -${removed})`);
+      return new Text(text, 0, 0);
+    },
+  });
+
+  const originalWrite = createWriteTool(cwd);
+  pi.registerTool({
+    name: "write",
+    label: "write",
+    description: originalWrite.description,
+    parameters: originalWrite.parameters,
+
+    async execute(toolCallId, params, signal, onUpdate) {
+      return originalWrite.execute(toolCallId, params, signal, onUpdate);
+    },
+
+    renderCall(args, theme, context) {
+      const lines = args.content.split("\n").length;
+      return renderHeader(theme, context, "Write", `${args.path}, ${lines} lines`);
     },
   });
 }
