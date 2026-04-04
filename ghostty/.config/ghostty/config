@@ -5,7 +5,7 @@ macos-titlebar-style = hidden
 clipboard-read = allow
 clipboard-write = allow
 confirm-close-surface = false
-cursor-style = block
+cursor-style = bar
 cursor-style-blink = true
 cursor-color = #bb9af7
 cursor-text = #1a1b26
@@ -16,8 +16,9 @@ custom-shader-animation = always
 mouse-hide-while-typing = true
 window-padding-x = 10
 window-padding-y = 6
+adjust-cursor-thickness=3
 
 shell-integration-features = no-cursor
 
 # Send ESC+Enter for Shift+Enter so Claude Code detects newlines inside tmux
-keybind = shift+enter=text:\x1b\x0d
+# keybind = shift+enter=text:\x1b\x0d
