@@ -10,13 +10,7 @@ import { truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import { basename } from "node:path";
 
 export default function (pi: ExtensionAPI) {
-  let turnCount = 0;
-
   pi.on("session_start", async (_event, ctx) => {
-    const theme = ctx.ui.theme;
-
-    ctx.ui.setStatus("status-demo", theme.fg("dim", "Ready"));
-
     ctx.ui.setFooter((tui, theme, footerData) => {
       const unsub = footerData.onBranchChange(() => tui.requestRender());
 
@@ -81,18 +75,4 @@ export default function (pi: ExtensionAPI) {
     });
   });
 
-  pi.on("turn_start", async (_event, ctx) => {
-    turnCount++;
-    const theme = ctx.ui.theme;
-    const spinner = theme.fg("accent", "●");
-    const text = theme.fg("dim", ` Turn ${turnCount}...`);
-    ctx.ui.setStatus("status-demo", spinner + text);
-  });
-
-  pi.on("turn_end", async (_event, ctx) => {
-    const theme = ctx.ui.theme;
-    const check = theme.fg("success", "✓");
-    const text = theme.fg("dim", ` Turn ${turnCount} complete`);
-    ctx.ui.setStatus("status-demo", check + text);
-  });
 }
