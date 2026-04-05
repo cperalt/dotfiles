@@ -125,6 +125,8 @@ alias cc="claude"
 alias ccc="claude --continue"
 alias nv="nvim"
 alias pistow="stow -d ~/.dotfiles -t "$HOME" --no-folding -R pi"
+alias c="clear"
+alias q="exit"
 
 # Create worktree and launch claude with a prompt in its tmux session
 # Usage: wtnc my-branch 'Fix the login bug'
