@@ -1,61 +1,29 @@
 /**
- * Modal Editor - vim-like modal editing example
+ * Modal Editor - vim-like modal editing extension
  *
- * Usage: pi --extension ./examples/extensions/modal-editor.ts
+ * Refactored to use a small vim state machine architecture inspired by more
+ * complete modal editors: a thin Pi editor adapter + isolated command
+ * transitions + pure motion helpers.
  *
- * Added here with a more practical Vim-ish normal mode:
+ * Supported:
  * - motions: h j k l, b w e, 0 ^ $
  * - insert: i a I A o O
- * - jumps: gg, G
+ * - jumps: gg, G, {count}gg, {count}G
  * - edit: x, u, p, P
- * - operators: d c y with w e b 0 ^ $, plus dd cc yy
+ * - operators: d c y with h l w e b 0 ^ $, plus dd cc yy
+ * - counts: 2w, 3x, 4dd, 2dw, ...
  *
  * Notes:
- * - This is a lightweight approximation, not embedded Neovim.
+ * - Still intentionally lightweight, not embedded Neovim.
  * - Yanks/pastes use the macOS global clipboard via pbcopy/pbpaste.
  */
 
 import { execFileSync } from "node:child_process";
 import { CustomEditor, type ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { CURSOR_MARKER, matchesKey, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
-
-type Mode = "normal" | "insert";
-type PendingOp = "g" | "d" | "c" | "y" | null;
-type MotionKey = "w" | "e" | "b" | "W" | "E" | "B" | "0" | "^" | "$";
-
-type Pos = { line: number; col: number };
-type Range = { start: Pos; end: Pos };
-
-const DIRECT_KEYS: Record<string, string | null> = {
-  h: "\x1b[D",
-  j: "\x1b[B",
-  k: "\x1b[A",
-  l: "\x1b[C",
-  b: null,
-  w: null,
-  e: null,
-  B: null,
-  W: null,
-  E: null,
-  "0": null,
-  "^": null,
-  $: null,
-  x: null,
-  i: null,
-  a: null,
-  I: null,
-  A: null,
-  o: null,
-  O: null,
-  u: null,
-  p: null,
-  P: null,
-  g: null,
-  G: null,
-  d: null,
-  c: null,
-  y: null,
-};
+import { clampCursor, firstNonBlankCol, motionRange, normalizeRange, posToIndex, resolveMotion } from "./vim/motions";
+import { transition, type TransitionContext } from "./vim/transitions";
+import { createIdleCommandState, createInitialVimState, type CommandState, type MotionKey, type Operator, type Pos, type Range, type VimState } from "./vim/types";
 
 const CURSOR_BLOCK = "\x1b[1 q";
 const CURSOR_BEAM = "\x1b[5 q";
@@ -65,18 +33,10 @@ function writeToTerminal(sequence: string): void {
 }
 
 class ModalEditor extends CustomEditor {
-  private mode: Mode = "insert";
-  private pending: PendingOp = null;
+  private vimState: VimState = createInitialVimState();
 
   public syncCursorShape(): void {
-    writeToTerminal(this.mode === "insert" ? CURSOR_BEAM : CURSOR_BLOCK);
-  }
-
-  private setMode(mode: Mode): void {
-    if (this.mode === mode) return;
-    this.mode = mode;
-    this.syncCursorShape();
-    this.invalidate();
+    writeToTerminal(this.vimState.mode === "insert" ? CURSOR_BEAM : CURSOR_BLOCK);
   }
 
   private get internal(): any {
@@ -87,25 +47,25 @@ class ModalEditor extends CustomEditor {
     return this.internal.state;
   }
 
-  private clampCursor(pos: Pos): Pos {
-    const lines = this.getLines();
-    const line = Math.max(0, Math.min(pos.line, Math.max(0, lines.length - 1)));
-    const text = lines[line] ?? "";
-    const col = Math.max(0, Math.min(pos.col, text.length));
-    return { line, col };
+  private get commandState(): CommandState {
+    return this.vimState.mode === "normal" ? this.vimState.command : createIdleCommandState();
   }
 
-  private setCursor(pos: Pos): void {
-    const state = this.getState();
-    const next = this.clampCursor(pos);
-    state.cursorLine = next.line;
-    state.cursorCol = next.col;
+  private setCommandState(command: CommandState): void {
+    if (this.vimState.mode !== "normal") return;
+    this.vimState = { mode: "normal", command };
     this.invalidate();
   }
 
-  private getCursorPos(): Pos {
-    const c = this.getCursor();
-    return { line: c.line, col: c.col };
+  private resetCommandState(): void {
+    if (this.vimState.mode === "normal") this.setCommandState(createIdleCommandState());
+  }
+
+  private setMode(mode: "normal" | "insert"): void {
+    const next = mode === "insert" ? ({ mode: "insert" } satisfies VimState) : ({ mode: "normal", command: createIdleCommandState() } satisfies VimState);
+    this.vimState = next;
+    this.syncCursorShape();
+    this.invalidate();
   }
 
   private pushUndo(): void {
@@ -117,198 +77,51 @@ class ModalEditor extends CustomEditor {
     this.invalidate();
   }
 
-  private isWordChar(char: string | undefined): boolean {
-    return !!char && /[A-Za-z0-9_]/.test(char);
-  }
-
   private lineText(line = this.getCursor().line): string {
     return this.getLines()[line] ?? "";
   }
 
-  private firstNonBlankCol(line = this.getCursor().line): number {
-    const text = this.lineText(line);
-    const idx = text.search(/\S/);
-    return idx === -1 ? 0 : idx;
+  private getCursorPos(): Pos {
+    const c = this.getCursor();
+    return { line: c.line, col: c.col };
   }
 
-  private moveLineStart(): void {
-    this.setCursor({ line: this.getCursor().line, col: 0 });
-  }
-
-  private moveFirstNonBlank(): void {
-    this.setCursor({ line: this.getCursor().line, col: this.firstNonBlankCol() });
-  }
-
-  private moveLineEnd(): void {
-    this.setCursor({ line: this.getCursor().line, col: this.lineText().length });
-  }
-
-  private moveFileStart(): void {
-    this.setCursor({ line: 0, col: 0 });
-  }
-
-  private moveFileEnd(): void {
-    const lines = this.getLines();
-    const line = Math.max(0, lines.length - 1);
-    this.setCursor({ line, col: (lines[line] ?? "").length });
-  }
-
-  private isBigWordChar(char: string | undefined): boolean {
-    return !!char && !/\s/.test(char);
-  }
-
-  private nextWordStart(pos = this.getCursorPos(), bigWord = false): Pos {
-    const lines = this.getLines();
-    const isChar = bigWord ? this.isBigWordChar.bind(this) : this.isWordChar.bind(this);
-    let line = pos.line;
-    let col = pos.col;
-
-    while (line < lines.length) {
-      const text = lines[line] ?? "";
-      let i = line === pos.line ? col : 0;
-
-      if (line === pos.line && i < text.length && isChar(text[i])) {
-        while (i < text.length && isChar(text[i])) i++;
-      }
-      while (i < text.length && !isChar(text[i])) i++;
-      if (i < text.length) return { line, col: i };
-
-      line++;
-      col = 0;
-    }
-
-    return this.getCursorPos();
-  }
-
-  private prevWordStart(pos = this.getCursorPos(), bigWord = false): Pos {
-    const lines = this.getLines();
-    const isChar = bigWord ? this.isBigWordChar.bind(this) : this.isWordChar.bind(this);
-    let line = pos.line;
-    let col = pos.col - 1;
-
-    while (line >= 0) {
-      const text = lines[line] ?? "";
-      let i = line === pos.line ? Math.min(col, text.length - 1) : text.length - 1;
-
-      while (i >= 0 && !isChar(text[i])) i--;
-      while (i > 0 && isChar(text[i - 1])) i--;
-      if (i >= 0 && isChar(text[i])) return { line, col: i };
-
-      line--;
-      col = Number.MAX_SAFE_INTEGER;
-    }
-
-    return { line: 0, col: 0 };
-  }
-
-  private wordEnd(pos = this.getCursorPos(), bigWord = false): Pos {
-    const lines = this.getLines();
-    const isChar = bigWord ? this.isBigWordChar.bind(this) : this.isWordChar.bind(this);
-    let line = pos.line;
-
-    while (line < lines.length) {
-      const text = lines[line] ?? "";
-      let i = line === pos.line ? pos.col : 0;
-
-      if (i < text.length && isChar(text[i])) {
-        // If we're inside a word, go to the end of this word unless we're
-        // already on its last character. In that case, continue to the next
-        // word, matching Vim's `e` behavior.
-        if (i + 1 < text.length && isChar(text[i + 1])) {
-          while (i + 1 < text.length && isChar(text[i + 1])) i++;
-          return { line, col: i };
-        }
-        i++;
-      }
-
-      while (i < text.length && !isChar(text[i])) i++;
-      if (i < text.length) {
-        while (i + 1 < text.length && isChar(text[i + 1])) i++;
-        return { line, col: i };
-      }
-
-      line++;
-    }
-
-    return this.getCursorPos();
-  }
-
-  private moveWordForward(bigWord = false): void {
-    this.setCursor(this.nextWordStart(this.getCursorPos(), bigWord));
-  }
-
-  private moveWordBackward(bigWord = false): void {
-    this.setCursor(this.prevWordStart(this.getCursorPos(), bigWord));
-  }
-
-  private moveWordEnd(bigWord = false): void {
-    this.setCursor(this.wordEnd(this.getCursorPos(), bigWord));
-  }
-
-  private comparePos(a: Pos, b: Pos): number {
-    if (a.line !== b.line) return a.line - b.line;
-    return a.col - b.col;
-  }
-
-  private normalizeRange(start: Pos, end: Pos): Range {
-    return this.comparePos(start, end) <= 0 ? { start, end } : { start: end, end: start };
-  }
-
-  private posToIndex(pos: Pos): number {
-    const lines = this.getLines();
-    let idx = 0;
-    for (let i = 0; i < pos.line; i++) idx += (lines[i] ?? "").length + 1;
-    return idx + pos.col;
-  }
-
-  private sliceRange(range: Range): string {
-    const text = this.getText();
-    return text.slice(this.posToIndex(range.start), this.posToIndex(range.end));
-  }
-
-  private replaceRange(range: Range, replacement: string, cursor = range.start): void {
-    const normalized = this.normalizeRange(range.start, range.end);
-    const text = this.getText();
-    const start = this.posToIndex(normalized.start);
-    const end = this.posToIndex(normalized.end);
-    this.pushUndo();
-    this.internal.setTextInternal?.(text.slice(0, start) + replacement + text.slice(end));
-    this.setCursor(cursor);
+  private setCursor(pos: Pos): void {
+    const state = this.getState();
+    const next = clampCursor(this.getLines(), pos);
+    state.cursorLine = next.line;
+    state.cursorCol = next.col;
     this.invalidate();
   }
 
+  private replaceText(text: string, cursor: Pos): void {
+    this.internal.setTextInternal?.(text);
+    this.setCursor(cursor);
+    this.emitChange();
+  }
+
+  private sliceRange(range: Range): string {
+    const normalized = normalizeRange(range.start, range.end);
+    const lines = this.getLines();
+    const text = this.getText();
+    return text.slice(posToIndex(lines, normalized.start), posToIndex(lines, normalized.end));
+  }
+
+  private replaceRange(range: Range, replacement: string, cursor = range.start): void {
+    const normalized = normalizeRange(range.start, range.end);
+    const lines = this.getLines();
+    const text = this.getText();
+    const start = posToIndex(lines, normalized.start);
+    const end = posToIndex(lines, normalized.end);
+    this.pushUndo();
+    this.replaceText(text.slice(0, start) + replacement + text.slice(end), normalized.start.line === cursor.line && normalized.start.col === cursor.col ? normalized.start : cursor);
+  }
+
   private deleteRange(range: Range): string {
-    const normalized = this.normalizeRange(range.start, range.end);
+    const normalized = normalizeRange(range.start, range.end);
     const deleted = this.sliceRange(normalized);
     this.replaceRange(normalized, "", normalized.start);
     return deleted;
-  }
-
-  private getMotionTarget(motion: MotionKey, from = this.getCursorPos()): Pos {
-    if (motion === "w") return this.nextWordStart(from, false);
-    if (motion === "W") return this.nextWordStart(from, true);
-    if (motion === "e") return this.wordEnd(from, false);
-    if (motion === "E") return this.wordEnd(from, true);
-    if (motion === "b") return this.prevWordStart(from, false);
-    if (motion === "B") return this.prevWordStart(from, true);
-    if (motion === "0") return { line: from.line, col: 0 };
-    if (motion === "^") return { line: from.line, col: this.firstNonBlankCol(from.line) };
-    return { line: from.line, col: this.lineText(from.line).length };
-  }
-
-  private motionRange(motion: MotionKey): Range | null {
-    const start = this.getCursorPos();
-    const target = this.getMotionTarget(motion, start);
-
-    if (motion === "b") {
-      return this.comparePos(target, start) === 0 ? null : { start: target, end: start };
-    }
-
-    if (motion === "e") {
-      return this.comparePos(target, start) < 0 ? null : { start, end: { line: target.line, col: target.col + 1 } };
-    }
-
-    return this.comparePos(target, start) === 0 ? null : { start, end: target };
   }
 
   private readClipboard(): string {
@@ -328,95 +141,116 @@ class ModalEditor extends CustomEditor {
   }
 
   private yankRange(range: Range): void {
-    const text = this.sliceRange(this.normalizeRange(range.start, range.end));
+    const text = this.sliceRange(range);
     if (text) this.writeClipboard(text);
   }
 
-  private yankLine(): void {
-    const lines = this.getLines();
-    const line = this.getCursor().line;
-    const text = (lines[line] ?? "") + (line < lines.length - 1 ? "\n" : "");
-    this.writeClipboard(text);
-  }
-
-  private deleteCurrentLine(change = false): void {
-    const lines = [...this.getLines()];
-    const line = this.getCursor().line;
-    const deleted = lines[line] ?? "";
-    this.writeClipboard(deleted + (lines.length > 1 ? "\n" : ""));
-
-    this.pushUndo();
-    if (lines.length === 1) {
-      lines[0] = "";
-    } else {
-      lines.splice(line, 1);
+  private enterInsert(kind: "i" | "a" | "I" | "A" | "o" | "O"): void {
+    if (kind === "i") {
+      this.setMode("insert");
+      return;
     }
 
-    this.internal.setTextInternal?.(lines.join("\n"));
-    const nextLine = Math.min(line, lines.length - 1);
-    this.setCursor({ line: Math.max(0, nextLine), col: change ? this.firstNonBlankCol(Math.max(0, nextLine)) : 0 });
-    this.invalidate();
-    if (change) this.setMode("insert");
+    if (kind === "a") {
+      const cur = this.getCursorPos();
+      if (cur.col < this.lineText(cur.line).length) this.setCursor({ line: cur.line, col: cur.col + 1 });
+      this.setMode("insert");
+      return;
+    }
+
+    if (kind === "I") {
+      this.setCursor({ line: this.getCursor().line, col: firstNonBlankCol(this.getLines(), this.getCursor().line) });
+      this.setMode("insert");
+      return;
+    }
+
+    if (kind === "A") {
+      this.setCursor({ line: this.getCursor().line, col: this.lineText().length });
+      this.setMode("insert");
+      return;
+    }
+
+    const state = this.getState();
+    const lines = state.lines;
+    const line = state.cursorLine;
+    this.pushUndo();
+
+    if (kind === "o") {
+      lines.splice(line + 1, 0, "");
+      state.cursorLine = line + 1;
+      state.cursorCol = 0;
+    } else {
+      lines.splice(line, 0, "");
+      state.cursorLine = line;
+      state.cursorCol = 0;
+    }
+
+    this.setMode("insert");
+    this.emitChange();
   }
 
-  private changeRange(range: Range): void {
+  private moveMotion(motion: MotionKey, count: number): void {
+    const target = resolveMotion(this.getLines(), this.getCursorPos(), motion, count);
+    this.setCursor(target);
+  }
+
+  private executeOperatorMotion(op: Operator, motion: MotionKey, count: number): void {
+    const range = motionRange(this.getLines(), this.getCursorPos(), motion, count);
+    if (!range) return;
+
+    if (op === "yank") {
+      this.yankRange(range);
+      return;
+    }
+
     const deleted = this.deleteRange(range);
     if (deleted) this.writeClipboard(deleted);
+    if (op === "change") this.setMode("insert");
+  }
+
+  private executeLineOp(op: Operator, count: number): void {
+    const lines = [...this.getLines()];
+    const line = this.getCursor().line;
+    const start = line;
+    const endExclusive = Math.min(lines.length, line + count);
+    const removed = lines.slice(start, endExclusive);
+    const linewiseText = `${removed.join("\n")}${endExclusive < lines.length || removed.length > 0 ? "\n" : ""}`;
+    this.writeClipboard(linewiseText);
+
+    if (op === "yank") return;
+
+    this.pushUndo();
+
+    if (op === "delete") {
+      if (lines.length === removed.length) {
+        lines.splice(0, lines.length, "");
+      } else {
+        lines.splice(start, removed.length);
+      }
+      const nextLine = Math.max(0, Math.min(start, lines.length - 1));
+      this.replaceText(lines.join("\n"), { line: nextLine, col: 0 });
+      return;
+    }
+
+    if (lines.length === removed.length) {
+      this.replaceText("", { line: 0, col: 0 });
+    } else {
+      lines.splice(start, removed.length, "");
+      this.replaceText(lines.join("\n"), { line: Math.max(0, Math.min(start, lines.length - 1)), col: 0 });
+    }
     this.setMode("insert");
   }
 
-  private deleteByMotion(motion: MotionKey): void {
-    const range = this.motionRange(motion);
-    if (!range) return;
-    const deleted = this.deleteRange(range);
-    if (deleted) this.writeClipboard(deleted);
-  }
-
-  private changeByMotion(motion: MotionKey): void {
-    const range = this.motionRange(motion);
-    if (!range) return;
-    this.changeRange(range);
-  }
-
-  private yankByMotion(motion: MotionKey): void {
-    const range = this.motionRange(motion);
-    if (!range) return;
-    this.yankRange(range);
-  }
-
-  private deleteChar(): void {
+  private executeDeleteChar(count: number): void {
     const cur = this.getCursorPos();
     const text = this.lineText(cur.line);
     if (cur.col >= text.length) return;
-    const deleted = this.deleteRange({ start: cur, end: { line: cur.line, col: cur.col + 1 } });
+    const end = Math.min(text.length, cur.col + count);
+    const deleted = this.deleteRange({ start: cur, end: { line: cur.line, col: end } });
     if (deleted) this.writeClipboard(deleted);
   }
 
-  private openBelow(): void {
-    const state = this.getState();
-    const lines = state.lines;
-    const line = state.cursorLine;
-    this.pushUndo();
-    lines.splice(line + 1, 0, "");
-    state.cursorLine = line + 1;
-    state.cursorCol = 0;
-    this.setMode("insert");
-    this.emitChange();
-  }
-
-  private openAbove(): void {
-    const state = this.getState();
-    const lines = state.lines;
-    const line = state.cursorLine;
-    this.pushUndo();
-    lines.splice(line, 0, "");
-    state.cursorLine = line;
-    state.cursorCol = 0;
-    this.setMode("insert");
-    this.emitChange();
-  }
-
-  private paste(after: boolean): void {
+  private executePaste(after: boolean, count: number): void {
     const clip = this.readClipboard();
     if (!clip) return;
 
@@ -426,7 +260,8 @@ class ModalEditor extends CustomEditor {
 
     if (wantsLinePaste) {
       const insertAt = state.cursorLine + (after ? 1 : 0);
-      const toInsert = clip.replace(/\n$/, "").split("\n");
+      const base = clip.replace(/\n$/, "").split("\n");
+      const toInsert = Array.from({ length: count }, () => base).flat();
       this.pushUndo();
       state.lines.splice(insertAt, 0, ...toInsert);
       state.cursorLine = insertAt;
@@ -438,124 +273,82 @@ class ModalEditor extends CustomEditor {
     if (after && state.cursorCol < currentLine.length) {
       this.setCursor({ line: state.cursorLine, col: state.cursorCol + 1 });
     }
-    this.insertTextAtCursor(clip);
+    this.insertTextAtCursor(clip.repeat(count));
     this.setMode("normal");
   }
 
-  private undo(): void {
-    super.handleInput("\x1f");
+  private performUndo(): void {
+    this.internal.undo?.();
+    this.invalidate();
   }
 
-  private clearPending(): void {
-    this.pending = null;
+  private goToLineStart(): void {
+    this.setCursor({ line: this.getCursor().line, col: 0 });
   }
 
-  private handlePending(data: string): boolean {
-    const pending = this.pending;
-    if (!pending) return false;
-    this.pending = null;
-
-    if (pending === "g") {
-      if (data === "g") {
-        this.moveFileStart();
-        return true;
-      }
-      return true;
+  private goToFirstLine(count: number): void {
+    if (count > 1) {
+      this.goToLine(count);
+      return;
     }
+    this.setCursor({ line: 0, col: 0 });
+  }
 
-    if (pending === "d") {
-      if (data === "d") {
-        this.deleteCurrentLine(false);
-        return true;
-      }
-      if (["w", "e", "b", "W", "E", "B", "0", "^", "$"].includes(data)) {
-        this.deleteByMotion(data as MotionKey);
-        return true;
-      }
-      return true;
+  private goToLastLine(count: number): void {
+    if (count > 1) {
+      this.goToLine(count);
+      return;
     }
+    const lines = this.getLines();
+    const line = Math.max(0, lines.length - 1);
+    this.setCursor({ line, col: (lines[line] ?? "").length });
+  }
 
-    if (pending === "c") {
-      if (data === "c") {
-        this.deleteCurrentLine(true);
-        return true;
-      }
-      if (["w", "e", "b", "W", "E", "B", "0", "^", "$"].includes(data)) {
-        this.changeByMotion(data as MotionKey);
-        return true;
-      }
-      return true;
-    }
+  private goToLine(count: number): void {
+    const lines = this.getLines();
+    const line = Math.max(0, Math.min(lines.length - 1, count - 1));
+    this.setCursor({ line, col: 0 });
+  }
 
-    if (pending === "y") {
-      if (data === "y") {
-        this.yankLine();
-        return true;
-      }
-      if (["w", "e", "b", "W", "E", "B", "0", "^", "$"].includes(data)) {
-        this.yankByMotion(data as MotionKey);
-        return true;
-      }
-      return true;
-    }
-
-    return false;
+  private createTransitionContext(): TransitionContext {
+    return {
+      moveMotion: (motion, count) => this.moveMotion(motion, count),
+      executeOperatorMotion: (op, motion, count) => this.executeOperatorMotion(op, motion, count),
+      executeLineOp: (op, count) => this.executeLineOp(op, count),
+      executeDeleteChar: (count) => this.executeDeleteChar(count),
+      executePaste: (after, count) => this.executePaste(after, count),
+      goToFirstLine: (count) => this.goToFirstLine(count),
+      goToLastLine: (count) => this.goToLastLine(count),
+      goToLineStart: () => this.goToLineStart(),
+      enterInsert: (kind) => this.enterInsert(kind),
+      undo: () => this.performUndo(),
+    };
   }
 
   handleInput(data: string): void {
     if (matchesKey(data, "escape")) {
-      this.clearPending();
-      if (this.mode === "insert") {
-        this.setMode("normal");
-      } else {
-        super.handleInput(data);
-      }
+      if (this.vimState.mode === "insert") this.setMode("normal");
+      else this.resetCommandState();
       return;
     }
 
-    if (this.mode === "insert") {
+    // Let app/editor control keys behave exactly like the base editor.
+    // In particular, Ctrl+C should still trigger Pi's interrupt behavior in
+    // normal mode instead of being swallowed by vim command parsing.
+    if (data.length > 0 && data.charCodeAt(0) < 32) {
       super.handleInput(data);
       return;
     }
 
-    if (this.handlePending(data)) return;
+    if (this.vimState.mode === "insert") {
+      super.handleInput(data);
+      return;
+    }
 
-    if (data in DIRECT_KEYS) {
-      if (data === "i") this.setMode("insert");
-      else if (data === "a") {
-        const cur = this.getCursorPos();
-        if (cur.col < this.lineText().length) this.setCursor({ line: cur.line, col: cur.col + 1 });
-        this.setMode("insert");
-      } else if (data === "I") {
-        this.moveFirstNonBlank();
-        this.setMode("insert");
-      } else if (data === "A") {
-        this.moveLineEnd();
-        this.setMode("insert");
-      } else if (data === "o") this.openBelow();
-      else if (data === "O") this.openAbove();
-      else if (data === "w") this.moveWordForward(false);
-      else if (data === "b") this.moveWordBackward(false);
-      else if (data === "e") this.moveWordEnd(false);
-      else if (data === "W") this.moveWordForward(true);
-      else if (data === "B") this.moveWordBackward(true);
-      else if (data === "E") this.moveWordEnd(true);
-      else if (data === "0") this.moveLineStart();
-      else if (data === "^") this.moveFirstNonBlank();
-      else if (data === "$") this.moveLineEnd();
-      else if (data === "x") this.deleteChar();
-      else if (data === "u") this.undo();
-      else if (data === "p") this.paste(true);
-      else if (data === "P") this.paste(false);
-      else if (data === "g") this.pending = "g";
-      else if (data === "G") this.moveFileEnd();
-      else if (data === "d") this.pending = "d";
-      else if (data === "c") this.pending = "c";
-      else if (data === "y") this.pending = "y";
-      else {
-        const seq = DIRECT_KEYS[data];
-        if (seq) super.handleInput(seq);
-      }
+    const result = transition(this.commandState, data, this.createTransitionContext());
+    if (result.handled) {
+      this.setCommandState(result.next);
+      if (result.mode === "insert") this.setMode("insert");
       return;
     }
 
@@ -563,22 +356,32 @@ class ModalEditor extends CustomEditor {
     super.handleInput(data);
   }
 
+  private commandSuffix(): string {
+    if (this.vimState.mode !== "normal") return "";
+
+    const state = this.vimState.command;
+    if (state.type === "idle") return "";
+    if (state.type === "count") return ` ${state.digits}`;
+    if (state.type === "g") return ` ${state.count === 1 ? "g" : `${state.count}g`}`;
+    if (state.type === "operator") {
+      const prefix = state.op === "delete" ? "d" : state.op === "change" ? "c" : "y";
+      return ` ${state.count > 1 ? `${state.count}` : ""}${prefix}`;
+    }
+    const prefix = state.op === "delete" ? "d" : state.op === "change" ? "c" : "y";
+    return ` ${state.count > 1 ? `${state.count}` : ""}${prefix}${state.digits}`;
+  }
+
   render(width: number): string[] {
     const lines = super.render(width);
     if (lines.length === 0) return lines;
 
-    // pi-tui's Editor always renders a virtual inverse-video cursor.
-    // Keep the hardware cursor marker for IME/cursor positioning, but strip
-    // the fake cursor so DECSCUSR-controlled cursor shapes are the only cursor
-    // visible in insert/normal mode.
     for (let i = 0; i < lines.length; i++) {
       lines[i] = lines[i]!
         .replace(`${CURSOR_MARKER}\x1b[7m \x1b[0m`, CURSOR_MARKER)
         .replace(new RegExp(`${CURSOR_MARKER}\\x1b\\[7m([\\s\\S])\\x1b\\[0m`, "g"), `${CURSOR_MARKER}$1`);
     }
 
-    const pending = this.pending ? ` ${this.pending}` : "";
-    const label = `${this.mode === "normal" ? " NORMAL" : " INSERT"}${pending} `;
+    const label = `${this.vimState.mode === "normal" ? " NORMAL" : " INSERT"}${this.commandSuffix()} `;
     const last = lines.length - 1;
     if (visibleWidth(lines[last]!) >= label.length) {
       lines[last] = truncateToWidth(lines[last]!, width - label.length, "") + label;
