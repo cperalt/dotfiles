@@ -93,29 +93,65 @@ return {
       [[ WWWWVVVVVVVVVVVVVVVVWWWWWWWWWWWWWWWWVVVVVVVVVVBBBBBBBBWWWWBBBBBBWWWWWWWWWWWWWWBBBBBBWWWWBBBBWWWWWWWWWW ]],
     }
 
-    local colors = {
-      ["W"] = { fg = mocha.base },
-      ["C"] = { fg = mocha.text },
-      ["B"] = { fg = mocha.crust },
-      ["R"] = { fg = mocha.red },
-      ["O"] = { fg = mocha.peach },
-      ["Y"] = { fg = mocha.yellow },
-      ["G"] = { fg = mocha.green },
-      ["U"] = { fg = mocha.blue },
-      ["P"] = { fg = mocha.yellow },
-      ["H"] = { fg = mocha.pink },
-      ["F"] = { fg = mocha.red },
-      ["M"] = { fg = mocha.overlay0 },
-      ["V"] = { fg = mocha.lavender },
-      ["r"] = { fg = mocha.red },
-      ["c"] = { fg = mocha.text },
-    }
+    local function alpha_colors()
+      return {
+        ["W"] = { fg = mocha.base },
+        ["C"] = { fg = mocha.text },
+        ["B"] = { fg = mocha.crust },
+        ["R"] = { fg = mocha.red },
+        ["O"] = { fg = mocha.peach },
+        ["Y"] = { fg = mocha.yellow },
+        ["G"] = { fg = mocha.green },
+        ["U"] = { fg = mocha.blue },
+        ["P"] = { fg = mocha.yellow },
+        ["H"] = { fg = mocha.pink },
+        ["F"] = { fg = mocha.red },
+        ["M"] = { fg = mocha.overlay0 },
+        ["V"] = { fg = mocha.lavender },
+        ["r"] = { fg = mocha.red },
+        ["c"] = { fg = mocha.text },
+      }
+    end
 
-    dashboard.section.header.val = header
-    dashboard.section.header.opts = {
-      hl = colorize(header, color_map, colors),
-      position = "center",
-    }
+    local function sample_line(line, step)
+      local out = {}
+      local chars = vim.fn.strchars(line)
+
+      for i = 0, chars - 1, step do
+        out[#out + 1] = vim.fn.strcharpart(line, i, 1)
+      end
+
+      return table.concat(out)
+    end
+
+    local function compact_lines(lines, step, keep_every)
+      local out = {}
+      for i, line in ipairs(lines) do
+        if (i - 1) % keep_every == 0 then
+          out[#out + 1] = sample_line(line, step)
+        end
+      end
+      return out
+    end
+
+    local function apply_responsive_header()
+      local width = vim.o.columns
+      local active_header = header
+      local active_color_map = color_map
+
+      if width < 100 then
+        active_header = compact_lines(header, 2, 2)
+        active_color_map = compact_lines(color_map, 2, 2)
+      end
+
+      dashboard.section.header.val = active_header
+      dashboard.section.header.opts = {
+        hl = colorize(active_header, active_color_map, alpha_colors()),
+        position = "center",
+      }
+    end
+
+    apply_responsive_header()
 
     -- stylua: ignore
     dashboard.section.buttons.val = {
@@ -147,6 +183,24 @@ return {
     end
 
     alpha.setup(dashboard.opts)
+
+    vim.api.nvim_create_autocmd("VimResized", {
+      callback = function()
+        apply_responsive_header()
+        if vim.bo.filetype == "alpha" then
+          pcall(vim.cmd.AlphaRedraw)
+        end
+      end,
+    })
+
+    vim.api.nvim_create_autocmd("User", {
+      once = true,
+      pattern = "AlphaReady",
+      callback = function()
+        apply_responsive_header()
+        pcall(vim.cmd.AlphaRedraw)
+      end,
+    })
 
     vim.api.nvim_create_autocmd("User", {
       once = true,
