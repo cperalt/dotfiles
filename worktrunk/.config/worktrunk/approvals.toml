@@ -1,3 +1,9 @@
+[projects."github.com/SageHomeLoans/mortgage-pos"]
+approved-commands = [
+    "ln -sf {{ primary_worktree_path }}/node_modules .",
+    "wt step copy-ignored",
+]
+
 [projects."github.com/bankrate/mortgage-pos"]
 approved-commands = [
     "ln -sf {{ primary_worktree_path }}/node_modules .",
