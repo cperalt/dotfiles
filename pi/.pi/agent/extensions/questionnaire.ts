@@ -239,7 +239,11 @@ export default function questionnaire(pi: ExtensionAPI) {
 
             // Tab navigation (multi-question only)
             if (isMulti) {
-              if (matchesKey(data, Key.tab) || matchesKey(data, Key.right)) {
+              if (
+                matchesKey(data, Key.tab) ||
+                matchesKey(data, Key.right) ||
+                data === "l"
+              ) {
                 currentTab = (currentTab + 1) % totalTabs;
                 optionIndex = 0;
                 refresh();
@@ -247,7 +251,8 @@ export default function questionnaire(pi: ExtensionAPI) {
               }
               if (
                 matchesKey(data, Key.shift("tab")) ||
-                matchesKey(data, Key.left)
+                matchesKey(data, Key.left) ||
+                data === "h"
               ) {
                 currentTab = (currentTab - 1 + totalTabs) % totalTabs;
                 optionIndex = 0;
@@ -267,12 +272,12 @@ export default function questionnaire(pi: ExtensionAPI) {
             }
 
             // Option navigation
-            if (matchesKey(data, Key.up)) {
+            if (matchesKey(data, Key.up) || data === "k") {
               optionIndex = Math.max(0, optionIndex - 1);
               refresh();
               return;
             }
-            if (matchesKey(data, Key.down)) {
+            if (matchesKey(data, Key.down) || data === "j") {
               optionIndex = Math.min(opts.length - 1, optionIndex + 1);
               refresh();
               return;
