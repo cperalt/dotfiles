@@ -4,13 +4,12 @@
  * Goals:
  * - Claude Code-like compact tool headers
  * - Single status dot that changes with tool state
+ * - Move result counts into the header line
  * - Keep built-in execution behavior
- * - Keep built-in result renderers unless we intentionally compact them
  */
 
 import type {
   BashToolDetails,
-  EditToolDetails,
   ExtensionAPI,
   FindToolDetails,
   GrepToolDetails,
@@ -26,7 +25,7 @@ import {
   createReadTool,
   createWriteTool,
 } from "@mariozechner/pi-coding-agent";
-import { Text } from "@mariozechner/pi-tui";
+import { Container, Text } from "@mariozechner/pi-tui";
 
 function countNonEmptyLines(text: string) {
   return text.split("\n").filter((line) => line.trim().length > 0).length;
@@ -50,13 +49,43 @@ function dot(theme: any, context: any) {
   return context.isError ? theme.fg("error", "⏺") : theme.fg("success", "⏺");
 }
 
-function renderHeader(theme: any, context: any, label: string, detail: string) {
+function renderHeaderText(
+  theme: any,
+  context: any,
+  label: string,
+  detail: string,
+  summary?: string,
+) {
   let text = `${dot(theme, context)} `;
   text += theme.fg("toolTitle", label);
   if (detail) {
     text += theme.fg("muted", `(${detail})`);
   }
-  return new Text(text, 0, 0);
+  if (summary) {
+    text += theme.fg("dim", ` · ${summary}`);
+  }
+  return text;
+}
+
+function renderHeader(theme: any, context: any, label: string, detail: string, summary?: string) {
+  let header = context.state?.header as Text | undefined;
+  if (!header) {
+    header = new Text("", 0, 0);
+    context.state.header = header;
+  }
+  header.setText(renderHeaderText(theme, context, label, detail, summary));
+  return header;
+}
+
+function updateHeader(theme: any, context: any, label: string, detail: string, summary?: string) {
+  const header = context.state?.header as Text | undefined;
+  if (header) {
+    header.setText(renderHeaderText(theme, context, label, detail, summary));
+  }
+}
+
+function emptyResult() {
+  return new Container();
 }
 
 export default function (pi: ExtensionAPI) {
@@ -77,17 +106,20 @@ export default function (pi: ExtensionAPI) {
       const parts = [args.path];
       if (args.offset) parts.push(`offset=${args.offset}`);
       if (args.limit) parts.push(`limit=${args.limit}`);
-      return renderHeader(theme, context, "Read", parts.join(", "));
+      context.state.detail = parts.join(", ");
+      return renderHeader(theme, context, "Read", context.state.detail, context.state.summary);
     },
 
-    renderResult(result, { expanded, isPartial }, theme, _context) {
+    renderResult(result, { expanded, isPartial }, theme, context) {
       if (isPartial) return new Text(theme.fg("warning", "Reading..."), 0, 0);
 
       const details = result.details as ReadToolDetails | undefined;
       const content = result.content[0];
 
       if (content?.type === "image") {
-        return new Text(theme.fg("success", "Image loaded"), 0, 0);
+        context.state.summary = "image";
+        updateHeader(theme, context, "Read", context.state.detail, context.state.summary);
+        return emptyResult();
       }
 
       if (content?.type !== "text") {
@@ -95,26 +127,27 @@ export default function (pi: ExtensionAPI) {
       }
 
       const lineCount = content.text.split("\n").length;
-      let text = theme.fg("success", `${lineCount} lines`);
-
+      let summary = `${lineCount} lines`;
       if (details?.truncation?.truncated) {
-        text += theme.fg(
-          "warning",
-          ` (truncated from ${details.truncation.totalLines})`,
-        );
+        summary += " [truncated]";
+      }
+      context.state.summary = summary;
+      updateHeader(theme, context, "Read", context.state.detail, summary);
+
+      if (!expanded) {
+        return emptyResult();
       }
 
-      if (expanded) {
-        const lines = content.text.split("\n").slice(0, 15);
-        for (const line of lines) {
-          text += `\n${theme.fg("dim", line)}`;
-        }
-        if (lineCount > 15) {
-          text += `\n${theme.fg("muted", `... ${lineCount - 15} more lines`)}`;
-        }
+      let text = "";
+      const lines = content.text.split("\n").slice(0, 15);
+      for (const line of lines) {
+        text += `\n${theme.fg("dim", line)}`;
+      }
+      if (lineCount > 15) {
+        text += `\n${theme.fg("muted", `... ${lineCount - 15} more lines`)}`;
       }
 
-      return new Text(text, 0, 0);
+      return new Text(text.trimStart(), 0, 0);
     },
   });
 
@@ -133,10 +166,11 @@ export default function (pi: ExtensionAPI) {
       const parts = [args.pattern];
       if (args.path) parts.push(`in ${args.path}`);
       if (args.glob) parts.push(args.glob);
-      return renderHeader(theme, context, "Grep", parts.join(", "));
+      context.state.detail = parts.join(", ");
+      return renderHeader(theme, context, "Grep", context.state.detail, context.state.summary);
     },
 
-    renderResult(result, { expanded, isPartial }, theme, _context) {
+    renderResult(result, { expanded, isPartial }, theme, context) {
       if (isPartial) return new Text(theme.fg("warning", "Searching..."), 0, 0);
 
       const details = result.details as GrepToolDetails | undefined;
@@ -146,22 +180,27 @@ export default function (pi: ExtensionAPI) {
       }
 
       const matchCount = countNonEmptyLines(content.text);
-      let text = theme.fg("success", `${matchCount} matches`);
+      let summary = `${matchCount} matches`;
       if (details?.truncation?.truncated) {
-        text += theme.fg("warning", " [truncated]");
+        summary += " [truncated]";
+      }
+      context.state.summary = summary;
+      updateHeader(theme, context, "Grep", context.state.detail, summary);
+
+      if (!expanded) {
+        return emptyResult();
       }
 
-      if (expanded) {
-        const lines = content.text.split("\n").slice(0, 20);
-        for (const line of lines) {
-          text += `\n${theme.fg("dim", line)}`;
-        }
-        if (countNonEmptyLines(content.text) > 20) {
-          text += `\n${theme.fg("muted", "... more matches")}`;
-        }
+      let text = "";
+      const lines = content.text.split("\n").slice(0, 20);
+      for (const line of lines) {
+        text += `\n${theme.fg("dim", line)}`;
+      }
+      if (matchCount > 20) {
+        text += `\n${theme.fg("muted", "... more matches")}`;
       }
 
-      return new Text(text, 0, 0);
+      return new Text(text.trimStart(), 0, 0);
     },
   });
 
@@ -179,10 +218,11 @@ export default function (pi: ExtensionAPI) {
     renderCall(args, theme, context) {
       const parts = [args.pattern];
       if (args.path) parts.push(`in ${args.path}`);
-      return renderHeader(theme, context, "Find", parts.join(", "));
+      context.state.detail = parts.join(", ");
+      return renderHeader(theme, context, "Find", context.state.detail, context.state.summary);
     },
 
-    renderResult(result, { expanded, isPartial }, theme, _context) {
+    renderResult(result, { expanded, isPartial }, theme, context) {
       if (isPartial) return new Text(theme.fg("warning", "Finding..."), 0, 0);
 
       const details = result.details as FindToolDetails | undefined;
@@ -192,22 +232,27 @@ export default function (pi: ExtensionAPI) {
       }
 
       const fileCount = countNonEmptyLines(content.text);
-      let text = theme.fg("success", `${fileCount} files`);
+      let summary = `${fileCount} files`;
       if (details?.truncation?.truncated) {
-        text += theme.fg("warning", " [truncated]");
+        summary += " [truncated]";
+      }
+      context.state.summary = summary;
+      updateHeader(theme, context, "Find", context.state.detail, summary);
+
+      if (!expanded) {
+        return emptyResult();
       }
 
-      if (expanded) {
-        const lines = content.text.split("\n").slice(0, 20);
-        for (const line of lines) {
-          text += `\n${theme.fg("dim", line)}`;
-        }
-        if (countNonEmptyLines(content.text) > 20) {
-          text += `\n${theme.fg("muted", "... more files")}`;
-        }
+      let text = "";
+      const lines = content.text.split("\n").slice(0, 20);
+      for (const line of lines) {
+        text += `\n${theme.fg("dim", line)}`;
+      }
+      if (fileCount > 20) {
+        text += `\n${theme.fg("muted", "... more files")}`;
       }
 
-      return new Text(text, 0, 0);
+      return new Text(text.trimStart(), 0, 0);
     },
   });
 
@@ -225,10 +270,11 @@ export default function (pi: ExtensionAPI) {
     renderCall(args, theme, context) {
       const parts = [args.path ?? "."];
       if (args.limit) parts.push(`limit=${args.limit}`);
-      return renderHeader(theme, context, "Ls", parts.join(", "));
+      context.state.detail = parts.join(", ");
+      return renderHeader(theme, context, "Ls", context.state.detail, context.state.summary);
     },
 
-    renderResult(result, { expanded, isPartial }, theme, _context) {
+    renderResult(result, { expanded, isPartial }, theme, context) {
       if (isPartial) return new Text(theme.fg("warning", "Listing..."), 0, 0);
 
       const details = result.details as LsToolDetails | undefined;
@@ -238,22 +284,27 @@ export default function (pi: ExtensionAPI) {
       }
 
       const entryCount = countNonEmptyLines(content.text);
-      let text = theme.fg("success", `${entryCount} entries`);
+      let summary = `${entryCount} entries`;
       if (details?.truncation?.truncated) {
-        text += theme.fg("warning", " [truncated]");
+        summary += " [truncated]";
+      }
+      context.state.summary = summary;
+      updateHeader(theme, context, "Ls", context.state.detail, summary);
+
+      if (!expanded) {
+        return emptyResult();
       }
 
-      if (expanded) {
-        const lines = content.text.split("\n").slice(0, 20);
-        for (const line of lines) {
-          text += `\n${theme.fg("dim", line)}`;
-        }
-        if (countNonEmptyLines(content.text) > 20) {
-          text += `\n${theme.fg("muted", "... more entries")}`;
-        }
+      let text = "";
+      const lines = content.text.split("\n").slice(0, 20);
+      for (const line of lines) {
+        text += `\n${theme.fg("dim", line)}`;
+      }
+      if (entryCount > 20) {
+        text += `\n${theme.fg("muted", "... more entries")}`;
       }
 
-      return new Text(text, 0, 0);
+      return new Text(text.trimStart(), 0, 0);
     },
   });
 
@@ -269,26 +320,29 @@ export default function (pi: ExtensionAPI) {
     },
 
     renderCall(args, theme, context) {
-      return renderHeader(theme, context, "Bash", truncate(args.command, 88));
+      context.state.detail = truncate(args.command, 88);
+      return renderHeader(theme, context, "Bash", context.state.detail, context.state.summary);
     },
 
-    renderResult(result, _options, theme, _context) {
+    renderResult(result, _options, theme, context) {
       const content = result.content[0];
       const details = result.details as BashToolDetails | undefined;
-      if (content?.type !== "text") return new Text("", 0, 0);
+      if (content?.type !== "text") return emptyResult();
 
       const lineCount = countNonEmptyLines(content.text);
-      let text = theme.fg("success", `${lineCount} lines`);
+      let summary = `${lineCount} lines`;
       if (details?.truncation?.truncated) {
-        text += theme.fg("warning", " [truncated]");
+        summary += " [truncated]";
       }
+      context.state.summary = summary;
+      updateHeader(theme, context, "Bash", context.state.detail, summary);
 
       const preview = firstNonEmptyLine(content.text);
       if (preview) {
-        text += `\n${theme.fg("dim", truncate(preview, 120))}`;
+        return new Text(theme.fg("dim", truncate(preview, 120)), 0, 0);
       }
 
-      return new Text(text, 0, 0);
+      return emptyResult();
     },
   });
 
@@ -303,27 +357,7 @@ export default function (pi: ExtensionAPI) {
       return originalEdit.execute(toolCallId, params, signal, onUpdate);
     },
 
-    renderCall(args, theme, context) {
-      const count = args.edits?.length ?? 0;
-      return renderHeader(theme, context, "Edit", `${args.path}, ${count} change${count === 1 ? "" : "s"}`);
-    },
-
-    renderResult(result, _options, theme, _context) {
-      const details = result.details as EditToolDetails | undefined;
-      if (!details?.diff) {
-        return new Text(theme.fg("success", "Applied"), 0, 0);
-      }
-
-      const added = details.diff.split("\n").filter((line) => line.startsWith("+") && !line.startsWith("+++"))
-        .length;
-      const removed = details.diff
-        .split("\n")
-        .filter((line) => line.startsWith("-") && !line.startsWith("---")).length;
-
-      let text = theme.fg("success", "Applied");
-      text += theme.fg("muted", ` (+${added} -${removed})`);
-      return new Text(text, 0, 0);
-    },
+    // Intentionally no render overrides so Pi keeps the built-in diff renderer.
   });
 
   const originalWrite = createWriteTool(cwd);
@@ -337,9 +371,6 @@ export default function (pi: ExtensionAPI) {
       return originalWrite.execute(toolCallId, params, signal, onUpdate);
     },
 
-    renderCall(args, theme, context) {
-      const lines = args.content.split("\n").length;
-      return renderHeader(theme, context, "Write", `${args.path}, ${lines} lines`);
-    },
+    // Intentionally no render overrides so Pi keeps the built-in detailed renderer.
   });
 }
