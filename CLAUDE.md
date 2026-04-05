@@ -81,6 +81,8 @@ stow -d ~/.dotfiles -t "$HOME" --no-folding -R pi
 
 Pi auto-discovers extensions from `~/.pi/agent/extensions/*.ts`. If a new extension file exists in the repo but hasn't been re-stowed, pi won't see it.
 
+**Editing an existing symlinked extension file does not require re-stowing** — changes are visible through the existing symlink. In that case, just restart Pi. Re-stow is only needed when files/directories are added, removed, or moved.
+
 ## install.sh Notes
 
 - `install.sh` clones the repo via SSH (`git@github.com`). On a fresh machine, SSH keys must be configured before running the script, otherwise the clone step will fail. This is a known limitation — set up your SSH key first, or clone manually via HTTPS then run the rest of the script.
