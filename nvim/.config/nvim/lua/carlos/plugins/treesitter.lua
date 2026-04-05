@@ -9,6 +9,9 @@ return {
   config = function()
     -- Map filetype "tf" → terraform parser (Neovim detects .tf files as "tf", not "terraform")
     vim.treesitter.language.register("terraform", "tf")
+    -- Reuse the bash parser for shell-like config files so Treesitter-based integrations work there.
+    vim.treesitter.language.register("bash", "zsh")
+    vim.treesitter.language.register("bash", "ghostty")
 
     require("nvim-treesitter").install({
       "json",
