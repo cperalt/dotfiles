@@ -14,5 +14,8 @@
     "anthropic/claude-opus-4-6",
     "anthropic/claude-sonnet-4-6",
     "openai-codex/gpt-5.4"
+  ],
+  "packages": [
+    "npm:pi-web-access"
   ]
 }
