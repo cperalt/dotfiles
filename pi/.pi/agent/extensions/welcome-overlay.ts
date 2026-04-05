@@ -16,26 +16,69 @@ const DEFAULT_SETTINGS: WelcomeHeaderSettings = {
   timeoutSeconds: 12,
 };
 
-const BASE_LOGO = [
-  "▀████████████▀",
-  " ╘███    ███  ",
-  "  ███    ███  ",
-  "  ███    ███  ",
-  " ▄███▄  ▄███▄ ",
+const NYAN_HEADER = [
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ███████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ███████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
 ];
 
-// Uses color names defined by your Tokyo Night themes.
-const GRADIENT: Array<
-  "accent" | "mdLink" | "syntaxType" | "syntaxKeyword" | "syntaxVariable" | "warning" | "success"
-> = [
-  "accent",
-  "mdLink",
-  "syntaxType",
-  "syntaxKeyword",
-  "syntaxVariable",
-  "warning",
-  "success",
+const NYAN_COLOR_MAP = [
+  " WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWWWWWWWWWW ",
+  " RRRRWWWWWWWWWWWWWWWWRRRRRRRRRRRRRRRRWWWWWWWWWWWWWWWWBBPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPBBWWWWWWWWWWWW ",
+  " RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBPPPPPPHHHHHHHHHHHHHHHHHHHHHHHHHHPPPPPPBBWWWWWWWWWW ",
+  " RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBPPPPHHHHHHHHHHHHFFHHHHFFHHHHHHHHHHPPPPBBWWWWWWWWWW ",
+  " OOOORRRRRRRRRRRRRRRROOOOOOOOOOOOOOOORRRRRRRRRRRRRRBBPPHHHHFFHHHHHHHHHHHHHHHHHHHHHHHHHHHHPPBBWWWWWWWWWW ",
+  " OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOBBPPHHHHHHHHHHHHHHHHHHHHBBBBHHHHFFHHHHPPBBWWBBBBWWWW ",
+  " OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOBBPPHHHHHHHHHHHHHHHHHHBBMMMMBBHHHHHHHHPPBBBBMMMMBBWW ",
+  " YYYYOOOOOOOOOOOOOOOOYYYYYYYYYYYYYYYYOOBBBBBBBBOOOOBBPPHHHHHHHHHHHHFFHHHHBBMMMMMMBBHHHHHHPPBBMMMMMMBBWW ",
+  " YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYBBMMMMBBBBOOBBPPHHHHHHHHHHHHHHHHHHBBMMMMMMMMBBBBBBBBMMMMMMMMBBWW ",
+  " YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYBBBBMMMMBBBBBBPPHHHHHHFFHHHHHHHHHHBBMMMMMMMMMMMMMMMMMMMMMMMMBBWW ",
+  " GGGGYYYYYYYYYYYYYYYYGGGGGGGGGGGGGGGGYYYYBBBBMMMMBBBBPPHHHHHHHHHHHHHHFFBBMMMMMMMMMMMMMMMMMMMMMMMMMMMMBB ",
+  " GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGBBBBMMMMBBPPHHFFHHHHHHHHHHHHBBMMMMMMCCBBMMMMMMMMMMCCBBMMMMBB ",
+  " GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGBBBBBBBBPPHHHHHHHHHHHHHHHHBBMMMMMMBBBBMMMMMMBBMMBBBBMMMMBB ",
+  " UUUUGGGGGGGGGGGGGGGGUUUUUUUUUUUUUUUUGGGGGGGGGGGGBBBBPPHHHHHHHHHHFFHHHHBBMMrrrrMMMMMMMMMMMMMMMMrrrrBB   ",
+  " UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUBBPPPPHHFFHHHHHHHHHHBBMMrrrrMMBBMMMMBBMMMMBBMMrrrrBB ",
+  " UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUBBPPPPPPHHHHHHHHHHHHHHBBMMMMMMBBBBBBBBBBBBBBMMMMBBWW ",
+  " VVVVUUUUUUUUUUUUUUUUVVVVVVVVVVVVVVVVUUUUUUUUUUUUBBBBBBPPPPPPPPPPPPPPPPPPPPBBMMMMMMMMMMMMMMMMMMMMBBWWWW ",
+  " VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVBBMMMMMMBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWW ",
+  " VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVBBMMMMBBBBWWBBMMMMBBWWWWWWWWWWBBMMMMBBWWBBMMMMBBWWWWWWWW ",
+  " WWWWVVVVVVVVVVVVVVVVWWWWWWWWWWWWWWWWVVVVVVVVVVBBBBBBBBWWWWBBBBBBWWWWWWWWWWWWWWBBBBBBWWWWBBBBWWWWWWWWWW ",
 ];
+
+const CATPPUCCIN_MOCHA_HEX: Partial<Record<string, string>> = {
+  C: "#cdd6f4",
+  B: "#11111b",
+  R: "#f38ba8",
+  O: "#fab387",
+  Y: "#f9e2af",
+  G: "#a6e3a1",
+  U: "#89b4fa",
+  P: "#f9e2af",
+  H: "#f5c2e7",
+  F: "#f38ba8",
+  M: "#6c7086",
+  V: "#b4befe",
+  r: "#f38ba8",
+};
+
+const TRANSPARENT_TOKENS = new Set(["W"]);
 
 function getSettingsPath(): string {
   return join(process.env.HOME || process.env.USERPROFILE || homedir(), ".pi", "agent", "settings.json");
@@ -76,29 +119,45 @@ function center(text: string, width: number): string {
   return " ".repeat(left) + text + " ".repeat(right);
 }
 
-function gradientText(theme: Theme, text: string): string {
+function sampleLine(line: string, step: number): string {
   let out = "";
-  const chars = [...text];
-  const step = Math.max(1, Math.floor(chars.length / GRADIENT.length));
+  for (let i = 0; i < line.length; i += step) out += line[i] ?? " ";
+  return out;
+}
 
-  for (let i = 0; i < chars.length; i++) {
-    const color = GRADIENT[Math.min(GRADIENT.length - 1, Math.floor(i / step))]!;
-    out += chars[i] === " " ? " " : theme.fg(color, chars[i]!);
+function hexFg(hex: string, text: string): string {
+  const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!match) return text;
+  const [, r, g, b] = match;
+  return `\u001b[38;2;${parseInt(r!, 16)};${parseInt(g!, 16)};${parseInt(b!, 16)}m${text}\u001b[39m`;
+}
+
+function renderMappedLine(_theme: Theme, headerLine: string, colorLine: string): string {
+  let out = "";
+
+  for (let i = 0; i < headerLine.length; i++) {
+    const char = headerLine[i] ?? " ";
+    const colorKey = colorLine[i] ?? " ";
+    const hex = CATPPUCCIN_MOCHA_HEX[colorKey];
+
+    if (char === " " || TRANSPARENT_TOKENS.has(colorKey)) {
+      out += " ";
+    } else if (!hex) {
+      out += char;
+    } else {
+      out += hexFg(hex, char);
+    }
   }
 
   return out;
 }
 
-function scaleLine(line: string): string {
-  return [...line].map((char) => char + char).join("");
-}
-
 function renderLogo(theme: Theme, width: number): string[] {
-  const scaled = BASE_LOGO.flatMap((line) => {
-    const expanded = scaleLine(line);
-    return [expanded, expanded];
-  });
-  return scaled.map((line) => center(gradientText(theme, line), width));
+  const compact = width < 108;
+  const header = compact ? NYAN_HEADER.filter((_, index) => index % 2 === 0).map((line) => sampleLine(line, 2)) : NYAN_HEADER;
+  const colors = compact ? NYAN_COLOR_MAP.filter((_, index) => index % 2 === 0).map((line) => sampleLine(line, 2)) : NYAN_COLOR_MAP;
+
+  return header.map((line, index) => center(renderMappedLine(theme, line, colors[index] ?? ""), width));
 }
 
 class WelcomeHeaderComponent {
@@ -127,7 +186,7 @@ class WelcomeHeaderComponent {
     const scope = `${this.providerName} / ${this.modelName}`;
 
     lines.push("");
-    lines.push(center(this.theme.bold(gradientText(this.theme, "pi")), width));
+    lines.push(center(this.theme.bold(this.theme.fg("accent", "pi")), width));
     lines.push(center(this.theme.fg("muted", scope), width));
     lines.push("");
     lines.push(...renderLogo(this.theme, width));
