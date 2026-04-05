@@ -5,13 +5,6 @@
   "defaultThinkingLevel": "medium",
   "hideThinkingBlock": true,
   "showHardwareCursor": true,
-  "npmCommand": [
-    "mise",
-    "exec",
-    "node@22",
-    "--",
-    "npm"
-  ],
   "extensions": [
     "/Users/cperaltarayon/code/pi-nvim/extension.ts"
   ],
