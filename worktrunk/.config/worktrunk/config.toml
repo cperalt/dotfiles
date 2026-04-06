@@ -3,8 +3,7 @@
 worktree-path = "{{ repo_path }}/../{{ branch | sanitize }}"
 
 [switch]
-# tmux sessions handle navigation — use --cd to override when needed
-no-cd = true
+cd = false
 
 [pre-start]
 # Symlink node_modules from main worktree (shared deps, no install needed)
