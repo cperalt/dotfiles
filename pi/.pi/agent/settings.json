@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.65.0",
+  "lastChangelogVersion": "0.65.2",
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.4",
   "defaultThinkingLevel": "medium",
@@ -16,6 +16,8 @@
     "openai-codex/gpt-5.4"
   ],
   "packages": [
-    "npm:pi-web-access"
+    "npm:pi-web-access",
+    "npm:pi-subagents",
+    "npm:pi-prompt-template-model"
   ]
 }
