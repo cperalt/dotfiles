@@ -12,6 +12,7 @@ This command is the canonical workflow. Do not treat brainstorming, planning, pl
 ### Phase 1 — Brainstorm in-session
 You must:
 - inspect repository context first
+- for broad repository discovery, use `semantic_search` before guessing keywords or file paths, then verify important details with targeted reads
 - ask clarifying questions one at a time
 - identify constraints and success criteria
 - propose 2-3 approaches with trade-offs and a recommendation
@@ -29,6 +30,7 @@ After the design is approved, you must:
 
 ### Phase 3 — Plan in-session
 After the written spec is approved, you must:
+- use `semantic_search` for broad architecture or dependency discovery when planning touches unclear areas, then verify concrete details with file reads
 - create an implementation plan in the current session
 - write it to `.pi/plans/YYYY-MM-DD-<topic>.md`
 - break work into small, reviewable, commit-sized tasks

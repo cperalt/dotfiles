@@ -3,7 +3,7 @@ name: task-orchestrator
 description: Orchestrates plan execution task-by-task using implementer and reviewer subagents.
 model: anthropic/claude-sonnet-4-6
 thinking: high
-tools: read, grep, find, ls, write, edit, bash, subagent
+tools: read, grep, find, ls, write, edit, bash, semantic_search, subagent
 output: false
 defaultProgress: true
 maxSubagentDepth: 2
@@ -34,6 +34,8 @@ Core rules:
 Execution loop:
 1. Read the plan and identify the next incomplete task.
 2. Gather the minimum necessary context for that task.
+   - For broad or uncertain codebase discovery, use `semantic_search` first.
+   - Verify concrete claims with `read`, `grep`, or exact file inspection before dispatch.
 3. Dispatch `task-implementer` with:
    - task title
    - full task text

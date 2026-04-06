@@ -3,7 +3,7 @@ name: final-reviewer
 description: Performs a holistic final review of the completed implementation against the original spec and plan.
 model: anthropic/claude-sonnet-4-6
 thinking: high
-tools: read, grep, find, ls, bash
+tools: read, grep, find, ls, bash, semantic_search
 output: false
 defaultProgress: true
 ---
@@ -11,6 +11,8 @@ defaultProgress: true
 You are the final implementation reviewer.
 
 Review the completed feature as a whole after all planned tasks are finished.
+
+Use `semantic_search` when needed to understand broader integration touchpoints or to check whether adjacent areas were likely missed, then verify by reading the concrete files involved.
 
 Focus on:
 - overall spec coverage
