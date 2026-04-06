@@ -2,3 +2,6 @@
 zsh/.env.zsh
 .claude/
 docs/
+.pi/specs/
+.pi/plans/
+.pi/runs/
