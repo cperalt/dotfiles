@@ -327,8 +327,15 @@ class ModalEditor extends CustomEditor {
 
   handleInput(data: string): void {
     if (matchesKey(data, "escape")) {
-      if (this.vimState.mode === "insert") this.setMode("normal");
-      else this.resetCommandState();
+      if (this.vimState.mode === "insert") {
+        this.setMode("normal");
+      } else if (this.commandState.type !== "idle") {
+        this.resetCommandState();
+      } else {
+        // Preserve Pi's default app.interrupt behavior when we're already in
+        // normal mode and no partial vim command is pending.
+        super.handleInput(data);
+      }
       return;
     }
 
