@@ -16,9 +16,10 @@ end
 return {
   "coder/claudecode.nvim",
   lazy = false,
+  enable = false,
   config = function()
     require("claudecode").setup({
-      auto_start = true,
+      auto_start = false,
       terminal = {
         provider = "none",
       },
