@@ -73,6 +73,42 @@ Scripts are **not a stow package** — they are referenced by their full repo pa
 
 The `pi` stow package manages `~/.pi/agent/settings.json` and `~/.pi/agent/extensions/`. It uses `--no-folding` because the target directory contains unmanaged files (`auth.json`, `sessions/`, `git/`) that must not be touched.
 
+**CLI install/update strategy:** pi itself should be managed by the `mise` npm backend, not by `npm install -g` under an active project Node version. Using `npm install -g @mariozechner/pi-coding-agent` inside a repo will install pi into that repo's active Node toolchain (for example Node 22), which causes `pi` to resolve differently across directories.
+
+Use these commands instead:
+
+```bash
+# Install/update pi itself via mise (stable across repos)
+mise install npm:@mariozechner/pi-coding-agent@latest
+mise reshim
+
+# Verify
+which pi
+pi -v
+```
+
+Avoid this for pi itself:
+
+```bash
+npm install -g @mariozechner/pi-coding-agent
+```
+
+**Pi packages** (such as `pi-web-access`, `pi-subagents`, `pi-prompt-template-model`, `pi-markdown-preview`) should still be installed with pi itself, e.g.:
+
+```bash
+pi install npm:pi-markdown-preview
+pi update
+pi list
+```
+
+This repo pins pi's npm package-manager operations via `pi/.pi/agent/settings.json`:
+
+```json
+"npmCommand": ["mise", "exec", "node@25.9.0", "--", "npm"]
+```
+
+That means pi package installs/updates use a stable npm context even when the current project activates a different Node version with mise. Existing pi packages do **not** need to be reinstalled just because pi itself was moved to mise management; `pi list` should confirm the current installed package locations.
+
 **After adding or removing files in `pi/.pi/agent/extensions/`**, you must re-stow for the new symlinks to appear at runtime:
 
 ```bash
