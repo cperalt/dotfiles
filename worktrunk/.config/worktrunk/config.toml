@@ -6,27 +6,31 @@ worktree-path = "{{ repo_path }}/../{{ branch | sanitize }}"
 cd = false
 
 [pre-start]
-# Symlink node_modules from main worktree (shared deps, no install needed)
-# PR review flow skips this — npm ci runs in post-start background instead
-symNodeModules = """
-[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0
-ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules
-"""
-# Copy nx cache from main worktree (uses reflinks on APFS)
-copyIgnore = "[ -n \"${WT_REVIEW_ONLY:-}\" ] && exit 0; wt step copy-ignored"
 # Copy migrations-index from main so esbuild can resolve the import in dev mode
+# (symNodeModules and copyIgnore are handled by the project config)
 migrations = "[ -n \"${WT_REVIEW_ONLY:-}\" ] && exit 0; [ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{ primary_worktree_path }}/db/migrations-index.ts {{ worktree_path }}/db/migrations-index.ts || true"
-# Create tmux session with Servers window (6 empty panes, tiled)
+# Create tmux session — review mode: window 0 only (3 panes for claude/nvim/deps)
+# Normal mode: full setup with Servers window (6 panes, tiled)
 tmux = """
 SESSION="mpos-{{ branch | sanitize }}"
 if ! tmux has-session -t "$SESSION" 2>/dev/null; then
   tmux new-session -d -s "$SESSION" -c {{ worktree_path }}
-  tmux new-window -t "$SESSION" -n "Servers" -c {{ worktree_path }}
-  for i in 1 2 3 4 5; do
-    tmux split-window -t "$SESSION:Servers" -c {{ worktree_path }}
-    tmux select-layout -t "$SESSION:Servers" tiled
-  done
-  tmux select-window -t "$SESSION:0"
+  if [ -n "${WT_REVIEW_ONLY:-}" ]; then
+    # Same 25/75 split as normal mode, plus small pane for deps
+    tmux split-window -h -t "$SESSION:0.0" -l 75% -c {{ worktree_path }}
+    tmux split-window -v -t "$SESSION:0.1" -l 20% -c {{ worktree_path }}
+    tmux select-pane -t "$SESSION:0.0"
+  else
+    # Split window 0: left pane (25%) for work, right pane (75%) for nvim
+    tmux split-window -h -t "$SESSION:0.0" -l 75% -c {{ worktree_path }}
+    tmux select-pane -t "$SESSION:0.1"
+    tmux new-window -t "$SESSION" -n "Servers" -c {{ worktree_path }}
+    for i in 1 2 3 4 5; do
+      tmux split-window -t "$SESSION:Servers" -c {{ worktree_path }}
+      tmux select-layout -t "$SESSION:Servers" tiled
+    done
+    tmux select-window -t "$SESSION:0"
+  fi
 fi
 """
 
@@ -36,12 +40,12 @@ editor = """
 SESSION="mpos-{{ branch | sanitize }}"
 tmux send-keys -t "$SESSION:0.1" "nvim" Enter
 """
-# For PR review flow, run bun install in the background on Servers.0 pane
-# Claude starts immediately on window 0 while deps install in parallel
+# For PR review flow, run bun install in the background on pane 0.2
+# Claude starts immediately on pane 0.0 while deps install in parallel
 reviewDeps = """
 [ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
 SESSION="mpos-{{ branch | sanitize }}"
-tmux send-keys -t "$SESSION:Servers.0" "cd {{ worktree_path }} && bun install" Enter
+tmux send-keys -t "$SESSION:0.2" "cd {{ worktree_path }} && bun install" Enter
 """
 # Start servers in background (staggered to avoid Nx daemon contention)
 servers = """
