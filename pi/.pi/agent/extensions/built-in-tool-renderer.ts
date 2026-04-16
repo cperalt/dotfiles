@@ -10,6 +10,7 @@
 
 import type {
   BashToolDetails,
+  EditToolDetails,
   ExtensionAPI,
   FindToolDetails,
   GrepToolDetails,
@@ -26,6 +27,11 @@ import {
   createWriteTool,
 } from "@mariozechner/pi-coding-agent";
 import { Container, Text } from "@mariozechner/pi-tui";
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { isAbsolute, resolve } from "node:path";
+import { renderEditDiffResult, renderWriteDiffResult } from "./tool-display-vendored/diff-renderer.js";
+import { DEFAULT_TOOL_DISPLAY_CONFIG, type ToolDisplayConfig } from "./tool-display-vendored/types.js";
 
 function countNonEmptyLines(text: string) {
   return text.split("\n").filter((line) => line.trim().length > 0).length;
@@ -88,8 +94,117 @@ function emptyResult() {
   return new Container();
 }
 
+function extractTextOutput(result: { content?: unknown }) {
+  const blocks = Array.isArray(result.content) ? result.content : [];
+  return blocks
+    .filter(
+      (block): block is { type: string; text: string } =>
+        typeof block === "object" &&
+        block !== null &&
+        "type" in block &&
+        (block as { type?: string }).type === "text" &&
+        typeof (block as { text?: unknown }).text === "string",
+    )
+    .map((block) => block.text)
+    .join("\n");
+}
+
+function resolveWriteTargetPath(cwd: string, rawPath: string) {
+  const trimmed = rawPath.trim();
+  if (!trimmed) {
+    return cwd;
+  }
+
+  const expandedHome =
+    trimmed.startsWith("~/") || trimmed.startsWith("~\\")
+      ? `${homedir()}${trimmed.slice(1)}`
+      : trimmed;
+
+  return isAbsolute(expandedHome) ? expandedHome : resolve(cwd, expandedHome);
+}
+
+function captureExistingWriteContent(cwd: string, rawPath: unknown) {
+  if (typeof rawPath !== "string" || !rawPath.trim()) {
+    return { existed: false };
+  }
+
+  const resolvedPath = resolveWriteTargetPath(cwd, rawPath);
+  if (!existsSync(resolvedPath)) {
+    return { existed: false };
+  }
+
+  try {
+    return {
+      existed: true,
+      content: readFileSync(resolvedPath, "utf8"),
+    };
+  } catch {
+    return { existed: true };
+  }
+}
+
+function getToolPathArg(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const path = (value as { path?: unknown; file_path?: unknown }).path
+    ?? (value as { path?: unknown; file_path?: unknown }).file_path;
+  return typeof path === "string" ? path : undefined;
+}
+
+function getToolContentArg(value: unknown): string | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const content = (value as { content?: unknown }).content;
+  return typeof content === "string" ? content : undefined;
+}
+
+function countTextLines(value: unknown): number {
+  if (typeof value !== "string") {
+    return 0;
+  }
+  const normalized = value.replace(/\r/g, "");
+  const lines = normalized.split("\n");
+  if (lines.length > 0 && lines[lines.length - 1] === "") {
+    lines.pop();
+  }
+  return lines.length;
+}
+
+function getEditLineCount(value: unknown): number {
+  if (!value || typeof value !== "object") return 0;
+  const edits = Array.isArray((value as { edits?: unknown[] }).edits)
+    ? (value as { edits: unknown[] }).edits
+    : [];
+
+  if (edits.length > 0) {
+    return edits.reduce<number>((total, edit) => {
+      if (!edit || typeof edit !== "object") return total;
+      return total + countTextLines((edit as { newText?: unknown }).newText);
+    }, 0);
+  }
+
+  return countTextLines((value as { newText?: unknown }).newText);
+}
+
+function formatLineCountSuffix(lineCount: number): string {
+  return ` (${lineCount} ${lineCount === 1 ? "line" : "lines"})`;
+}
+
+const DIFF_CONFIG: ToolDisplayConfig = {
+  ...DEFAULT_TOOL_DISPLAY_CONFIG,
+  registerToolOverrides: { ...DEFAULT_TOOL_DISPLAY_CONFIG.registerToolOverrides },
+  enableNativeUserMessageBox: false,
+  readOutputMode: "hidden",
+  searchOutputMode: "hidden",
+  mcpOutputMode: "hidden",
+  bashOutputMode: "opencode",
+  diffViewMode: "auto",
+  diffSplitMinWidth: 120,
+  diffCollapsedLines: 24,
+  diffWordWrap: true,
+};
+
 export default function (pi: ExtensionAPI) {
   const cwd = process.cwd();
+  const pendingWriteMeta = new Map<string, { fileExistedBeforeWrite: boolean; previousContent?: string }>();
 
   const originalRead = createReadTool(cwd);
   pi.registerTool({
@@ -357,7 +472,35 @@ export default function (pi: ExtensionAPI) {
       return originalEdit.execute(toolCallId, params, signal, onUpdate);
     },
 
-    // Intentionally no render overrides so Pi keeps the built-in diff renderer.
+    renderCall(args, theme, context) {
+      const path = getToolPathArg(args) ?? "...";
+      const lineCount = getEditLineCount(args);
+      context.state.detail = `${path}${formatLineCountSuffix(lineCount)}`;
+      return renderHeader(theme, context, "Edit", context.state.detail, context.state.summary);
+    },
+
+    renderResult(result, options, theme, context) {
+      const lineCount = getEditLineCount(context?.args);
+      if (options.isPartial) {
+        return new Text(theme.fg("warning", `Editing...${formatLineCountSuffix(lineCount)}`), 0, 0);
+      }
+
+      const fallbackText = extractTextOutput(result);
+      if (context?.isError || (result as { isError?: boolean }).isError) {
+        return new Text(theme.fg("error", fallbackText || "Edit failed."), 0, 0);
+      }
+
+      const details = (result as { details?: unknown }).details as EditToolDetails | undefined;
+      context.state.summary = "diff";
+      updateHeader(theme, context, "Edit", context.state.detail, context.state.summary);
+      return renderEditDiffResult(
+        details,
+        { expanded: options.expanded, filePath: getToolPathArg(context?.args) },
+        DIFF_CONFIG,
+        theme,
+        fallbackText,
+      );
+    },
   });
 
   const originalWrite = createWriteTool(cwd);
@@ -368,9 +511,51 @@ export default function (pi: ExtensionAPI) {
     parameters: originalWrite.parameters,
 
     async execute(toolCallId, params, signal, onUpdate) {
+      const previous = captureExistingWriteContent(cwd, params.path);
+      pendingWriteMeta.set(toolCallId, {
+        fileExistedBeforeWrite: previous.existed,
+        previousContent: previous.content,
+      });
       return originalWrite.execute(toolCallId, params, signal, onUpdate);
     },
 
-    // Intentionally no render overrides so Pi keeps the built-in detailed renderer.
+    renderCall(args, theme, context) {
+      const path = getToolPathArg(args) ?? "...";
+      const lineCount = countTextLines(getToolContentArg(args));
+      context.state.detail = `${path}${formatLineCountSuffix(lineCount)}`;
+      return renderHeader(theme, context, "Write", context.state.detail, context.state.summary);
+    },
+
+    renderResult(result, options, theme, context) {
+      const lineCount = countTextLines(getToolContentArg(context?.args));
+      if (options.isPartial) {
+        return new Text(theme.fg("warning", `Writing...${formatLineCountSuffix(lineCount)}`), 0, 0);
+      }
+
+      const fallbackText = extractTextOutput(result);
+      if (context?.isError || (result as { isError?: boolean }).isError) {
+        return new Text(theme.fg("error", fallbackText || "Write failed."), 0, 0);
+      }
+
+      const meta = context?.toolCallId ? pendingWriteMeta.get(context.toolCallId) : undefined;
+      if (context?.toolCallId) {
+        pendingWriteMeta.delete(context.toolCallId);
+      }
+
+      context.state.summary = meta?.fileExistedBeforeWrite ? "updated" : "created";
+      updateHeader(theme, context, "Write", context.state.detail, context.state.summary);
+      return renderWriteDiffResult(
+        getToolContentArg(context?.args),
+        {
+          expanded: options.expanded,
+          filePath: getToolPathArg(context?.args),
+          previousContent: meta?.previousContent,
+          fileExistedBeforeWrite: meta?.fileExistedBeforeWrite ?? false,
+        },
+        DIFF_CONFIG,
+        theme,
+        fallbackText,
+      );
+    },
   });
 }
