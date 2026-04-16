@@ -60,7 +60,6 @@ export default function (pi: ExtensionAPI) {
           if (statuses !== "") leftParts.push(statuses);
           const left = leftParts.join(theme.fg("dim", " | "));
           const right = [
-            cwdPart,
             branchPart,
             thinkingPart,
             modelPart,
