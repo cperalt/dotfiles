@@ -3,6 +3,9 @@ node = "latest"
 "npm:@mariozechner/pi-coding-agent" = "latest"
 "npm:typescript-language-server" = "latest"
 
+[hooks]
+postinstall = "hash -r"
+
 [settings]
 idiomatic_version_file_enable_tools = ["node"]
 auto_install = true
