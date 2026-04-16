@@ -85,13 +85,13 @@ keybindings:
         branch=$(gh pr view {{.PrNumber}} --json headRefName -q .headRefName) &&
         session="mpos-${branch//\//-}" &&
         WT_REVIEW_ONLY=1 WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch pr:{{.PrNumber}} &&
-        tmux send-keys -t "$session:0.0" "claude --model anthropic.claude-sonnet-4-6 '/review-pr {{.PrNumber}}'" Enter
+        tmux send-keys -t "$session:0.0" "claude --model claude-sonnet-4-6 '/review-pr {{.PrNumber}}'" Enter
     - key: U
       command: >
         branch=$(gh pr view {{.PrNumber}} --json headRefName -q .headRefName) &&
         session="mpos-${branch//\//-}" &&
         WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch "$branch" &&
-        tmux send-keys -t "$session:0.0" "claude --model anthropic.claude-sonnet-4-6 '/address-comments {{.PrNumber}}'" Enter
+        tmux send-keys -t "$session:0.0" "claude --model claude-sonnet-4-6 '/address-comments {{.PrNumber}}'" Enter
 repoPaths: {}
 theme:
   ui:
