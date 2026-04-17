@@ -27,7 +27,7 @@ return {
       { "<leader>g", group = "Git" },
       { "<leader>h", group = "Hunk" },
       { "<leader>l", group = "Lint" },
-      { "<leader>m", group = "Format" },
+      { "<leader>m", group = "Harpoon / Format" },
       { "<leader>r", group = "Refactor" },
       { "<leader>s", group = "Split" },
       { "<leader>t", group = "Test" },
