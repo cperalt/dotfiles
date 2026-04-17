@@ -1,0 +1,9 @@
+#:schema https://github.com/joshmedeski/sesh/raw/main/sesh.schema.json
+
+# Default session types sort order
+sort_order = [
+  "tmux",
+  "config",
+  "tmuxinator",
+  "zoxide",
+]

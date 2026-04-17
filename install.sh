@@ -37,7 +37,7 @@ brew bundle --file="$DOTFILES/Brewfile"
 success "Homebrew packages installed"
 
 # --- Step 4: Symlinks via GNU Stow ---
-STOW_PACKAGES=(zsh tmux wezterm ghostty nvim aerospace yazi karabiner mise)
+STOW_PACKAGES=(zsh tmux wezterm ghostty nvim aerospace yazi karabiner mise sesh)
 # Packages that must use --no-folding because they share a target dir with unmanaged files
 STOW_NO_FOLD_PACKAGES=(pi)
 
