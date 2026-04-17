@@ -13,18 +13,34 @@ return {
     -- Toggle harpoon quick menu (using Telescope)
     local conf = require("telescope.config").values
     local function toggle_telescope(harpoon_files)
-      local file_paths = {}
+      local entries = {}
       for _, item in ipairs(harpoon_files.items) do
-        table.insert(file_paths, item.value)
+        local row = item.context and item.context.row or 0
+        table.insert(entries, {
+          value = item.value,
+          display = item.value .. ":" .. row,
+          ordinal = item.value,
+          filename = item.value,
+          lnum = row,
+        })
       end
 
       require("telescope.pickers")
         .new({}, {
           prompt_title = "Harpoon",
           finder = require("telescope.finders").new_table({
-            results = file_paths,
+            results = entries,
+            entry_maker = function(entry)
+              return {
+                value = entry.value,
+                display = entry.display,
+                ordinal = entry.ordinal,
+                filename = entry.value,
+                lnum = entry.lnum,
+              }
+            end,
           }),
-          previewer = conf.file_previewer({}),
+          previewer = conf.grep_previewer({}),
           sorter = conf.generic_sorter({}),
         })
         :find()
