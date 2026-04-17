@@ -5,3 +5,16 @@ sort_order = [
   "tmux",
   "config",
 ]
+
+# Hide config sessions from the tmux session list to avoid duplicates
+# blacklist = ["tmux config", "zsh config"]
+
+[[session]]
+name = "tmux config"
+path = "~/.dotfiles/tmux"
+startup_command = "nvim .tmux.conf"
+
+[[session]]
+name = "zsh config"
+path = "~/.dotfiles/zsh"
+startup_command = "nvim .zshrc"
