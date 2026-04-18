@@ -79,9 +79,8 @@ The `pi` stow package manages `~/.pi/agent/settings.json` and `~/.pi/agent/exten
 Use these commands instead:
 
 ```bash
-# Install/update pi itself via mise (stable across repos)
-mise install npm:@mariozechner/pi-coding-agent@latest
-mise reshim
+# Update pi itself via mise (stable across repos)
+mise upgrade npm:@mariozechner/pi-coding-agent
 
 # Verify
 which pi
