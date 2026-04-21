@@ -5,12 +5,21 @@ worktree-path = "{{ repo_path }}/../{{ branch | sanitize }}"
 [switch]
 cd = false
 
-[pre-start]
-# Copy migrations-index from main so esbuild can resolve the import in dev mode
-# (symNodeModules and copyIgnore are handled by the project config)
-migrations = "[ -n \"${WT_REVIEW_ONLY:-}\" ] && exit 0; [ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{ primary_worktree_path }}/db/migrations-index.ts {{ worktree_path }}/db/migrations-index.ts || true"
-# Create tmux session — review mode: window 0 only (3 panes for claude/nvim/deps)
-# Normal mode: full setup with Servers window (6 panes, tiled)
+[[pre-start]]
+# Symlink node_modules from main worktree (shared deps, no install needed)
+symNodeModules = """
+[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0
+ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules
+"""
+
+[[pre-start]]
+# Copy nx cache from main worktree (uses reflinks on APFS)
+copyIgnore = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; wt step copy-ignored'
+
+[[pre-start]]
+migrations = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; [ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{ primary_worktree_path }}/db/migrations-index.ts {{ worktree_path }}/db/migrations-index.ts || true'
+
+[[pre-start]]
 tmux = """
 SESSION="mpos-{{ branch | sanitize }}"
 if ! tmux has-session -t "$SESSION" 2>/dev/null; then
@@ -123,8 +132,7 @@ if ! tmux list-windows -t "$SESSION" -F '#W' 2>/dev/null | grep -q '^Servers$'; 
 fi
 """
 
-[pre-remove]
-# Kill entire server process trees before removing the worktree
+[[pre-remove]]
 killServers = """
 kill_tree() {
   local pid="$1"
@@ -138,7 +146,8 @@ for pid in $(tmux list-panes -t "$SESSION:Servers" -F '#{pane_pid}' 2>/dev/null)
   kill_tree "$pid"
 done
 """
-# Kill any Neovim instances running in the worktree (prevents orphaned LSP servers)
+
+[[pre-remove]]
 killNvim = """
 for pid in $(ps -eo pid,comm | awk '/nvim/{print $1}'); do
   cwd=$(lsof -p "$pid" 2>/dev/null | awk '$4=="cwd"{print $NF}')
