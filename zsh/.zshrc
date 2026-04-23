@@ -9,6 +9,7 @@ export PATH="${HOMEBREW_PREFIX}/opt/openssl/bin:$PATH"
 source /opt/homebrew/share/powerlevel10k/powerlevel10k.zsh-theme
 export ENABLE_LSP_TOOL=1
 export ENABLE_TOOL_SEARCH=true
+# export COMPOSE_PROJECT_NAME=mortgage-pos
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
