@@ -16,69 +16,49 @@ const DEFAULT_SETTINGS: WelcomeHeaderSettings = {
   timeoutSeconds: 12,
 };
 
-const NYAN_HEADER = [
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ███████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ███████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
-  " ██████████████████████████████████████████████████████████████████████████████████████████████████████ ",
+const GHOSTTY_LOGO_FRAME = [
+  "                                      <span class=\"b\">+++==*%%%%%%%%%%%%*==+++</span>                                      ",
+  "                                  <span class=\"b\">++****++</span>                <span class=\"b\">++****++</span>                                  ",
+  "                              <span class=\"b\">++**++</span>                            <span class=\"b\">++**++</span>                              ",
+  "                          <span class=\"b\">xx**+=</span>          o+*%$@@@@@@$%*+o          <span class=\"b\">=+**xx</span>                          ",
+  "                        <span class=\"b\">xx**oo</span>      \u00b7=$@@@@@@@$$$$$$$$@@@@@@@$=\u00b7      <span class=\"b\">oo**xx</span>                        ",
+  "                      <span class=\"b\">xx**</span>       x$@@@$$$$$$$$$$$$$$$$$$$$$$$$@@@$x       <span class=\"b\">**xx</span>                      ",
+  "                    <span class=\"b\">ox**</span>      \u00b7$@@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@@$\u00b7      <span class=\"b\">**xo</span>                    ",
+  "                    <span class=\"b\">==+~</span>    ~@@@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@@@~    <span class=\"b\">~+==</span>                    ",
+  "                  <span class=\"b\">x+++</span>     $@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@$     <span class=\"b\">+++x</span>                  ",
+  "                  <span class=\"b\">==</span>     \u00b7@@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@@\u00b7     <span class=\"b\">==</span>                  ",
+  "                <span class=\"b\">ox++</span>    ~@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@~    <span class=\"b\">++xo</span>                ",
+  "                <span class=\"b\">+++~</span>    @$$$$$@@@@@@@@@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@    <span class=\"b\">~+++</span>                ",
+  "                <span class=\"b\">==</span>     $$$$$@@%%%%%%$$$$$$$@@@@@$$$@@@@@@@@@@@@@@@@@@@@$$$$$$     <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>     @$$$$*                  $$$$%                  =$$$$$@     <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7$$$$@                   x@$@                    @$$$$$\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$%                 \u00b7$$$$%                  *$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$@@$%%$$$$$$@@@@@@@@$$$$@@@@@@@@@@@@@@@@@@@@$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$@@@@@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    \u00b7@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@\u00b7    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>    ~$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$~    <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==</span>     @@$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$@@     <span class=\"b\">==</span>                ",
+  "                <span class=\"b\">==x\u00b7</span>    $@@$$$$$$$$$@@@@@@@@@@$$$$$$$$@@@@@@@@@@$$$$$$$$$@@$    <span class=\"b\">\u00b7+==</span>                ",
+  "                <span class=\"b\">++++</span>      =@@@@@@@@@*       x$@@@@@@@@$x       *@@@@@@@@@=      <span class=\"b\">++++</span>                ",
+  "                <span class=\"b\">xx==++</span>                                                        <span class=\"b\">++==oo</span>                ",
+  "                  <span class=\"b\">++===+</span>              <span class=\"b\">++%%+o</span>            <span class=\"b\">o+%%++</span>              <span class=\"b\">+===++</span>                  ",
+  "                    <span class=\"b\">++=====%+=++++*=*========***++++***========*=*++++=+%=====++</span>                    ",
+  "                      <span class=\"b\">xx++==******====++</span>  <span class=\"b\">++==********==++</span>  <span class=\"b\">++====******==++xx</span>                      ",
+  "                              <span class=\"b\">++++</span>              <span class=\"b\">++++</span>              <span class=\"b\">++++</span>                              "
 ];
 
-const NYAN_COLOR_MAP = [
-  " WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWWWWWWWWWW ",
-  " RRRRWWWWWWWWWWWWWWWWRRRRRRRRRRRRRRRRWWWWWWWWWWWWWWWWBBPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPBBWWWWWWWWWWWW ",
-  " RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBPPPPPPHHHHHHHHHHHHHHHHHHHHHHHHHHPPPPPPBBWWWWWWWWWW ",
-  " RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBPPPPHHHHHHHHHHHHFFHHHHFFHHHHHHHHHHPPPPBBWWWWWWWWWW ",
-  " OOOORRRRRRRRRRRRRRRROOOOOOOOOOOOOOOORRRRRRRRRRRRRRBBPPHHHHFFHHHHHHHHHHHHHHHHHHHHHHHHHHHHPPBBWWWWWWWWWW ",
-  " OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOBBPPHHHHHHHHHHHHHHHHHHHHBBBBHHHHFFHHHHPPBBWWBBBBWWWW ",
-  " OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOBBPPHHHHHHHHHHHHHHHHHHBBMMMMBBHHHHHHHHPPBBBBMMMMBBWW ",
-  " YYYYOOOOOOOOOOOOOOOOYYYYYYYYYYYYYYYYOOBBBBBBBBOOOOBBPPHHHHHHHHHHHHFFHHHHBBMMMMMMBBHHHHHHPPBBMMMMMMBBWW ",
-  " YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYBBMMMMBBBBOOBBPPHHHHHHHHHHHHHHHHHHBBMMMMMMMMBBBBBBBBMMMMMMMMBBWW ",
-  " YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYBBBBMMMMBBBBBBPPHHHHHHFFHHHHHHHHHHBBMMMMMMMMMMMMMMMMMMMMMMMMBBWW ",
-  " GGGGYYYYYYYYYYYYYYYYGGGGGGGGGGGGGGGGYYYYBBBBMMMMBBBBPPHHHHHHHHHHHHHHFFBBMMMMMMMMMMMMMMMMMMMMMMMMMMMMBB ",
-  " GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGBBBBMMMMBBPPHHFFHHHHHHHHHHHHBBMMMMMMCCBBMMMMMMMMMMCCBBMMMMBB ",
-  " GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGBBBBBBBBPPHHHHHHHHHHHHHHHHBBMMMMMMBBBBMMMMMMBBMMBBBBMMMMBB ",
-  " UUUUGGGGGGGGGGGGGGGGUUUUUUUUUUUUUUUUGGGGGGGGGGGGBBBBPPHHHHHHHHHHFFHHHHBBMMrrrrMMMMMMMMMMMMMMMMrrrrBB   ",
-  " UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUBBPPPPHHFFHHHHHHHHHHBBMMrrrrMMBBMMMMBBMMMMBBMMrrrrBB ",
-  " UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUBBPPPPPPHHHHHHHHHHHHHHBBMMMMMMBBBBBBBBBBBBBBMMMMBBWW ",
-  " VVVVUUUUUUUUUUUUUUUUVVVVVVVVVVVVVVVVUUUUUUUUUUUUBBBBBBPPPPPPPPPPPPPPPPPPPPBBMMMMMMMMMMMMMMMMMMMMBBWWWW ",
-  " VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVBBMMMMMMBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWW ",
-  " VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVBBMMMMBBBBWWBBMMMMBBWWWWWWWWWWBBMMMMBBWWBBMMMMBBWWWWWWWW ",
-  " WWWWVVVVVVVVVVVVVVVVWWWWWWWWWWWWWWWWVVVVVVVVVVBBBBBBBBWWWWBBBBBBWWWWWWWWWWWWWWBBBBBBWWWWBBBBWWWWWWWWWW ",
-];
-
-const CATPPUCCIN_MOCHA_HEX: Partial<Record<string, string>> = {
-  C: "#cdd6f4",
-  B: "#11111b",
-  R: "#f38ba8",
-  O: "#fab387",
-  Y: "#f9e2af",
-  G: "#a6e3a1",
-  U: "#89b4fa",
-  P: "#f9e2af",
-  H: "#f5c2e7",
-  F: "#f38ba8",
-  M: "#6c7086",
-  V: "#b4befe",
-  r: "#f38ba8",
-};
-
-const TRANSPARENT_TOKENS = new Set(["W"]);
+const GHOSTTY_BLUE_HEX = "#89b4fa";
+const GHOSTTY_WHITE_HEX = "#cdd6f4";
 
 function getSettingsPath(): string {
   return join(process.env.HOME || process.env.USERPROFILE || homedir(), ".pi", "agent", "settings.json");
@@ -119,12 +99,6 @@ function center(text: string, width: number): string {
   return " ".repeat(left) + text + " ".repeat(right);
 }
 
-function sampleLine(line: string, step: number): string {
-  let out = "";
-  for (let i = 0; i < line.length; i += step) out += line[i] ?? " ";
-  return out;
-}
-
 function hexFg(hex: string, text: string): string {
   const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!match) return text;
@@ -132,32 +106,65 @@ function hexFg(hex: string, text: string): string {
   return `\u001b[38;2;${parseInt(r!, 16)};${parseInt(g!, 16)};${parseInt(b!, 16)}m${text}\u001b[39m`;
 }
 
-function renderMappedLine(_theme: Theme, headerLine: string, colorLine: string): string {
+type GhosttyCell = { char: string; color: "blue" | "white" | null };
+
+function parseGhosttyLine(line: string): GhosttyCell[] {
+  const cells: GhosttyCell[] = [];
+  let inBlueSpan = false;
+
+  for (let i = 0; i < line.length; ) {
+    if (line.startsWith('<span class="b">', i)) {
+      inBlueSpan = true;
+      i += '<span class="b">'.length;
+      continue;
+    }
+
+    if (line.startsWith('</span>', i)) {
+      inBlueSpan = false;
+      i += '</span>'.length;
+      continue;
+    }
+
+    const char = line[i] ?? " ";
+    cells.push({ char, color: char === " " ? null : inBlueSpan ? "blue" : "white" });
+    i++;
+  }
+
+  return cells;
+}
+
+function sampleCells(cells: GhosttyCell[], step: number): GhosttyCell[] {
+  if (step <= 1) return cells;
+  const out: GhosttyCell[] = [];
+  for (let i = 0; i < cells.length; i += step) out.push(cells[i] ?? { char: " ", color: null });
+  return out;
+}
+
+function renderGhosttyLine(line: string, columnStep: number): string {
+  const cells = sampleCells(parseGhosttyLine(line), columnStep);
   let out = "";
 
-  for (let i = 0; i < headerLine.length; i++) {
-    const char = headerLine[i] ?? " ";
-    const colorKey = colorLine[i] ?? " ";
-    const hex = CATPPUCCIN_MOCHA_HEX[colorKey];
-
-    if (char === " " || TRANSPARENT_TOKENS.has(colorKey)) {
+  for (const { char, color } of cells) {
+    if (!color) {
       out += " ";
-    } else if (!hex) {
-      out += char;
     } else {
-      out += hexFg(hex, char);
+      out += hexFg(color === "blue" ? GHOSTTY_BLUE_HEX : GHOSTTY_WHITE_HEX, char);
     }
   }
 
   return out;
 }
 
-function renderLogo(theme: Theme, width: number): string[] {
-  const compact = width < 108;
-  const header = compact ? NYAN_HEADER.filter((_, index) => index % 2 === 0).map((line) => sampleLine(line, 2)) : NYAN_HEADER;
-  const colors = compact ? NYAN_COLOR_MAP.filter((_, index) => index % 2 === 0).map((line) => sampleLine(line, 2)) : NYAN_COLOR_MAP;
+function renderLogo(_theme: Theme, width: number): string[] {
+  // Keep the logo in the terminal-friendly aspect ratio used on narrower screens.
+  // Rendering every source column on fullscreen terminals makes the static frame look too wide,
+  // and it also exaggerates the empty gap between the blue shell and white ghost.
+  const rowStep = 2;
+  const columnStep = 2;
 
-  return header.map((line, index) => center(renderMappedLine(theme, line, colors[index] ?? ""), width));
+  return GHOSTTY_LOGO_FRAME
+    .filter((_, index) => index % rowStep === 0)
+    .map((line) => center(renderGhosttyLine(line, columnStep), width));
 }
 
 class WelcomeHeaderComponent {
