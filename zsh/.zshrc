@@ -135,7 +135,7 @@ wtnc() {
   local branch="$1"
   shift
   WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch --create "$branch"
-  tmux send-keys -t "mpos-${branch}:0.0" "claude '$*'" Enter
+  tmux send-keys -t "${branch}:0.0" "claude '$*'" Enter
 }
 
 # Address PR review comments in an existing worktree's tmux session
@@ -145,7 +145,7 @@ wtac() {
   local branch
   branch="$(gh pr view "$pr" --json headRefName -q .headRefName)"
   WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch "$branch"
-  tmux send-keys -t "mpos-${branch}:0.0" "claude --model claude-sonnet-4-6 '/address-comments ${pr}'" Enter
+  tmux send-keys -t "${branch}:0.0" "claude --model claude-sonnet-4-6 '/address-comments ${pr}'" Enter
 }
 
 # Source sensitive env vars and aliases

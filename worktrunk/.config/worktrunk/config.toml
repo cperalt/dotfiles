@@ -21,7 +21,7 @@ migrations = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; [ -f {{ primary_worktree_p
 
 [[pre-start]]
 tmux = """
-SESSION="mpos-{{ branch | sanitize }}"
+SESSION="{{ branch | sanitize }}"
 if ! tmux has-session -t "$SESSION" 2>/dev/null; then
   tmux new-session -d -s "$SESSION" -c {{ worktree_path }}
   if [ -n "${WT_REVIEW_ONLY:-}" ]; then
@@ -46,20 +46,20 @@ fi
 [post-start]
 # Start nvim on pane 0.0 of window 0
 editor = """
-SESSION="mpos-{{ branch | sanitize }}"
+SESSION="{{ branch | sanitize }}"
 tmux send-keys -t "$SESSION:0.1" "nvim" Enter
 """
 # For PR review flow, run bun install in the background on pane 0.2
 # Claude starts immediately on pane 0.0 while deps install in parallel
 reviewDeps = """
 [ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
-SESSION="mpos-{{ branch | sanitize }}"
+SESSION="{{ branch | sanitize }}"
 tmux send-keys -t "$SESSION:0.2" "cd {{ worktree_path }} && bun install" Enter
 """
 # Start servers in background (staggered to avoid Nx daemon contention)
 servers = """
 [ -n "${WT_SKIP_SERVERS:-}" ] && exit 0
-SESSION="mpos-{{ branch | sanitize }}"
+SESSION="{{ branch | sanitize }}"
 tmux send-keys -t "$SESSION:Servers.0" "adminUI" Enter
 sleep 3
 tmux send-keys -t "$SESSION:Servers.1" "adminAPI" Enter
@@ -77,7 +77,7 @@ tmux send-keys -t "$SESSION:Servers.5" "bpAPI" Enter
 # Switch tmux session (instant, separate background process)
 switchTmuxSesh = """
 [ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
-SESSION="mpos-{{ branch | sanitize }}"
+SESSION="{{ branch | sanitize }}"
 if tmux has-session -t "$SESSION" 2>/dev/null; then
   tmux select-window -t "$SESSION:0"
   if [ -n "${TMUX:-}" ]; then
@@ -90,7 +90,7 @@ fi
 # Kill old servers and start new ones (separate background process)
 killRespawnServers = """
 [ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
-SESSION="mpos-{{ branch | sanitize }}"
+SESSION="{{ branch | sanitize }}"
 
 # Recursively kill all descendants of each pane in other sessions
 kill_tree() {
@@ -101,7 +101,7 @@ kill_tree() {
   kill -9 "$pid" 2>/dev/null || true
 }
 
-for s in $(tmux list-sessions -F '#S' 2>/dev/null | grep '^mpos-' || true); do
+for s in $(tmux list-sessions -F '#S' 2>/dev/null || true); do
   [ "$s" = "$SESSION" ] && continue
   if tmux list-windows -t "$s" -F '#W' 2>/dev/null | grep -q '^Servers$'; then
     for pid in $(tmux list-panes -t "$s:Servers" -F '#{pane_pid}' 2>/dev/null); do
@@ -141,7 +141,7 @@ kill_tree() {
   done
   kill -9 "$pid" 2>/dev/null || true
 }
-SESSION="mpos-{{ branch | sanitize }}"
+SESSION="{{ branch | sanitize }}"
 for pid in $(tmux list-panes -t "$SESSION:Servers" -F '#{pane_pid}' 2>/dev/null); do
   kill_tree "$pid"
 done
@@ -159,4 +159,4 @@ done
 
 [post-remove]
 # Kill the tmux session for the removed worktree
-tmux = "tmux kill-session -t mpos-{{ branch | sanitize }} 2>/dev/null || true"
+tmux = "tmux kill-session -t {{ branch | sanitize }} 2>/dev/null || true"
