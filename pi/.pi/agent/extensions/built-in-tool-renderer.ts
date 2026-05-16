@@ -424,6 +424,8 @@ export default function (pi: ExtensionAPI) {
   });
 
   const originalBash = createBashTool(cwd);
+  const isPsqlCommand = (cmd: unknown) =>
+    typeof cmd === "string" && /(^|[\s;|&(])psql(\s|$)/.test(cmd.trimStart());
   pi.registerTool({
     name: "bash",
     label: "bash",
@@ -451,6 +453,14 @@ export default function (pi: ExtensionAPI) {
       }
       context.state.summary = summary;
       updateHeader(theme, context, "Bash", context.state.detail, summary);
+
+      if (isPsqlCommand(context?.args?.command)) {
+        const command = String(context.args.command);
+        const commandLines = command.split("\n").map((line) => theme.fg("toolTitle", `$ ${line}`));
+        const outputLines = content.text.split("\n").map((line) => theme.fg("text", line));
+        const body = [...commandLines, "", ...outputLines].join("\n");
+        return new Text(body, 0, 0);
+      }
 
       const preview = firstNonEmptyLine(content.text);
       if (preview) {
