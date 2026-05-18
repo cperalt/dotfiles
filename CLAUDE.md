@@ -74,23 +74,34 @@ Scripts are **not a stow package** — they are referenced by their full repo pa
 
 The `pi` stow package manages `~/.pi/agent/settings.json` and `~/.pi/agent/extensions/`. It uses `--no-folding` because the target directory contains unmanaged files (`auth.json`, `sessions/`, `git/`) that must not be touched.
 
-**CLI install/update strategy:** pi itself should be managed by the `mise` npm backend, not by `npm install -g` under an active project Node version. Using `npm install -g @mariozechner/pi-coding-agent` inside a repo will install pi into that repo's active Node toolchain (for example Node 22), which causes `pi` to resolve differently across directories.
+**CLI install/update strategy:** pi itself should be managed by the `mise` npm backend, not by `npm install -g` under an active project Node version. Using `npm install -g @earendil-works/pi-coding-agent` inside a repo will install pi into that repo's active Node toolchain (for example Node 22), which causes `pi` to resolve differently across directories.
+
+As of 0.74+, pi was relocated from `@mariozechner/pi-coding-agent` to `@earendil-works/pi-coding-agent` (the old scope is frozen at 0.73.1, so `mise upgrade` against it silently reports "up to date"). Always use the `@earendil-works` scope going forward.
 
 Use these commands instead:
 
 ```bash
 # Update pi itself via mise (stable across repos)
-mise upgrade npm:@mariozechner/pi-coding-agent
+mise upgrade npm:@earendil-works/pi-coding-agent
 
 # Verify
 which pi
 pi -v
 ```
 
+One-time migration from the old scope:
+
+```bash
+mise uninstall --all npm:@mariozechner/pi-coding-agent
+mise use -g npm:@earendil-works/pi-coding-agent@latest
+```
+
+Also update `~/.config/mise/config.toml` so the pinned tool is `npm:@earendil-works/pi-coding-agent`.
+
 Avoid this for pi itself:
 
 ```bash
-npm install -g @mariozechner/pi-coding-agent
+npm install -g @earendil-works/pi-coding-agent
 ```
 
 **Pi packages** (such as `pi-web-access`, `pi-subagents`, `pi-prompt-template-model`, `pi-markdown-preview`) should still be installed with pi itself, e.g.:
