@@ -1,5 +1,6 @@
 [tools]
 node = "latest"
+"npm:@earendil-works/pi-coding-agent" = "latest"
 "npm:@mariozechner/pi-coding-agent" = "latest"
 "npm:typescript-language-server" = "latest"
 
