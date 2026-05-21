@@ -1,3 +1,11 @@
 lastChangelogVersion: 15.1.8
 modelRoles: 
   default: anthropic/claude-opus-4-7:medium
+  slow: anthropic/claude-opus-4-7:high
+  designer: openai-codex/gpt-5.4:medium
+  vision: openai-codex/gpt-5.4:low
+  smol: anthropic/claude-haiku-4-5-20251001:off
+theme: 
+  dark: titanium
+edit: 
+  mode: hashline
