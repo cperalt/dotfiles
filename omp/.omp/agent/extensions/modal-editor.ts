@@ -28,7 +28,7 @@
 
 import { execFileSync } from "node:child_process";
 import { CustomEditor, type ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
-import { CURSOR_MARKER, matchesKey, truncateToWidth, visibleWidth } from "@oh-my-pi/pi-tui";
+import { CURSOR_MARKER, matchesKey } from "@oh-my-pi/pi-tui";
 import {
 	clampCursor,
 	firstNonBlankCol,
@@ -409,20 +409,6 @@ class ModalEditor extends CustomEditor {
 
 	// ----- render ---------------------------------------------------------------
 
-	private commandSuffix(): string {
-		if (this.vimState.mode !== "normal") return "";
-
-		const state = this.vimState.command;
-		if (state.type === "idle") return "";
-		if (state.type === "count") return ` ${state.digits}`;
-		if (state.type === "g") return ` ${state.count === 1 ? "g" : `${state.count}g`}`;
-		if (state.type === "operator") {
-			const prefix = state.op === "delete" ? "d" : state.op === "change" ? "c" : "y";
-			return ` ${state.count > 1 ? `${state.count}` : ""}${prefix}`;
-		}
-		const prefix = state.op === "delete" ? "d" : state.op === "change" ? "c" : "y";
-		return ` ${state.count > 1 ? `${state.count}` : ""}${prefix}${state.digits}`;
-	}
 
 	render(width: number): string[] {
 		const lines = super.render(width);
@@ -436,11 +422,7 @@ class ModalEditor extends CustomEditor {
 				.replace(new RegExp(`${CURSOR_MARKER}\\x1b\\[7m([\\s\\S])\\x1b\\[0m`, "g"), `${CURSOR_MARKER}$1`);
 		}
 
-		const label = `${this.vimState.mode === "normal" ? " NORMAL" : " INSERT"}${this.commandSuffix()} `;
-		const last = lines.length - 1;
-		if (visibleWidth(lines[last]!) >= label.length) {
-			lines[last] = truncateToWidth(lines[last]!, width - label.length) + label;
-		}
+		// Mode is conveyed by the block (NORMAL) vs beam (INSERT) cursor; no inline label.
 		return lines;
 	}
 }
