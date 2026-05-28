@@ -67,6 +67,10 @@ _fzf_compgen_dir() {
 # Cursor cli neeeded
 export PATH="$HOME/.local/bin:$PATH"
 
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
 
 # --- setup fzf theme ---
 fg="#CBE0F0"
@@ -117,6 +121,7 @@ alias zsh="nvim ~/.dotfiles/zsh/.zshrc"
 alias zshr="source ~/.zshrc"
 alias boo="nvim ~/.dotfiles/ghostty/.config/ghostty/config"
 alias tmx="nvim ~/.dotfiles/tmux/.tmux.conf"
+alias tma="tmux attach-session"
 alias gs="git status"
 alias nrd="npm run dev"
 alias nrl="npm run dev:live"
@@ -170,6 +175,12 @@ function y() {
 export PATH="/Users/cperaltarayon/.codeium/windsurf/bin:$PATH"
 # --- Mise (runtime/env manager) ---
 eval "$(mise activate zsh)"
+
+function chpwd() {
+  if [[ -f .mise.toml || -f .tool-versions || -f .nvmrc || -f .node-version ]]; then
+    mise install --quiet 2>/dev/null
+  fi
+}
 unalias lg 2>/dev/null
 
 lg() {
