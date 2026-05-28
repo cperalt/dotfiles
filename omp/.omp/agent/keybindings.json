@@ -1,3 +1,4 @@
 {
-  "app.model.selectTemporary": "ctrl+y"
+  "app.model.selectTemporary": "ctrl+y",
+  "app.plan.toggle": "ctrl+x"
 }
