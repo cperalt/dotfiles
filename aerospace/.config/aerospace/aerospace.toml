@@ -232,7 +232,7 @@ if.app-id = 'us.zoom.xos'
 run = "move-node-to-workspace Z"
 
 [[on-window-detected]]
-if.app-id = 'app.zen-browser.zen'
+if.app-id = 'com.amazon.workspaces'
 run = "move-node-to-workspace 2"
 
 [[on-window-detected]]
