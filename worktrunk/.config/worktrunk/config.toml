@@ -44,11 +44,6 @@ fi
 """
 
 [post-start]
-# Start nvim on pane 0.0 of window 0
-editor = """
-SESSION="{{ branch | sanitize }}"
-tmux send-keys -t "$SESSION:0.1" "nvim" Enter
-"""
 # For PR review flow, run bun install in the background on pane 0.2
 # Claude starts immediately on pane 0.0 while deps install in parallel
 reviewDeps = """
@@ -107,7 +102,6 @@ for s in $(tmux list-sessions -F '#S' 2>/dev/null || true); do
     for pid in $(tmux list-panes -t "$s:Servers" -F '#{pane_pid}' 2>/dev/null); do
       kill_tree "$pid"
     done
-    tmux kill-window -t "$s:Servers" 2>/dev/null || true
   fi
 done
 
