@@ -2,6 +2,12 @@
  * Modal Editor - vim-like modal editing for the omp prompt editor.
  *
  * Ported from the original @mariozechner/pi extension to @oh-my-pi (OMP).
+ *
+ * The base class is taken from `pi.pi.CustomEditor` (the host-injected SDK
+ * namespace) instead of a module-level import: extension imports of
+ * `@oh-my-pi/pi-coding-agent` resolve to a second copy of the package's
+ * `src/` tree whose `theme` singleton is never initialized, which crashes
+ * paste-placeholder rendering (`theme.fg`) in omp >= 15.4.
  * OMP's pi-tui Editor uses true JS private fields for its internal state,
  * so this adapter only touches the public `Editor` API:
  *
@@ -27,7 +33,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { CustomEditor, type ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
+import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import { CURSOR_MARKER, matchesKey } from "@oh-my-pi/pi-tui";
 import {
 	clampCursor,
@@ -65,369 +71,373 @@ function writeToTerminal(sequence: string): void {
 
 type Snapshot = { text: string; cursor: Pos };
 
-class ModalEditor extends CustomEditor {
-	private vimState: VimState = createInitialVimState();
-	private undoStack: Snapshot[] = [];
+function createModalEditorClass(BaseEditor: ExtensionAPI["pi"]["CustomEditor"]) {
+	return class ModalEditor extends BaseEditor {
+		private vimState: VimState = createInitialVimState();
+		private undoStack: Snapshot[] = [];
 
-	public syncCursorShape(): void {
-		writeToTerminal(this.vimState.mode === "insert" ? CURSOR_BEAM : CURSOR_BLOCK);
-	}
-
-	// ----- vim state helpers ---------------------------------------------------
-
-	private get commandState(): CommandState {
-		return this.vimState.mode === "normal" ? this.vimState.command : createIdleCommandState();
-	}
-
-	private setCommandState(command: CommandState): void {
-		if (this.vimState.mode !== "normal") return;
-		this.vimState = { mode: "normal", command };
-		this.invalidate();
-	}
-
-	private resetCommandState(): void {
-		if (this.vimState.mode === "normal") this.setCommandState(createIdleCommandState());
-	}
-
-	private setMode(mode: "normal" | "insert"): void {
-		this.vimState =
-			mode === "insert"
-				? ({ mode: "insert" } satisfies VimState)
-				: ({ mode: "normal", command: createIdleCommandState() } satisfies VimState);
-		this.syncCursorShape();
-		this.invalidate();
-	}
-
-	// ----- editor adapters -----------------------------------------------------
-
-	private getCursorPos(): Pos {
-		const c = this.getCursor();
-		return { line: c.line, col: c.col };
-	}
-
-	private snapshot(): Snapshot {
-		return { text: this.getText(), cursor: this.getCursorPos() };
-	}
-
-	private pushUndo(): void {
-		this.undoStack.push(this.snapshot());
-		if (this.undoStack.length > MAX_UNDO) this.undoStack.shift();
-	}
-
-	private positionCursor(target: Pos): void {
-		// After setText(), the editor's cursor sits at the end of the buffer.
-		// Reset to (0,0) and step to target with public movers + synthesized arrows.
-		const lines = this.getLines();
-		const clamped = clampCursor(lines, target);
-		this.moveToMessageStart();
-		for (let i = 0; i < clamped.line; i++) super.handleInput(KEY_DOWN);
-		this.moveToLineStart();
-		for (let i = 0; i < clamped.col; i++) super.handleInput(KEY_RIGHT);
-		this.invalidate();
-	}
-
-	private replaceBuffer(text: string, cursor: Pos): void {
-		this.setText(text);
-		this.positionCursor(cursor);
-	}
-
-	private sliceRange(range: Range): string {
-		const normalized = normalizeRange(range.start, range.end);
-		const lines = this.getLines();
-		const text = this.getText();
-		return text.slice(posToIndex(lines, normalized.start), posToIndex(lines, normalized.end));
-	}
-
-	private replaceRange(range: Range, replacement: string, cursor?: Pos): void {
-		const normalized = normalizeRange(range.start, range.end);
-		const lines = this.getLines();
-		const text = this.getText();
-		const start = posToIndex(lines, normalized.start);
-		const end = posToIndex(lines, normalized.end);
-		this.pushUndo();
-		this.replaceBuffer(text.slice(0, start) + replacement + text.slice(end), cursor ?? normalized.start);
-	}
-
-	private deleteRange(range: Range): string {
-		const normalized = normalizeRange(range.start, range.end);
-		const deleted = this.sliceRange(normalized);
-		this.replaceRange(normalized, "", normalized.start);
-		return deleted;
-	}
-
-	// ----- clipboard -----------------------------------------------------------
-
-	private readClipboard(): string {
-		try {
-			return execFileSync("pbpaste", { encoding: "utf8" });
-		} catch {
-			return "";
+		public syncCursorShape(): void {
+			writeToTerminal(this.vimState.mode === "insert" ? CURSOR_BEAM : CURSOR_BLOCK);
 		}
-	}
 
-	private writeClipboard(text: string): void {
-		try {
-			execFileSync("pbcopy", { input: text, encoding: "utf8" });
-		} catch {
-			// pbcopy unavailable: silently drop the yank.
+		// ----- vim state helpers ---------------------------------------------------
+
+		private get commandState(): CommandState {
+			return this.vimState.mode === "normal" ? this.vimState.command : createIdleCommandState();
 		}
-	}
 
-	private yankRange(range: Range): void {
-		const text = this.sliceRange(range);
-		if (text) this.writeClipboard(text);
-	}
+		private setCommandState(command: CommandState): void {
+			if (this.vimState.mode !== "normal") return;
+			this.vimState = { mode: "normal", command };
+			this.invalidate();
+		}
 
-	// ----- vim operations ------------------------------------------------------
+		private resetCommandState(): void {
+			if (this.vimState.mode === "normal") this.setCommandState(createIdleCommandState());
+		}
 
-	private enterInsert(kind: "i" | "a" | "I" | "A" | "o" | "O"): void {
-		const lines = this.getLines();
-		const cur = this.getCursorPos();
+		private setMode(mode: "normal" | "insert"): void {
+			this.vimState =
+				mode === "insert"
+					? ({ mode: "insert" } satisfies VimState)
+					: ({ mode: "normal", command: createIdleCommandState() } satisfies VimState);
+			this.syncCursorShape();
+			this.invalidate();
+		}
 
-		switch (kind) {
-			case "i":
-				this.setMode("insert");
-				return;
-			case "a": {
-				const lineLen = (lines[cur.line] ?? "").length;
-				if (cur.col < lineLen) this.positionCursor({ line: cur.line, col: cur.col + 1 });
-				this.setMode("insert");
-				return;
-			}
-			case "I":
-				this.positionCursor({ line: cur.line, col: firstNonBlankCol(lines, cur.line) });
-				this.setMode("insert");
-				return;
-			case "A":
-				this.positionCursor({ line: cur.line, col: (lines[cur.line] ?? "").length });
-				this.setMode("insert");
-				return;
-			case "o": {
-				this.pushUndo();
-				const next = [...lines];
-				next.splice(cur.line + 1, 0, "");
-				this.replaceBuffer(next.join("\n"), { line: cur.line + 1, col: 0 });
-				this.setMode("insert");
-				return;
-			}
-			case "O": {
-				this.pushUndo();
-				const next = [...lines];
-				next.splice(cur.line, 0, "");
-				this.replaceBuffer(next.join("\n"), { line: cur.line, col: 0 });
-				this.setMode("insert");
-				return;
+		// ----- editor adapters -----------------------------------------------------
+
+		private getCursorPos(): Pos {
+			const c = this.getCursor();
+			return { line: c.line, col: c.col };
+		}
+
+		private snapshot(): Snapshot {
+			return { text: this.getText(), cursor: this.getCursorPos() };
+		}
+
+		private pushUndo(): void {
+			this.undoStack.push(this.snapshot());
+			if (this.undoStack.length > MAX_UNDO) this.undoStack.shift();
+		}
+
+		private positionCursor(target: Pos): void {
+			// After setText(), the editor's cursor sits at the end of the buffer.
+			// Reset to (0,0) and step to target with public movers + synthesized arrows.
+			const lines = this.getLines();
+			const clamped = clampCursor(lines, target);
+			this.moveToMessageStart();
+			for (let i = 0; i < clamped.line; i++) super.handleInput(KEY_DOWN);
+			this.moveToLineStart();
+			for (let i = 0; i < clamped.col; i++) super.handleInput(KEY_RIGHT);
+			this.invalidate();
+		}
+
+		private replaceBuffer(text: string, cursor: Pos): void {
+			this.setText(text);
+			this.positionCursor(cursor);
+		}
+
+		private sliceRange(range: Range): string {
+			const normalized = normalizeRange(range.start, range.end);
+			const lines = this.getLines();
+			const text = this.getText();
+			return text.slice(posToIndex(lines, normalized.start), posToIndex(lines, normalized.end));
+		}
+
+		private replaceRange(range: Range, replacement: string, cursor?: Pos): void {
+			const normalized = normalizeRange(range.start, range.end);
+			const lines = this.getLines();
+			const text = this.getText();
+			const start = posToIndex(lines, normalized.start);
+			const end = posToIndex(lines, normalized.end);
+			this.pushUndo();
+			this.replaceBuffer(text.slice(0, start) + replacement + text.slice(end), cursor ?? normalized.start);
+		}
+
+		private deleteRange(range: Range): string {
+			const normalized = normalizeRange(range.start, range.end);
+			const deleted = this.sliceRange(normalized);
+			this.replaceRange(normalized, "", normalized.start);
+			return deleted;
+		}
+
+		// ----- clipboard -----------------------------------------------------------
+
+		private readClipboard(): string {
+			try {
+				return execFileSync("pbpaste", { encoding: "utf8" });
+			} catch {
+				return "";
 			}
 		}
-	}
 
-	private moveMotion(motion: MotionKey, count: number): void {
-		const target = resolveMotion(this.getLines(), this.getCursorPos(), motion, count);
-		this.positionCursor(target);
-	}
-
-	private executeOperatorMotion(op: Operator, motion: MotionKey, count: number): void {
-		const range = motionRange(this.getLines(), this.getCursorPos(), motion, count);
-		if (!range) return;
-
-		if (op === "yank") {
-			this.yankRange(range);
-			return;
+		private writeClipboard(text: string): void {
+			try {
+				execFileSync("pbcopy", { input: text, encoding: "utf8" });
+			} catch {
+				// pbcopy unavailable: silently drop the yank.
+			}
 		}
 
-		const deleted = this.deleteRange(range);
-		if (deleted) this.writeClipboard(deleted);
-		if (op === "change") this.setMode("insert");
-	}
+		private yankRange(range: Range): void {
+			const text = this.sliceRange(range);
+			if (text) this.writeClipboard(text);
+		}
 
-	private executeLineOp(op: Operator, count: number): void {
-		const lines = [...this.getLines()];
-		const startLine = this.getCursor().line;
-		const endExclusive = Math.min(lines.length, startLine + count);
-		const removed = lines.slice(startLine, endExclusive);
-		const linewiseText = removed.length
-			? `${removed.join("\n")}${endExclusive < lines.length || removed.length > 0 ? "\n" : ""}`
-			: "";
-		if (linewiseText) this.writeClipboard(linewiseText);
+		// ----- vim operations ------------------------------------------------------
 
-		if (op === "yank") return;
+		private enterInsert(kind: "i" | "a" | "I" | "A" | "o" | "O"): void {
+			const lines = this.getLines();
+			const cur = this.getCursorPos();
 
-		this.pushUndo();
+			switch (kind) {
+				case "i":
+					this.setMode("insert");
+					return;
+				case "a": {
+					const lineLen = (lines[cur.line] ?? "").length;
+					if (cur.col < lineLen) this.positionCursor({ line: cur.line, col: cur.col + 1 });
+					this.setMode("insert");
+					return;
+				}
+				case "I":
+					this.positionCursor({ line: cur.line, col: firstNonBlankCol(lines, cur.line) });
+					this.setMode("insert");
+					return;
+				case "A":
+					this.positionCursor({ line: cur.line, col: (lines[cur.line] ?? "").length });
+					this.setMode("insert");
+					return;
+				case "o": {
+					this.pushUndo();
+					const next = [...lines];
+					next.splice(cur.line + 1, 0, "");
+					this.replaceBuffer(next.join("\n"), { line: cur.line + 1, col: 0 });
+					this.setMode("insert");
+					return;
+				}
+				case "O": {
+					this.pushUndo();
+					const next = [...lines];
+					next.splice(cur.line, 0, "");
+					this.replaceBuffer(next.join("\n"), { line: cur.line, col: 0 });
+					this.setMode("insert");
+					return;
+				}
+			}
+		}
 
-		if (op === "delete") {
-			if (lines.length === removed.length) {
-				this.replaceBuffer("", { line: 0, col: 0 });
+		private moveMotion(motion: MotionKey, count: number): void {
+			const target = resolveMotion(this.getLines(), this.getCursorPos(), motion, count);
+			this.positionCursor(target);
+		}
+
+		private executeOperatorMotion(op: Operator, motion: MotionKey, count: number): void {
+			const range = motionRange(this.getLines(), this.getCursorPos(), motion, count);
+			if (!range) return;
+
+			if (op === "yank") {
+				this.yankRange(range);
 				return;
 			}
-			lines.splice(startLine, removed.length);
-			const nextLine = Math.max(0, Math.min(startLine, lines.length - 1));
-			this.replaceBuffer(lines.join("\n"), { line: nextLine, col: 0 });
-			return;
+
+			const deleted = this.deleteRange(range);
+			if (deleted) this.writeClipboard(deleted);
+			if (op === "change") this.setMode("insert");
 		}
 
-		// change: leave a single empty line in place and enter insert
-		if (lines.length === removed.length) {
-			this.replaceBuffer("", { line: 0, col: 0 });
-		} else {
-			lines.splice(startLine, removed.length, "");
-			this.replaceBuffer(lines.join("\n"), { line: startLine, col: 0 });
-		}
-		this.setMode("insert");
-	}
+		private executeLineOp(op: Operator, count: number): void {
+			const lines = [...this.getLines()];
+			const startLine = this.getCursor().line;
+			const endExclusive = Math.min(lines.length, startLine + count);
+			const removed = lines.slice(startLine, endExclusive);
+			const linewiseText = removed.length
+				? `${removed.join("\n")}${endExclusive < lines.length || removed.length > 0 ? "\n" : ""}`
+				: "";
+			if (linewiseText) this.writeClipboard(linewiseText);
 
-	private executeDeleteChar(count: number): void {
-		const cur = this.getCursorPos();
-		const lineText = this.getLines()[cur.line] ?? "";
-		if (cur.col >= lineText.length) return;
-		const end = Math.min(lineText.length, cur.col + count);
-		const deleted = this.deleteRange({ start: cur, end: { line: cur.line, col: end } });
-		if (deleted) this.writeClipboard(deleted);
-	}
-
-	private executePaste(after: boolean, count: number): void {
-		const clip = this.readClipboard();
-		if (!clip) return;
-
-		const lines = [...this.getLines()];
-		const cur = this.getCursorPos();
-		const wantsLinePaste = clip.endsWith("\n");
-
-		if (wantsLinePaste) {
-			const base = clip.replace(/\n$/, "").split("\n");
-			const toInsert: string[] = [];
-			for (let i = 0; i < count; i++) toInsert.push(...base);
+			if (op === "yank") return;
 
 			this.pushUndo();
-			const insertAt = cur.line + (after ? 1 : 0);
-			lines.splice(insertAt, 0, ...toInsert);
-			this.replaceBuffer(lines.join("\n"), { line: insertAt, col: 0 });
-			return;
-		}
 
-		// charwise paste
-		const lineText = lines[cur.line] ?? "";
-		const insertCol = after ? Math.min(lineText.length, cur.col + (lineText.length > 0 ? 1 : 0)) : cur.col;
-		const repeated = clip.repeat(count);
-		const newLine = lineText.slice(0, insertCol) + repeated + lineText.slice(insertCol);
-
-		this.pushUndo();
-		lines[cur.line] = newLine;
-		// In vim, after charwise paste the cursor lands on the last inserted char.
-		const cursorCol = insertCol + repeated.length - 1;
-		this.replaceBuffer(lines.join("\n"), { line: cur.line, col: Math.max(insertCol, cursorCol) });
-	}
-
-	private performUndo(): void {
-		const snap = this.undoStack.pop();
-		if (!snap) return;
-		this.replaceBuffer(snap.text, snap.cursor);
-	}
-
-	private goToLineStart(): void {
-		this.positionCursor({ line: this.getCursor().line, col: 0 });
-	}
-
-	private goToFirstLine(count: number): void {
-		if (count > 1) {
-			this.goToLine(count);
-			return;
-		}
-		this.positionCursor({ line: 0, col: 0 });
-	}
-
-	private goToLastLine(count: number): void {
-		if (count > 1) {
-			this.goToLine(count);
-			return;
-		}
-		const lines = this.getLines();
-		const line = Math.max(0, lines.length - 1);
-		this.positionCursor({ line, col: (lines[line] ?? "").length });
-	}
-
-	private goToLine(count: number): void {
-		const lines = this.getLines();
-		const line = Math.max(0, Math.min(lines.length - 1, count - 1));
-		this.positionCursor({ line, col: 0 });
-	}
-
-	private createTransitionContext(): TransitionContext {
-		return {
-			moveMotion: (motion, count) => this.moveMotion(motion, count),
-			executeOperatorMotion: (op, motion, count) => this.executeOperatorMotion(op, motion, count),
-			executeLineOp: (op, count) => this.executeLineOp(op, count),
-			executeDeleteChar: count => this.executeDeleteChar(count),
-			executePaste: (after, count) => this.executePaste(after, count),
-			goToFirstLine: count => this.goToFirstLine(count),
-			goToLastLine: count => this.goToLastLine(count),
-			goToLineStart: () => this.goToLineStart(),
-			enterInsert: kind => this.enterInsert(kind),
-			undo: () => this.performUndo(),
-		};
-	}
-
-	// ----- input routing -------------------------------------------------------
-
-	handleInput(data: string): void {
-		if (matchesKey(data, "escape")) {
-			if (this.vimState.mode === "insert") {
-				this.setMode("normal");
-			} else if (this.commandState.type !== "idle") {
-				this.resetCommandState();
-			} else {
-				// Already in normal mode with no pending command: defer to the
-				// CustomEditor's escape handling (interrupt, autocomplete dismiss, ...).
-				super.handleInput(data);
+			if (op === "delete") {
+				if (lines.length === removed.length) {
+					this.replaceBuffer("", { line: 0, col: 0 });
+					return;
+				}
+				lines.splice(startLine, removed.length);
+				const nextLine = Math.max(0, Math.min(startLine, lines.length - 1));
+				this.replaceBuffer(lines.join("\n"), { line: nextLine, col: 0 });
+				return;
 			}
-			return;
+
+			// change: leave a single empty line in place and enter insert
+			if (lines.length === removed.length) {
+				this.replaceBuffer("", { line: 0, col: 0 });
+			} else {
+				lines.splice(startLine, removed.length, "");
+				this.replaceBuffer(lines.join("\n"), { line: startLine, col: 0 });
+			}
+			this.setMode("insert");
 		}
 
-		// Control characters (Ctrl+C, Ctrl+R, configured app shortcuts, etc.)
-		// must always reach CustomEditor so app-level hotkeys keep working.
-		if (data.length > 0 && data.charCodeAt(0) < 32) {
+		private executeDeleteChar(count: number): void {
+			const cur = this.getCursorPos();
+			const lineText = this.getLines()[cur.line] ?? "";
+			if (cur.col >= lineText.length) return;
+			const end = Math.min(lineText.length, cur.col + count);
+			const deleted = this.deleteRange({ start: cur, end: { line: cur.line, col: end } });
+			if (deleted) this.writeClipboard(deleted);
+		}
+
+		private executePaste(after: boolean, count: number): void {
+			const clip = this.readClipboard();
+			if (!clip) return;
+
+			const lines = [...this.getLines()];
+			const cur = this.getCursorPos();
+			const wantsLinePaste = clip.endsWith("\n");
+
+			if (wantsLinePaste) {
+				const base = clip.replace(/\n$/, "").split("\n");
+				const toInsert: string[] = [];
+				for (let i = 0; i < count; i++) toInsert.push(...base);
+
+				this.pushUndo();
+				const insertAt = cur.line + (after ? 1 : 0);
+				lines.splice(insertAt, 0, ...toInsert);
+				this.replaceBuffer(lines.join("\n"), { line: insertAt, col: 0 });
+				return;
+			}
+
+			// charwise paste
+			const lineText = lines[cur.line] ?? "";
+			const insertCol = after ? Math.min(lineText.length, cur.col + (lineText.length > 0 ? 1 : 0)) : cur.col;
+			const repeated = clip.repeat(count);
+			const newLine = lineText.slice(0, insertCol) + repeated + lineText.slice(insertCol);
+
+			this.pushUndo();
+			lines[cur.line] = newLine;
+			// In vim, after charwise paste the cursor lands on the last inserted char.
+			const cursorCol = insertCol + repeated.length - 1;
+			this.replaceBuffer(lines.join("\n"), { line: cur.line, col: Math.max(insertCol, cursorCol) });
+		}
+
+		private performUndo(): void {
+			const snap = this.undoStack.pop();
+			if (!snap) return;
+			this.replaceBuffer(snap.text, snap.cursor);
+		}
+
+		private goToLineStart(): void {
+			this.positionCursor({ line: this.getCursor().line, col: 0 });
+		}
+
+		private goToFirstLine(count: number): void {
+			if (count > 1) {
+				this.goToLine(count);
+				return;
+			}
+			this.positionCursor({ line: 0, col: 0 });
+		}
+
+		private goToLastLine(count: number): void {
+			if (count > 1) {
+				this.goToLine(count);
+				return;
+			}
+			const lines = this.getLines();
+			const line = Math.max(0, lines.length - 1);
+			this.positionCursor({ line, col: (lines[line] ?? "").length });
+		}
+
+		private goToLine(count: number): void {
+			const lines = this.getLines();
+			const line = Math.max(0, Math.min(lines.length - 1, count - 1));
+			this.positionCursor({ line, col: 0 });
+		}
+
+		private createTransitionContext(): TransitionContext {
+			return {
+				moveMotion: (motion, count) => this.moveMotion(motion, count),
+				executeOperatorMotion: (op, motion, count) => this.executeOperatorMotion(op, motion, count),
+				executeLineOp: (op, count) => this.executeLineOp(op, count),
+				executeDeleteChar: count => this.executeDeleteChar(count),
+				executePaste: (after, count) => this.executePaste(after, count),
+				goToFirstLine: count => this.goToFirstLine(count),
+				goToLastLine: count => this.goToLastLine(count),
+				goToLineStart: () => this.goToLineStart(),
+				enterInsert: kind => this.enterInsert(kind),
+				undo: () => this.performUndo(),
+			};
+		}
+
+		// ----- input routing -------------------------------------------------------
+
+		handleInput(data: string): void {
+			if (matchesKey(data, "escape")) {
+				if (this.vimState.mode === "insert") {
+					this.setMode("normal");
+				} else if (this.commandState.type !== "idle") {
+					this.resetCommandState();
+				} else {
+					// Already in normal mode with no pending command: defer to the
+					// CustomEditor's escape handling (interrupt, autocomplete dismiss, ...).
+					super.handleInput(data);
+				}
+				return;
+			}
+
+			// Control characters (Ctrl+C, Ctrl+R, configured app shortcuts, etc.)
+			// must always reach CustomEditor so app-level hotkeys keep working.
+			if (data.length > 0 && data.charCodeAt(0) < 32) {
+				super.handleInput(data);
+				return;
+			}
+
+			if (this.vimState.mode === "insert") {
+				super.handleInput(data);
+				return;
+			}
+
+			const result = transition(this.commandState, data, this.createTransitionContext());
+			if (result.handled) {
+				this.setCommandState(result.next);
+				if (result.mode === "insert") this.setMode("insert");
+				return;
+			}
+
+			// Unhandled single printable in normal mode: swallow so it doesn't leak
+			// into the buffer. CSI / multi-byte sequences fall through to super.
+			if (data.length === 1 && data.charCodeAt(0) >= 32) return;
 			super.handleInput(data);
-			return;
 		}
 
-		if (this.vimState.mode === "insert") {
-			super.handleInput(data);
-			return;
+		// ----- render ---------------------------------------------------------------
+
+
+		render(width: number): readonly string[] {
+			const rendered = super.render(width);
+			if (rendered.length === 0) return rendered;
+			const lines = [...rendered];
+
+			// Strip the editor's inverse-video cursor block so the terminal block
+			// cursor is the only thing the user sees in normal mode.
+			for (let i = 0; i < lines.length; i++) {
+				lines[i] = lines[i]!
+					.replace(`${CURSOR_MARKER}\x1b[7m \x1b[0m`, CURSOR_MARKER)
+					.replace(new RegExp(`${CURSOR_MARKER}\\x1b\\[7m([\\s\\S])\\x1b\\[0m`, "g"), `${CURSOR_MARKER}$1`);
+			}
+
+			// Mode is conveyed by the block (NORMAL) vs beam (INSERT) cursor; no inline label.
+			return lines;
 		}
-
-		const result = transition(this.commandState, data, this.createTransitionContext());
-		if (result.handled) {
-			this.setCommandState(result.next);
-			if (result.mode === "insert") this.setMode("insert");
-			return;
-		}
-
-		// Unhandled single printable in normal mode: swallow so it doesn't leak
-		// into the buffer. CSI / multi-byte sequences fall through to super.
-		if (data.length === 1 && data.charCodeAt(0) >= 32) return;
-		super.handleInput(data);
-	}
-
-	// ----- render ---------------------------------------------------------------
-
-
-	render(width: number): string[] {
-		const lines = super.render(width);
-		if (lines.length === 0) return lines;
-
-		// Strip the editor's inverse-video cursor block so the terminal block
-		// cursor is the only thing the user sees in normal mode.
-		for (let i = 0; i < lines.length; i++) {
-			lines[i] = lines[i]!
-				.replace(`${CURSOR_MARKER}\x1b[7m \x1b[0m`, CURSOR_MARKER)
-				.replace(new RegExp(`${CURSOR_MARKER}\\x1b\\[7m([\\s\\S])\\x1b\\[0m`, "g"), `${CURSOR_MARKER}$1`);
-		}
-
-		// Mode is conveyed by the block (NORMAL) vs beam (INSERT) cursor; no inline label.
-		return lines;
-	}
+	};
 }
 
 export default function (pi: ExtensionAPI) {
+	const ModalEditor = createModalEditorClass(pi.pi.CustomEditor);
 	pi.on("session_start", (_event, ctx) => {
 		ctx.ui.setEditorComponent((_tui, theme, _kb) => {
 			const editor = new ModalEditor(theme);
