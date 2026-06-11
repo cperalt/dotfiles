@@ -30,9 +30,6 @@ if ! tmux has-session -t "$SESSION" 2>/dev/null; then
     tmux split-window -v -t "$SESSION:0.1" -l 20% -c {{ worktree_path }}
     tmux select-pane -t "$SESSION:0.0"
   else
-    # Split window 0: left pane (25%) for work, right pane (75%) for nvim
-    tmux split-window -h -t "$SESSION:0.0" -l 75% -c {{ worktree_path }}
-    tmux select-pane -t "$SESSION:0.1"
     tmux new-window -t "$SESSION" -n "Servers" -c {{ worktree_path }}
     for i in 1 2 3 4 5; do
       tmux split-window -t "$SESSION:Servers" -c {{ worktree_path }}
