@@ -15,6 +15,14 @@ keymap.set("n", "<leader>nh", ":nohl<CR>", { desc = "Clear search highlights" })
 -- delete single character without copying into register
 -- keymap.set("n", "x", '"_x')
 
+-- keep cursor centered when scrolling
+keymap.set("n", "<C-d>", "<C-d>zz", { desc = "Scroll down and center" })
+keymap.set("n", "<C-u>", "<C-u>zz", { desc = "Scroll up and center" })
+
+-- keep cursor centered when jumping through search results
+-- keymap.set("n", "n", "nzzzv", { desc = "Next search result (centered)" })
+-- keymap.set("n", "N", "Nzzzv", { desc = "Prev search result (centered)" })
+
 -- increment/decrement numbers
 keymap.set("n", "<leader>+", "<C-a>", { desc = "Increment number" }) -- increment
 keymap.set("n", "<leader>-", "<C-x>", { desc = "Decrement number" }) -- decrement
