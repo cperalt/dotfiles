@@ -2,6 +2,13 @@
 zsh/.env.zsh
 .claude/
 docs/
+.omp/
+!omp/.omp/
+!omp/.omp/**
+omp/.omp/agent/extensions/node_modules/
+omp/.omp/agent/extensions/bun.lock
+omp/.omp/agent/extensions/tsconfig.json
+omp/.omp/agent/extensions/package.json
 .pi/specs/
 .pi/plans/
 .pi/runs/
