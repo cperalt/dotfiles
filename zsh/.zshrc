@@ -23,6 +23,9 @@ setopt hist_expire_dups_first
 setopt hist_ignore_dups
 setopt hist_verify
 
+# don't exit the shell (and kill the tmux pane/session) on a stray Ctrl+D
+setopt ignore_eof
+
 # completion using arrow keys (based on history)
 # Use up-line-or-search instead of history-search-backward to allow multiline editing
 bindkey '^[[A' up-line-or-search
