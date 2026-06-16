@@ -10,15 +10,34 @@ return {
   config = function()
     local neotest = require("neotest")
 
+    -- This is an Nx monorepo: each project has its own jest config and env is
+    -- provided by mise. Resolve the workspace root and the project-local jest
+    -- config from the spec file so one adapter works across all projects/worktrees.
+    local function ws_root(file)
+      local nx = vim.fs.find({ "nx.json" }, { upward = true, path = file })[1]
+      return nx and vim.fs.dirname(nx) or vim.fn.getcwd()
+    end
+
+    local function nearest_jest_config(file)
+      local root = ws_root(file)
+      for _, cfg in ipairs(vim.fs.find({ "jest.config.ts", "jest.config.js" }, { upward = true, path = file })) do
+        if vim.fs.dirname(cfg) ~= root then
+          return cfg
+        end
+      end
+      return root .. "/jest.config.ts"
+    end
+
     neotest.setup({
       adapters = {
         require("neotest-jest")({
-          jestCommand = "npm test --",
-          jestConfigFile = "jest.config.js",
-          env = { CI = true },
-          cwd = function()
-            return vim.fn.getcwd()
-          end,
+          -- Call the jest binary directly through mise instead of `npm test`/`nx test`:
+          -- mise supplies the managed node + .env (POSTGRES_*), and bypassing the nx
+          -- wrapper avoids its arg-schema rejection of jest flags (e.g. --testLocationInResults).
+          jestCommand = "mise exec -- node_modules/.bin/jest",
+          jestConfigFile = nearest_jest_config,
+          env = { CI = "true" },
+          cwd = ws_root,
         }),
       },
       -- Only scan files that look like test files; prevents neotest from
