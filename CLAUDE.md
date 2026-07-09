@@ -18,6 +18,14 @@ brew bundle --file=Brewfile
 
 After install, manual steps: `prefix + I` in tmux for plugins, open Neovim for lazy.nvim auto-install.
 
+## Homebrew Tap Trust
+
+Homebrew 6.0+ requires explicit trust for third-party (non-official) taps before it will load them. `brew outdated` / `brew install` silently **skip** untrusted taps with a warning. Trust persists in `~/.config/homebrew/trust.json`.
+
+- Trust a tap now: `brew trust <user/repo>` (e.g. `brew trust hashicorp/tap`).
+- Reproducible alternative: mark taps `trusted: true` in the `Brewfile`; `brew bundle` then writes the same `trust.json`.
+- The `Brewfile` edit alone changes nothing for `brew outdated` until `brew bundle` runs once — `brew outdated` reads `trust.json`, not the `Brewfile`.
+
 ## Symlink Map
 
 | Source (repo)                    | Target                                      |
