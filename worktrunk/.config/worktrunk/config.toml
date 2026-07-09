@@ -20,6 +20,26 @@ copyIgnore = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; wt step copy-ignored'
 migrations = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; [ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{ primary_worktree_path }}/db/migrations-index.ts {{ worktree_path }}/db/migrations-index.ts || true'
 
 [[pre-start]]
+# Opt-in (the `wtdb` alias sets WT_DB_ISOLATED=1): give this worktree its own
+# Postgres DB on the shared local container by cloning the main DB, then
+# point its processes at it via a mise env override. No flag => shared mortgage_pos.
+isolatedDb = '''
+[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0
+[ -z "${WT_DB_ISOLATED:-}" ] && exit 0
+export PGPASSWORD=pass
+PG="psql -h 127.0.0.1 -p 54320 -U user -d postgres -v ON_ERROR_STOP=1"
+DB="mortgage_pos_{{ branch | sanitize_db }}"
+if ! $PG -tAc "SELECT 1 FROM pg_database WHERE datname='$DB'" | grep -q 1; then
+  # CREATE ... TEMPLATE needs zero connections to the source; drop stray ones (e.g. DataGrip).
+  $PG -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='mortgage_pos' AND pid <> pg_backend_pid();" >/dev/null
+  $PG -c "CREATE DATABASE \"$DB\" TEMPLATE mortgage_pos;"
+fi
+printf '[env]\nPOSTGRES_DB = "%s"\n' "$DB" > {{ worktree_path }}/mise.local.toml
+mise trust {{ worktree_path }}/mise.local.toml >/dev/null 2>&1 || true
+echo "Isolated DB ready: $DB (cloned from mortgage_pos). If this branch adds migrations beyond mortgage_pos, run 'pnpm migrate' or resetWorktreeDB in the worktree."
+'''
+
+[[pre-start]]
 tmux = """
 SESSION="{{ branch | sanitize }}"
 if ! tmux has-session -t "$SESSION" 2>/dev/null; then
@@ -147,6 +167,15 @@ for pid in $(ps -eo pid,comm | awk '/nvim/{print $1}'); do
   esac
 done
 """
+
+[[pre-remove]]
+# Drop this worktree's isolated DB if one exists. IF EXISTS => no-op for shared-DB
+# worktrees; the branch-derived name can never match the shared base.
+dropDb = '''
+DB="mortgage_pos_{{ branch | sanitize_db }}"
+[ "$DB" = "mortgage_pos" ] && exit 0
+PGPASSWORD=pass psql -h 127.0.0.1 -p 54320 -U user -d postgres -c "DROP DATABASE IF EXISTS \"$DB\" WITH (FORCE);"
+'''
 
 [post-remove]
 # Kill the tmux session for the removed worktree
