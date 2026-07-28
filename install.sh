@@ -39,7 +39,7 @@ success "Homebrew packages installed"
 # --- Step 4: Symlinks via GNU Stow ---
 STOW_PACKAGES=(zsh tmux wezterm ghostty nvim aerospace yazi karabiner mise sesh)
 # Packages that must use --no-folding because they share a target dir with unmanaged files
-STOW_NO_FOLD_PACKAGES=(pi)
+STOW_NO_FOLD_PACKAGES=(pi herdr)
 
 info "Creating symlinks with stow..."
 
@@ -155,6 +155,20 @@ if command -v gh &>/dev/null; then
     fi
 else
     warn "gh not installed or not authenticated — skipping gh-dash"
+fi
+
+# --- Step 5b: herdr plugins ---
+HERDR_PLUGIN="paulbkim-dev/vim-herdr-navigation"
+if command -v herdr &>/dev/null; then
+    if ! herdr plugin list 2>/dev/null | grep -q "vim-herdr-navigation"; then
+        info "Installing herdr plugin: $HERDR_PLUGIN"
+        herdr plugin install "$HERDR_PLUGIN" -y
+        success "vim-herdr-navigation installed"
+    else
+        success "vim-herdr-navigation already installed"
+    fi
+else
+    warn "herdr not installed — skipping vim-herdr-navigation"
 fi
 
 # --- Step 6: Tmux Plugin Manager ---
