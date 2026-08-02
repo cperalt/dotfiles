@@ -21,7 +21,13 @@ zoom = ["prefix+m", "prefix+z"]
 copy_mode = ["prefix+v", "prefix+["]
 rename_tab = "prefix+comma"
 close_tab = "prefix+ampersand"
-goto = "prefix+O"
+
+# goto stays on its default prefix+g; prefix+O opens the MRU navigator below.
+# Pane focus is handled by ctrl+h/j/k/l below; free the prefix+h/j/k/l defaults.
+focus_pane_left = ""
+focus_pane_down = ""
+focus_pane_up = ""
+focus_pane_right = ""
 
 # vim-herdr-navigation; nvim side in nvim/.config/nvim/lua/carlos/plugins/tmux-navigator.lua
 [[keys.command]]
@@ -47,6 +53,20 @@ key = "ctrl+l"
 type = "plugin_action"
 command = "vim-herdr-navigation.right"
 description = "navigate right (vim/herdr)"
+
+# tmux-style last-workspace toggle (workspace-level prefix+l)
+[[keys.command]]
+key = "prefix+l"
+type = "plugin_action"
+command = "third774.last-workspace.toggle"
+description = "toggle last workspace"
+
+# MRU-sorted workspace popup (replaces alphabetical goto on prefix+O)
+[[keys.command]]
+key = "prefix+O"
+type = "plugin_action"
+command = "beyondlex.herdr-recent-navigator.focus-workspaces"
+description = "recent workspaces (MRU)"
 
 [ui]
 pane_borders = false
