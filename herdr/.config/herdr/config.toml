@@ -1,54 +1,29 @@
+# Reference: `herdr --default-config`. Reload: prefix + Shift-R
 onboarding = false
-# herdr configuration
-# Managed by dotfiles: ~/.dotfiles/herdr/.config/herdr/config.toml
-# Full reference: `herdr --default-config`
-# Apply changes to a running server: `herdr server reload-config` (or prefix + Shift-R)
 
-# Keybindings mirror ~/.dotfiles/tmux/.tmux.conf so the muscle memory carries over.
+[theme]
+name = "tokyo-night"
+
+[theme.custom]
+# Active space name; tokyo-night's text/subtext0 are too close to tell apart.
+text = "#9ece6a"
+
+# Keys mirror ~/.dotfiles/tmux/.tmux.conf.
 [keys]
-# tmux: set -g prefix C-a
 prefix = "ctrl+a"
 
-# tmux: bind | split-window -h  → panes side by side (vertical divider)
 split_vertical = "prefix+|"
-# tmux: bind - split-window -v  → panes stacked (horizontal divider); herdr default
 split_horizontal = "prefix+minus"
-
-# tmux: prefix + d detaches (herdr default is prefix+q)
 detach = "prefix+d"
-
-# tmux: bind r source-file ~/.tmux.conf
 reload_config = "prefix+r"
-# Displaced by reload_config above; herdr has no per-key directional resize, only this mode.
 resize_mode = "prefix+shift+r"
-
-# tmux: bind -r m resize-pane -Z  (prefix+z kept as the conventional alias)
 zoom = ["prefix+m", "prefix+z"]
-
-# tmux: bind v copy-mode  (prefix+[ kept; it is the default in both tools)
 copy_mode = ["prefix+v", "prefix+["]
-
-# tmux tab (window) keys
-# tmux: bind , rename-window  (herdr default is prefix+shift+t)
 rename_tab = "prefix+comma"
-# tmux: bind & kill-window  (herdr default is prefix+shift+x)
 close_tab = "prefix+ampersand"
-
-# Workspace/tab/pane navigator — herdr's answer to the sesh picker.
-# tmux: bind-key "O" run-shell "sesh connect ..."  (herdr default is prefix+g)
 goto = "prefix+O"
 
-# Already identical to tmux out of the box, left at herdr defaults:
-#   prefix+c new tab      prefix+n / prefix+p next / previous tab
-#   prefix+1..9 switch    prefix+x close pane
-#   prefix+? help
-# Note: prefix+h/j/k/l focuses panes in herdr (tmux uses those to resize).
-# Note: herdr indexes tabs from 1; tmux windows start at 0, so prefix+0 has no equivalent.
-
-# vim-herdr-navigation: ctrl+h/j/k/l crosses Neovim splits and herdr panes as one.
-# Port of vim-tmux-navigator; install with
-#   herdr plugin install paulbkim-dev/vim-herdr-navigation
-# Neovim side lives in nvim/.config/nvim/lua/carlos/plugins/tmux-navigator.lua.
+# vim-herdr-navigation; nvim side in nvim/.config/nvim/lua/carlos/plugins/tmux-navigator.lua
 [[keys.command]]
 key = "ctrl+h"
 type = "plugin_action"
@@ -74,10 +49,11 @@ command = "vim-herdr-navigation.right"
 description = "navigate right (vim/herdr)"
 
 [ui]
-# Strip the chrome: no boxes around split panes, keep a one-cell gutter so
-# neighbours stay readable. Set pane_gaps = false for zero separation.
 pane_borders = false
 pane_gaps = true
-
-# Reclaim the tab row while a workspace has a single tab; it returns with 2+.
 hide_tab_bar_when_single_tab = true
+
+agent_panel_sort = "priority"
+[ui.sidebar.spaces]
+# One line per space; branch is redundant with worktrunk branch-named workspaces.
+rows = [["state_icon", "workspace", "git_status"]]

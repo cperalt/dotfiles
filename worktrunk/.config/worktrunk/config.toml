@@ -5,21 +5,94 @@ worktree-path = "{{ repo_path }}/../{{ branch | sanitize }}"
 [switch]
 cd = false
 
+# ============================================================================
+# Global hooks — repo-agnostic. Repo-specific steps live under [projects.*]
+# below and APPEND after these (global first, then per-project).
+#
+# herdr workspace label: per-branch override via
+#   wt config state vars set session=<nickname> --branch=<branch>
+# (main in mortgage-pos = "mpos", main in sagehomeloans.com = "sage-website");
+# falls back to the sanitized branch name.
+#
+# Workspaces are addressed by label -> workspace_id via `herdr workspace list`
+# (the CLI only takes ids). All herdr calls go over the socket API, so hooks
+# work whether or not the shell is inside a herdr client.
+# ============================================================================
+
 [[pre-start]]
+# Copy gitignored caches/deps from main worktree (reflinks on APFS).
+# mortgage-pos excludes node_modules/ (symlinked instead — see its entry).
+copyIgnore = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; wt step copy-ignored'
+
+[[pre-start]]
+herdr = """
+LABEL="{{ vars.session | default(branch | sanitize) }}"
+WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
+if [ -z "$WS" ]; then
+  WS=$(herdr workspace create --cwd {{ worktree_path }} --label "$LABEL" --no-focus | jq -r '.result.workspace.workspace_id')
+  if [ -n "${WT_REVIEW_ONLY:-}" ]; then
+    # 25/75 split plus small bottom pane for deps (mirrors the old tmux review layout)
+    P0=$(herdr pane list --workspace "$WS" | jq -r '.result.panes[0].pane_id')
+    P1=$(herdr pane split --pane "$P0" --direction right --ratio 0.75 --cwd {{ worktree_path }} --no-focus | jq -r '.result.pane.pane_id')
+    herdr pane split --pane "$P1" --direction down --ratio 0.2 --cwd {{ worktree_path }} --no-focus >/dev/null
+  fi
+fi
+"""
+
+[post-switch]
+# Focus the herdr workspace (instant, separate background process)
+switchHerdr = """
+[ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
+LABEL="{{ vars.session | default(branch | sanitize) }}"
+WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
+[ -n "$WS" ] && herdr workspace focus "$WS" >/dev/null
+"""
+
+[[pre-remove]]
+killNvim = """
+for pid in $(ps -eo pid,comm | awk '/nvim/{print $1}'); do
+  cwd=$(lsof -p "$pid" 2>/dev/null | awk '$4=="cwd"{print $NF}')
+  case "$cwd" in
+    {{ worktree_path }}*) kill "$pid" 2>/dev/null || true ;;
+  esac
+done
+"""
+
+[post-remove]
+# Close the herdr workspace for the removed worktree. Closing a workspace
+# tears down its panes, which SIGHUPs anything still running in them
+# (including manually started dev servers).
+herdr = """
+LABEL="{{ vars.session | default(branch | sanitize) }}"
+WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
+[ -n "$WS" ] && herdr workspace close "$WS" >/dev/null || true
+"""
+
+# ============================================================================
+# mortgage-pos — pnpm monorepo, symlinked node_modules, per-worktree DB
+# opt-in.
+#
+# NOTE (herdr migration): the tmux Servers-window automation (serversWindow,
+# killOtherServers, killServers, the `wt servers` alias) was intentionally
+# dropped for now — start servers manually in a herdr tab. Closing the
+# workspace on removal kills whatever is running in its panes.
+# ============================================================================
+
+[projects."github.com/SageHomeLoans/mortgage-pos"]
+# node_modules is symlinked from main (below), keep it out of the reflink copy
+step.copy-ignored.exclude = ["node_modules/"]
+
+[[projects."github.com/SageHomeLoans/mortgage-pos".pre-start]]
 # Symlink node_modules from main worktree (shared deps, no install needed)
 symNodeModules = """
 [ -n "${WT_REVIEW_ONLY:-}" ] && exit 0
 ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules
 """
 
-[[pre-start]]
-# Copy nx cache from main worktree (uses reflinks on APFS)
-copyIgnore = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; wt step copy-ignored'
-
-[[pre-start]]
+[[projects."github.com/SageHomeLoans/mortgage-pos".pre-start]]
 migrations = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; [ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{ primary_worktree_path }}/db/migrations-index.ts {{ worktree_path }}/db/migrations-index.ts || true'
 
-[[pre-start]]
+[[projects."github.com/SageHomeLoans/mortgage-pos".pre-start]]
 # Opt-in (the `wtdb` alias sets WT_DB_ISOLATED=1): give this worktree its own
 # Postgres DB on the shared local container by cloning the main DB, then
 # point its processes at it via a mise env override. No flag => shared mortgage_pos.
@@ -39,136 +112,19 @@ mise trust {{ worktree_path }}/mise.local.toml >/dev/null 2>&1 || true
 echo "Isolated DB ready: $DB (cloned from mortgage_pos). If this branch adds migrations beyond mortgage_pos, run 'pnpm migrate' or resetWorktreeDB in the worktree."
 '''
 
-[[pre-start]]
-tmux = """
-SESSION="{{ branch | sanitize }}"
-if ! tmux has-session -t "$SESSION" 2>/dev/null; then
-  tmux new-session -d -s "$SESSION" -c {{ worktree_path }}
-  if [ -n "${WT_REVIEW_ONLY:-}" ]; then
-    # Same 25/75 split as normal mode, plus small pane for deps
-    tmux split-window -h -t "$SESSION:0.0" -l 75% -c {{ worktree_path }}
-    tmux split-window -v -t "$SESSION:0.1" -l 20% -c {{ worktree_path }}
-    tmux select-pane -t "$SESSION:0.0"
-  else
-    tmux new-window -t "$SESSION" -n "Servers" -c {{ worktree_path }}
-    for i in 1 2 3 4 5; do
-      tmux split-window -t "$SESSION:Servers" -c {{ worktree_path }}
-      tmux select-layout -t "$SESSION:Servers" tiled
-    done
-    tmux select-window -t "$SESSION:0"
-  fi
-fi
-"""
-
-[post-start]
-# For PR review flow, run bun install in the background on pane 0.2
-# Claude starts immediately on pane 0.0 while deps install in parallel
+[projects."github.com/SageHomeLoans/mortgage-pos".post-start]
+# For PR review flow, run pnpm install in the small bottom pane created by
+# the global review layout. Claude starts immediately in the left pane while
+# deps install in parallel.
 reviewDeps = """
 [ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
-SESSION="{{ branch | sanitize }}"
-tmux send-keys -t "$SESSION:0.2" "cd {{ worktree_path }} && bun install" Enter
-"""
-# Start servers in background (staggered to avoid Nx daemon contention)
-servers = """
-[ -n "${WT_SKIP_SERVERS:-}" ] && exit 0
-SESSION="{{ branch | sanitize }}"
-tmux send-keys -t "$SESSION:Servers.0" "adminUI" Enter
-sleep 3
-tmux send-keys -t "$SESSION:Servers.1" "adminAPI" Enter
-sleep 2
-tmux send-keys -t "$SESSION:Servers.2" "justUI" Enter
-sleep 2
-tmux send-keys -t "$SESSION:Servers.3" "justAPI" Enter
-sleep 2
-tmux send-keys -t "$SESSION:Servers.4" "bpUI" Enter
-sleep 2
-tmux send-keys -t "$SESSION:Servers.5" "bpAPI" Enter
+LABEL="{{ vars.session | default(branch | sanitize) }}"
+WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
+PANE=$(herdr pane list --workspace "$WS" | jq -r '.result.panes[-1].pane_id')
+[ -n "$PANE" ] && herdr pane run "$PANE" pnpm install
 """
 
-[post-switch]
-# Switch tmux session (instant, separate background process)
-switchTmuxSesh = """
-[ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
-SESSION="{{ branch | sanitize }}"
-if tmux has-session -t "$SESSION" 2>/dev/null; then
-  tmux select-window -t "$SESSION:0"
-  if [ -n "${TMUX:-}" ]; then
-    tmux switch-client -t "$SESSION"
-  else
-    tmux attach-session -t "$SESSION"
-  fi
-fi
-"""
-# Kill old servers and start new ones (separate background process)
-killRespawnServers = """
-[ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
-SESSION="{{ branch | sanitize }}"
-
-# Recursively kill all descendants of each pane in other sessions
-kill_tree() {
-  local pid="$1"
-  for child in $(pgrep -P "$pid" 2>/dev/null); do
-    kill_tree "$child"
-  done
-  kill -9 "$pid" 2>/dev/null || true
-}
-
-for s in $(tmux list-sessions -F '#S' 2>/dev/null || true); do
-  [ "$s" = "$SESSION" ] && continue
-  if tmux list-windows -t "$s" -F '#W' 2>/dev/null | grep -q '^Servers$'; then
-    for pid in $(tmux list-panes -t "$s:Servers" -F '#{pane_pid}' 2>/dev/null); do
-      kill_tree "$pid"
-    done
-  fi
-done
-
-# Start servers in target session if Servers window is missing
-if ! tmux list-windows -t "$SESSION" -F '#W' 2>/dev/null | grep -q '^Servers$'; then
-  tmux new-window -d -t "$SESSION" -n "Servers" -c {{ worktree_path }}
-  for i in 1 2 3 4 5; do
-    tmux split-window -d -t "$SESSION:Servers" -c {{ worktree_path }}
-    tmux select-layout -t "$SESSION:Servers" tiled
-  done
-  tmux send-keys -t "$SESSION:Servers.0" "adminUI" Enter
-  sleep 3
-  tmux send-keys -t "$SESSION:Servers.1" "adminAPI" Enter
-  sleep 2
-  tmux send-keys -t "$SESSION:Servers.2" "justUI" Enter
-  sleep 2
-  tmux send-keys -t "$SESSION:Servers.3" "justAPI" Enter
-  sleep 2
-  tmux send-keys -t "$SESSION:Servers.4" "bpUI" Enter
-  sleep 2
-  tmux send-keys -t "$SESSION:Servers.5" "bpAPI" Enter
-fi
-"""
-
-[[pre-remove]]
-killServers = """
-kill_tree() {
-  local pid="$1"
-  for child in $(pgrep -P "$pid" 2>/dev/null); do
-    kill_tree "$child"
-  done
-  kill -9 "$pid" 2>/dev/null || true
-}
-SESSION="{{ branch | sanitize }}"
-for pid in $(tmux list-panes -t "$SESSION:Servers" -F '#{pane_pid}' 2>/dev/null); do
-  kill_tree "$pid"
-done
-"""
-
-[[pre-remove]]
-killNvim = """
-for pid in $(ps -eo pid,comm | awk '/nvim/{print $1}'); do
-  cwd=$(lsof -p "$pid" 2>/dev/null | awk '$4=="cwd"{print $NF}')
-  case "$cwd" in
-    {{ worktree_path }}*) kill "$pid" 2>/dev/null || true ;;
-  esac
-done
-"""
-
-[[pre-remove]]
+[[projects."github.com/SageHomeLoans/mortgage-pos".pre-remove]]
 # Drop this worktree's isolated DB if one exists. IF EXISTS => no-op for shared-DB
 # worktrees; the branch-derived name can never match the shared base.
 dropDb = '''
@@ -177,6 +133,20 @@ DB="mortgage_pos_{{ branch | sanitize_db }}"
 PGPASSWORD=pass psql -h 127.0.0.1 -p 54320 -U user -d postgres -c "DROP DATABASE IF EXISTS \"$DB\" WITH (FORCE);"
 '''
 
-[post-remove]
-# Kill the tmux session for the removed worktree
-tmux = "tmux kill-session -t {{ branch | sanitize }} 2>/dev/null || true"
+# ============================================================================
+# sagehomeloans.com — Next.js site.
+#
+# NOTE (herdr migration): the tmux Dev-window automation (devWindow,
+# killRespawnDev, killDev) was intentionally dropped for now — run
+# `pnpm dev` manually in a herdr tab. :3000 single-owner enforcement is
+# gone with it; stop the other worktree's server before starting a new one.
+# ============================================================================
+
+[[projects."github.com/SageHomeLoans/sagehomeloans.com".pre-start]]
+# Symlink node_modules from main worktree (shared deps, no install needed).
+# node_modules/ is kept out of copy-ignored via .worktreeinclude in the repo.
+# -n: don't dereference an existing symlink (avoids nesting on re-runs)
+symNodeModules = """
+[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0
+ln -sfn {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules
+"""
