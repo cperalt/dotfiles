@@ -36,7 +36,6 @@ return {
       "c",
       "python",
       "terraform",
-      "tmux",
       "toml",
     })
 
