@@ -64,18 +64,8 @@ done
 # (including manually started dev servers).
 herdr = """
 LABEL="{{ vars.session | default(branch | sanitize) }}"
-LIST=$(herdr workspace list)
-WS=$(echo "$LIST" | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
-[ -z "$WS" ] && exit 0
-CUR=$(echo "$LIST" | jq -r '.result.workspaces[] | select(.focused) | .workspace_id')
-herdr workspace close "$WS" >/dev/null || true
-# herdr focuses a neighbor of the CLOSED workspace even when it wasn't the
-# focused one; restore the previous focus. Skipped when we just closed the
-# focused workspace itself (removing the worktree you're in) — there the
-# neighbor-focus is what you want.
-if [ -n "$CUR" ] && [ "$CUR" != "$WS" ]; then
-  herdr workspace focus "$CUR" >/dev/null || true
-fi
+WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
+[ -n "$WS" ] && herdr workspace close "$WS" >/dev/null || true
 """
 
 # ============================================================================
