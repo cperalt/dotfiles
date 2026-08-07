@@ -64,8 +64,18 @@ done
 # (including manually started dev servers).
 herdr = """
 LABEL="{{ vars.session | default(branch | sanitize) }}"
-WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
-[ -n "$WS" ] && herdr workspace close "$WS" >/dev/null || true
+LIST=$(herdr workspace list)
+WS=$(echo "$LIST" | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
+[ -z "$WS" ] && exit 0
+CUR=$(echo "$LIST" | jq -r '.result.workspaces[] | select(.focused) | .workspace_id')
+herdr workspace close "$WS" >/dev/null || true
+# herdr focuses a neighbor of the CLOSED workspace even when it wasn't the
+# focused one; restore the previous focus. Skipped when we just closed the
+# focused workspace itself (removing the worktree you're in) — there the
+# neighbor-focus is what you want.
+if [ -n "$CUR" ] && [ "$CUR" != "$WS" ]; then
+  herdr workspace focus "$CUR" >/dev/null || true
+fi
 """
 
 # ============================================================================
@@ -79,8 +89,11 @@ WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | selec
 # ============================================================================
 
 [projects."github.com/SageHomeLoans/mortgage-pos"]
-# node_modules is symlinked from main (below), keep it out of the reflink copy
-step.copy-ignored.exclude = ["node_modules/"]
+# node_modules is symlinked from main (below), keep it out of the reflink copy.
+# .nx/workspace-data holds the daemon pointer + outputs-tracking DB — sharing it
+# cross-wires worktrees to main's daemon and breaks cache restores; .nx/cache is
+# content-addressed and stays copied for warm starts.
+step.copy-ignored.exclude = ["node_modules/", ".nx/workspace-data/"]
 
 [[projects."github.com/SageHomeLoans/mortgage-pos".pre-start]]
 # Symlink node_modules from main worktree (shared deps, no install needed)
@@ -136,17 +149,15 @@ PGPASSWORD=pass psql -h 127.0.0.1 -p 54320 -U user -d postgres -c "DROP DATABASE
 # ============================================================================
 # sagehomeloans.com — Next.js site.
 #
+# node_modules: NOT symlinked from main (unlike mortgage-pos). Next 16's
+# Turbopack builds its VFS rooted at the project dir and hard-fails on any
+# symlink resolving outside it ("points out of the filesystem root").
+# Instead node_modules/ is listed in the repo's .worktreeinclude, so the
+# global copy-ignored pre-start step reflink-copies it from main (APFS —
+# seconds, near-zero disk). No project-specific pre-start hook needed.
+#
 # NOTE (herdr migration): the tmux Dev-window automation (devWindow,
 # killRespawnDev, killDev) was intentionally dropped for now — run
 # `pnpm dev` manually in a herdr tab. :3000 single-owner enforcement is
 # gone with it; stop the other worktree's server before starting a new one.
 # ============================================================================
-
-[[projects."github.com/SageHomeLoans/sagehomeloans.com".pre-start]]
-# Symlink node_modules from main worktree (shared deps, no install needed).
-# node_modules/ is kept out of copy-ignored via .worktreeinclude in the repo.
-# -n: don't dereference an existing symlink (avoids nesting on re-runs)
-symNodeModules = """
-[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0
-ln -sfn {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules
-"""
