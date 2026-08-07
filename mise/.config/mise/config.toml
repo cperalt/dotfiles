@@ -2,6 +2,7 @@
 node = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 "npm:typescript-language-server" = "latest"
+rust = "1.97.1"
 
 [hooks]
 postinstall = "hash -r"
