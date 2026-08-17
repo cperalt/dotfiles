@@ -1,0 +1,36 @@
+[tools]
+node = "latest"
+"npm:@earendil-works/pi-coding-agent" = "latest"
+"npm:typescript-language-server" = "latest"
+rust = "1.97.1"
+
+[hooks]
+postinstall = "hash -r"
+
+[settings]
+idiomatic_version_file_enable_tools = ["node"]
+auto_install = true
+experimental = true
+dotfiles.root = "~/.dotfiles/home"
+
+[dotfiles]
+# $HOME-root files
+"~/.zshrc" = {}
+"~/.p10k.zsh" = {}
+"~/.tmux.conf" = {}
+"~/.wezterm.lua" = {}
+# ~/.config dirs owned wholesale
+"~/.config/mise" = {}
+"~/.config/nvim" = {}
+"~/.config/ghostty" = {}
+"~/.config/aerospace" = {}
+"~/.config/yazi" = {}
+"~/.config/karabiner" = {}
+"~/.config/sesh" = {}
+"~/.config/worktrunk" = {}
+"~/Library/Application Support/lazygit/config.yml" = {}
+# shared target dirs: link each file, leave unmanaged neighbors alone
+"~/.config/herdr" = { mode = "symlink-each" }
+"~/.config/gh-dash" = { mode = "symlink-each" }
+"~/.pi/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }
+"~/.omp/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }

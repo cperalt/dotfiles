@@ -1,0 +1,60 @@
+modelRoles: 
+  default: anthropic/claude-fable-5:high
+  slow: anthropic/claude-opus-4-8:high
+  designer: openai/gpt-5.5:medium
+  vision: openai/gpt-5.5:low
+  smol: anthropic/claude-sonnet-4-6:low
+  plan: openai/gpt-5.5-pro:xhigh
+theme: 
+  dark: titanium
+edit: 
+  mode: hashline
+providers: 
+  webSearchOrder: 
+    - codex
+    - perplexity
+    - gemini
+    - anthropic
+    - xai
+    - zai
+    - exa
+    - tinyfish
+    - jina
+    - kagi
+    - tavily
+    - firecrawl
+    - brave
+    - kimi
+    - parallel
+    - synthetic
+    - searxng
+    - startpage
+    - duckduckgo
+    - ecosia
+    - google
+    - mojeek
+    - public
+symbolPreset: nerd
+setupVersion: 1
+defaultThinkingLevel: auto
+memory: 
+  backend: "off"
+autolearn: 
+  enabled: false
+  autoContinue: true
+mnemopi: 
+  enhancedRecall: true
+  proactiveLinking: true
+  scoping: global
+advisor: 
+  enabled: false
+dev: 
+  autoqaConsent: denied
+statusLine: 
+  compactThinkingLevel: false
+hideThinkingBlock: true
+task: 
+  agentAdvisor: 
+    task: "on"
+github: 
+  enabled: true

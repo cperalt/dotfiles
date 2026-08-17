@@ -2,7 +2,6 @@
 set -euo pipefail
 
 DOTFILES="$HOME/.dotfiles"
-BACKUP_DIR="$HOME/.dotfiles-backup"
 
 info() { printf "\033[1;34m[info]\033[0m %s\n" "$1"; }
 success() { printf "\033[1;32m[ok]\033[0m %s\n" "$1"; }
@@ -36,113 +35,18 @@ info "Installing Homebrew packages from Brewfile..."
 brew bundle --file="$DOTFILES/Brewfile"
 success "Homebrew packages installed"
 
-# --- Step 4: Symlinks via GNU Stow ---
-STOW_PACKAGES=(zsh tmux wezterm ghostty nvim aerospace yazi karabiner mise sesh)
-# Packages that must use --no-folding because they share a target dir with unmanaged files
-STOW_NO_FOLD_PACKAGES=(pi herdr)
-
-info "Creating symlinks with stow..."
-
-# Check for conflicts first
-CONFLICTS=()
-for pkg in "${STOW_PACKAGES[@]}" "${STOW_NO_FOLD_PACKAGES[@]}"; do
-    extra_flags=""
-    if printf '%s\n' "${STOW_NO_FOLD_PACKAGES[@]}" | grep -qx "$pkg"; then
-        extra_flags="--no-folding"
-    fi
-    # Dry-run — capture output; `|| true` prevents pipefail from aborting on stow's non-zero exit
-    stow_output=$(stow -d "$DOTFILES" -t "$HOME" -n $extra_flags "$pkg" 2>&1 || true)
-
-    if ! echo "$stow_output" | grep -q "WARNING\|ERROR"; then
-        continue
-    fi
-
-    # Extract conflicting files from the captured output (two possible formats):
-    # 1. "existing target is not owned by stow: .zshrc"
-    # 2. "cannot stow X over existing target .p10k.zsh since ..."
-    while IFS= read -r line; do
-        if [[ "$line" =~ "existing target is not owned by stow: " ]]; then
-            conflict=$(echo "$line" | awk -F': ' '{print $NF}' | xargs)
-            CONFLICTS+=("$conflict")
-        elif [[ "$line" =~ "over existing target" ]]; then
-            conflict=$(echo "$line" | sed -E 's/.*over existing target ([^ ]+) since.*/\1/' | xargs)
-            CONFLICTS+=("$conflict")
-        fi
-    done <<< "$stow_output"
-done
-
-# If conflicts exist, prompt user
-if [[ ${#CONFLICTS[@]} -gt 0 ]]; then
-    warn "Found ${#CONFLICTS[@]} conflicting config file(s):"
-    for conflict in "${CONFLICTS[@]}"; do
-        echo "  - $conflict"
-    done
-    echo ""
-    echo "Options:"
-    echo "  1) Backup existing configs and use repo versions (recommended)"
-    echo "  2) Keep existing configs and skip stow (you'll need to merge manually)"
-    echo "  3) Abort installation"
-    echo ""
-    read -p "Choose [1/2/3]: " -n 1 -r choice
-    echo ""
-
-    case $choice in
-        1)
-            info "Backing up existing configs to $BACKUP_DIR..."
-            mkdir -p "$BACKUP_DIR"
-            for conflict in "${CONFLICTS[@]}"; do
-                target="$HOME/$conflict"
-                # -L catches symlinks (even dangling ones); -e catches regular files/dirs
-                if [[ -L "$target" ]] || [[ -e "$target" ]]; then
-                    backup_name="$(basename "$conflict")-$(date +%Y%m%d%H%M%S)"
-                    mv "$target" "$BACKUP_DIR/$backup_name"
-                    warn "Backed up: $conflict → $BACKUP_DIR/$backup_name"
-                fi
-            done
-            success "Backups created"
-            ;;
-        2)
-            warn "Skipping stow - you'll need to manually merge configs"
-            echo "Run 'stow -d $DOTFILES -t \$HOME <package>' when ready"
-            exit 0
-            ;;
-        3)
-            error "Installation aborted"
-            exit 1
-            ;;
-        *)
-            error "Invalid choice - aborting"
-            exit 1
-            ;;
-    esac
+# --- Step 4: Dotfiles via mise ---
+# The global mise config normally lives at ~/.config/mise/config.toml, but that
+# symlink is itself created by the apply below — so bootstrap by pointing mise
+# at the repo copy explicitly for this one invocation.
+if ! command -v mise &>/dev/null; then
+    error "mise not found — it should have been installed from the Brewfile"
+    exit 1
 fi
-
-# Now stow packages (no --adopt needed, conflicts resolved)
-for pkg in "${STOW_PACKAGES[@]}"; do
-    info "Stowing $pkg..."
-    stow -d "$DOTFILES" -t "$HOME" "$pkg"
-done
-for pkg in "${STOW_NO_FOLD_PACKAGES[@]}"; do
-    info "Stowing $pkg (no-folding)..."
-    stow -d "$DOTFILES" -t "$HOME" --no-folding "$pkg"
-done
-success "Stow packages linked"
-
-# lazygit targets ~/Library/Application Support/ instead of $HOME, so link manually
-LAZYGIT_DEST="$HOME/Library/Application Support/lazygit/config.yml"
-LAZYGIT_SRC="$DOTFILES/lazygit/config.yml"
-mkdir -p "$(dirname "$LAZYGIT_DEST")"
-if [[ -L "$LAZYGIT_DEST" ]] && [[ "$(readlink "$LAZYGIT_DEST")" == "$LAZYGIT_SRC" ]]; then
-    success "Already linked: $LAZYGIT_DEST"
-else
-    if [[ -e "$LAZYGIT_DEST" ]] && [[ ! -L "$LAZYGIT_DEST" ]]; then
-        mkdir -p "$BACKUP_DIR"
-        mv "$LAZYGIT_DEST" "$BACKUP_DIR/lazygit-config.yml-$(date +%Y%m%d%H%M%S)"
-        warn "Backed up existing lazygit config"
-    fi
-    ln -sf "$LAZYGIT_SRC" "$LAZYGIT_DEST"
-    success "Linked: $LAZYGIT_DEST -> $LAZYGIT_SRC"
-fi
+info "Applying dotfiles with mise..."
+MISE_GLOBAL_CONFIG_FILE="$DOTFILES/home/.config/mise/config.toml" \
+    mise bootstrap dotfiles apply --yes
+success "Dotfiles applied"
 
 # --- Step 5: GitHub CLI extensions ---
 info "Installing gh extensions..."
@@ -201,7 +105,7 @@ else
 fi
 
 # --- Step 9: .env.zsh template ---
-ENV_FILE="$DOTFILES/zsh/.env.zsh"
+ENV_FILE="$DOTFILES/home/.env.zsh"
 if [[ ! -f "$ENV_FILE" ]]; then
     info "Creating .env.zsh template..."
     cat > "$ENV_FILE" << 'ENVEOF'
@@ -238,5 +142,5 @@ success "Setup complete!"
 info "Remaining manual steps:"
 echo "  1. Open tmux and press prefix + I to install tmux plugins"
 echo "  2. Open Neovim — Lazy will auto-install plugins on first launch"
-echo "  3. Fill in $DOTFILES/zsh/.env.zsh with your sensitive values (if new machine)"
+echo "  3. Fill in $DOTFILES/home/.env.zsh with your sensitive values (if new machine)"
 echo "  4. Restart your terminal or run: source ~/.zshrc"

@@ -138,13 +138,13 @@ alias wtn="WT_SKIP_SERVERS=1 wt switch --create"
 alias wtr="wt remove --force -D"
 alias wtl="wt list"
 alias wts="wt switch"
-alias zsh="nvim ~/.dotfiles/zsh/.zshrc"
+alias zsh="nvim ~/.zshrc"
 alias zshr="source ~/.zshrc"
-alias boo="nvim ~/.dotfiles/ghostty/.config/ghostty/config"
-alias tmx="nvim ~/.dotfiles/tmux/.tmux.conf"
+alias boo="nvim ~/.config/ghostty/config"
+alias tmx="nvim ~/.tmux.conf"
 alias tma="tmux attach-session"
 alias her="herdr"
-alias hdx="nvim ~/.dotfiles/herdr/.config/herdr/config.toml"
+alias hdx="nvim ~/.config/herdr/config.toml"
 alias gs="git status"
 alias nrd="npm run dev"
 alias nrl="npm run dev:live"
@@ -153,7 +153,7 @@ alias dot="cd ~/.dotfiles"
 alias cc="claude"
 alias ccc="claude --continue"
 alias nv="nvim"
-alias pistow="stow -d ~/.dotfiles -t "$HOME" --no-folding -R pi"
+alias dfa="mise bootstrap dotfiles apply"
 alias c="clear"
 alias q="exit"
 
@@ -177,7 +177,7 @@ wtac() {
 }
 
 # Source sensitive env vars and aliases
-[[ -f "${HOME}/.dotfiles/zsh/.env.zsh" ]] && source "${HOME}/.dotfiles/zsh/.env.zsh"
+[[ -f "${HOME}/.dotfiles/home/.env.zsh" ]] && source "${HOME}/.dotfiles/home/.env.zsh"
 
 # Silence powerlevel10k I/O Warning
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
@@ -233,8 +233,6 @@ lg() {
 autoload -Uz compinit && compinit
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
 
-# To customize prompt, run `p10k configure` or edit ~/.dotfiles/zsh/.p10k.zsh.
-[[ ! -f ~/.dotfiles/zsh/.p10k.zsh ]] || source ~/.dotfiles/zsh/.p10k.zsh
 
 
 # ---- Zsh Vi Mode Cursor Color + Shape ----
