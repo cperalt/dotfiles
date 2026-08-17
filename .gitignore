@@ -3,6 +3,7 @@ home/.env.zsh
 .DS_Store
 .claude/
 docs/
+scripts/
 .omp/
 !home/.omp/
 !home/.omp/**
