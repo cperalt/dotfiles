@@ -82,10 +82,12 @@ keybindings:
   prs:
     - key: P
       command: >
-        branch=$(gh pr view {{.PrNumber}} --json headRefName -q .headRefName) &&
-        session="${branch//\//-}" &&
-        WT_REVIEW_ONLY=1 WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch pr:{{.PrNumber}} &&
-        tmux send-keys -t "$session:0.0" "omp 'code review this pr: {{.PrNumber}}'" Enter
+        WT_REVIEW_ONLY=1 WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch pr:{{.PrNumber}}
+    # auto-start omp in the review pane; append to the command above to re-enable:
+    #   && label=$(gh pr view {{.PrNumber}} --json headRefName -q .headRefName | tr / -)
+    #   && ws=$(herdr workspace list | jq -r --arg l "$label" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
+    #   && pane=$(herdr pane list --workspace "$ws" | jq -r '.result.panes[0].pane_id')
+    #   && herdr pane run "$pane" "omp 'code review this pr: {{.PrNumber}}'"
     - key: U
       command: >
         WT_DB_ISOLATED=1 WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 wt switch pr:{{.PrNumber}}
