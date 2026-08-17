@@ -151,3 +151,11 @@ PGPASSWORD=pass psql -h 127.0.0.1 -p 54320 -U user -d postgres -c "DROP DATABASE
 # `pnpm dev` manually in a herdr tab. :3000 single-owner enforcement is
 # gone with it; stop the other worktree's server before starting a new one.
 # ============================================================================
+
+[list]
+summary = false    # Enable LLM branch summaries (requires [commit.generation])
+full = false       # Show CI status and LLM summaries (--full)
+branches = false   # Include branches without worktrees (--branches)
+remotes = false    # Include remote-only branches (--remotes)
+columns = ["branch", "status", "ci", "age", "message"]   # Columns to show, in order — built-ins or custom headers (omit for the default set)
+timeout-ms = 0     # Wall-clock budget for the entire collect phase; 0 disables
