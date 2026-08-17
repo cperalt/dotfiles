@@ -1,6 +1,6 @@
 # tmux copy-mode crash — context & fix
 
-**Status: FIXED (2026-07-26)** — running tmux `3.7c` built from source, linked against **jemalloc**.
+**Status: FIXED (2026-07-26), then REVERTED to brew (2026-08-17)** — see update at bottom.
 Feed this file to any AI agent session working on the tmux crash.
 
 ## Symptom
@@ -26,7 +26,7 @@ Confirmed by upstream A/B test: stock malloc crashed 6×, jemalloc 0×.
   (master) both build **without jemalloc** (formula has no jemalloc dep). Both still crash.
 - `--HEAD` == master; switching "HEAD vs master" changes nothing.
 
-## Current install (this machine)
+## Current install (this machine) — superseded 2026-08-17, see update below
 - Binary: `~/.local/bin/tmux` = `tmux 3.7c`, jemalloc-linked. Wins in PATH over `/opt/homebrew/bin` (#6 vs #24).
 - Source: `~/src/tmux-3.7c`, git branch `release_3.7c` (= stable 3.7b + jemalloc).
 - jemalloc from Homebrew (`brew install jemalloc`, 5.3.0).
@@ -54,3 +54,16 @@ After changing the binary you MUST restart the server for it to take effect
   formula gaining a jemalloc dep). When that lands: `rm ~/.local/bin/tmux` + `brew install tmux`.
 - Aggravating factor in this setup: `@resurrect-capture-pane-contents on` + large
   `history-limit` (restore-heavy workload feeds the trigger). jemalloc fixes it regardless.
+
+## Update 2026-08-17 — reverted to brew-managed tmux
+- Moved daily driving to **herdr**; tmux no longer in active use, so crash exposure is moot.
+- `brew upgrade` of the old `--HEAD` keg started **failing at configure**: tmux master now
+  *requires* an explicit `--enable-jemalloc`/`--disable-jemalloc` on macOS (upstream added a
+  mandatory check for this very calloc bug), and the Homebrew formula passes neither.
+  Every HEAD rebuild fails until the formula catches up.
+- Reverted per the plan above: `rm ~/.local/bin/tmux`, `brew uninstall tmux` (HEAD keg),
+  `brew install tmux` → bottled **3.7b**, old 3.6b keg cleaned up.
+- Now: `command -v tmux` → `/opt/homebrew/bin/tmux`, `tmux -V` → 3.7b, **no jemalloc** —
+  i.e. the copy-mode crash is NOT fixed in this install. If tmux becomes a daily driver
+  again on macOS 26/arm64, rebuild the jemalloc binary (source still at `~/src/tmux-3.7c`,
+  instructions in "Update / revert" above) or wait for a jemalloc-linked brew formula.
