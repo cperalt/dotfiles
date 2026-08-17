@@ -34,8 +34,7 @@ Homebrew 6.0+ requires explicit trust for third-party (non-official) taps before
 |-----------------------------------------------|----------------|----------------------------------------------------|
 | `~/.zshrc`, `~/.p10k.zsh`                     | symlink        |                                                    |
 | `~/.tmux.conf`, `~/.wezterm.lua`              | symlink        |                                                    |
-| `~/.config/{mise,nvim,ghostty,aerospace,yazi,karabiner,sesh,worktrunk}` | symlink | whole-directory links            |
-| `~/Library/Application Support/lazygit/config.yml` | symlink   | under `home/Library/Application Support/`          |
+| `~/.config/{mise,nvim,ghostty,aerospace,yazi,karabiner,sesh,worktrunk,lazygit}` | symlink | whole-directory links            |
 | `~/.config/herdr`, `~/.config/gh-dash`        | symlink-each   | target dirs hold unmanaged files                   |
 | `~/.pi/agent`, `~/.omp/agent`                 | symlink-each   | target dirs hold unmanaged files                   |
 
@@ -66,8 +65,8 @@ Theme: Catppuccin Mocha (consistent across nvim, tmux, wezterm, yazi).
 - **Shell**: zsh + Powerlevel10k + zsh-autosuggestions + zsh-syntax-highlighting
 - **Tmux prefix**: `Ctrl-a` (vim-tmux-navigator for seamless pane/vim movement)
 - **Window manager**: AeroSpace
-- **Version manager**: mise
-- **Git UI**: lazygit
+- **Version manager**: mise — also installs CLI tools `.zshrc` depends on (`bat`, `eza`, `fd`, `fzf`, `lazygit`, `zoxide`) via `[tools]` in `home/.config/mise/config.toml`; everything else stays in the `Brewfile`
+- **Git UI**: lazygit — config at `~/.config/lazygit/config.yml` via `LG_CONFIG_FILE` exported in `.zshrc` (macOS default would be `~/Library/Application Support/`)
 - **File explorer**: yazi + nvim-tree
 
 ## Sensitive Files

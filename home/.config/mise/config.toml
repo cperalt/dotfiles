@@ -3,6 +3,13 @@ node = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 "npm:typescript-language-server" = "latest"
 rust = "1.97.1"
+# CLI tools .zshrc depends on (migrated from Brewfile)
+bat = "latest"
+eza = "latest"
+fd = "latest"
+fzf = "latest"
+lazygit = "latest"
+zoxide = "latest"
 
 [hooks]
 postinstall = "hash -r"
@@ -28,7 +35,7 @@ dotfiles.root = "~/.dotfiles/home"
 "~/.config/karabiner" = {}
 "~/.config/sesh" = {}
 "~/.config/worktrunk" = {}
-"~/Library/Application Support/lazygit/config.yml" = {}
+"~/.config/lazygit" = {}
 # shared target dirs: link each file, leave unmanaged neighbors alone
 "~/.config/herdr" = { mode = "symlink-each" }
 "~/.config/gh-dash" = { mode = "symlink-each" }

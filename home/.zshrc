@@ -11,6 +11,10 @@ export ENABLE_LSP_TOOL=1
 export ENABLE_TOOL_SEARCH=true
 # export COMPOSE_PROJECT_NAME=mortgage-pos
 
+# --- Mise (runtime/env manager) ---
+# Activated early: fzf/eza/bat/zoxide below are mise-managed and must be on PATH.
+eval "$(mise activate zsh)"
+
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
@@ -194,10 +198,7 @@ function y() {
 	rm -f -- "$tmp"
 }
 
-# Added by Windsurf
 export PATH="/Users/cperaltarayon/.codeium/windsurf/bin:$PATH"
-# --- Mise (runtime/env manager) ---
-eval "$(mise activate zsh)"
 
 function chpwd() {
   if [[ -f .mise.toml || -f .tool-versions || -f .nvmrc || -f .node-version ]]; then
@@ -205,6 +206,7 @@ function chpwd() {
   fi
 }
 unalias lg 2>/dev/null
+export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
 
 lg() {
     local start_dir="$PWD"
