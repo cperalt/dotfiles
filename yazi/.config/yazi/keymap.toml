@@ -371,4 +371,4 @@ desc = "Go to the root directory of the git repository"
 
 [[mgr.prepend_keymap]]
 on  = "y"
-run = [ 'shell -- osascript -e "set the clipboard to (POSIX file \"$0\")" %f', "yank" ]
+run = [ 'shell -- p=%s1; osascript -e "set the clipboard to (POSIX file \"$p\")"', "yank" ]
