@@ -26,6 +26,24 @@ setopt hist_verify
 # don't exit the shell (and kill the tmux pane/session) on a stray Ctrl+D
 setopt ignore_eof
 
+# herdr: confirm before `exit` in a workspace's last pane — the process-exit
+# path closes the whole workspace with no confirmation (herdr #1385, not planned
+# upstream). Ctrl+D is already covered by ignore_eof above.
+if [[ -n "$HERDR_ENV" && -n "$HERDR_WORKSPACE_ID" ]]; then
+  exit() {
+    local info
+    info=$(herdr api snapshot 2>/dev/null | jq -r --arg ws "$HERDR_WORKSPACE_ID" \
+      '.result.snapshot.workspaces[] | select(.workspace_id == $ws) | "\(.pane_count)\t\(.label)"' 2>/dev/null)
+    if [[ "${info%%$'\t'*}" == "1" ]]; then
+      local reply
+      read -q "reply?Last pane in herdr workspace '${info#*$'\t'}' — exiting closes the workspace. Exit anyway? [y/N] "
+      print
+      [[ "$reply" == "y" ]] || return 1
+    fi
+    builtin exit "$@"
+  }
+fi
+
 # completion using arrow keys (based on history)
 # Use up-line-or-search instead of history-search-backward to allow multiline editing
 bindkey '^[[A' up-line-or-search
@@ -125,6 +143,8 @@ alias zshr="source ~/.zshrc"
 alias boo="nvim ~/.dotfiles/ghostty/.config/ghostty/config"
 alias tmx="nvim ~/.dotfiles/tmux/.tmux.conf"
 alias tma="tmux attach-session"
+alias her="herdr"
+alias hdx="nvim ~/.dotfiles/herdr/.config/herdr/config.toml"
 alias gs="git status"
 alias nrd="npm run dev"
 alias nrl="npm run dev:live"
