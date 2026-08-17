@@ -13,6 +13,7 @@ home/.omp/agent/extensions/bun.lock
 home/.omp/agent/extensions/tsconfig.json
 home/.omp/agent/extensions/package.json
 home/.omp/agent/tools
+home/.omp/agent/config.yml.lock
 .pi/specs/
 .pi/plans/
 .pi/runs/
