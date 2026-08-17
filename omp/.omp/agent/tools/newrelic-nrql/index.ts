@@ -100,6 +100,21 @@ const factory: CustomToolFactory = (pi) => ({
 			},
 		};
 	},
+
+	renderCall(args, _options, theme) {
+		const { query, accountId, format } = args as {
+			query: string;
+			accountId?: number;
+			format?: string;
+		};
+		const header = theme.fg("toolTitle", theme.bold("newrelic_nrql"));
+		const flags: string[] = [];
+		if (accountId !== undefined) flags.push(`accountId=${accountId}`);
+		if (format) flags.push(`format=${format}`);
+		const meta = flags.length > 0 ? theme.fg("muted", ` (${flags.join(", ")})`) : "";
+		const highlighted = pi.pi.highlightCode(query, "sql").join("\n");
+		return new pi.pi.Text(`${header}${meta}\n${highlighted}`, 0, 0);
+	},
 });
 
 export default factory;
