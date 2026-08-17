@@ -1,19 +1,27 @@
 {
-  "lastChangelogVersion": "0.65.2",
-  "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-5.4",
+  "lastChangelogVersion": "0.75.4",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-4-7",
   "defaultThinkingLevel": "medium",
-  "hideThinkingBlock": true,
+  "hideThinkingBlock": false,
   "showHardwareCursor": true,
   "extensions": [
     "/Users/cperaltarayon/code/pi-nvim/extension.ts"
   ],
+  "npmCommand": [
+    "mise",
+    "exec",
+    "node@25.9.0",
+    "--",
+    "npm"
+  ],
   "theme": "tokyo-night-minimal-tools",
   "powerline": "compact",
   "enabledModels": [
+    "anthropic/claude-opus-4-7",
     "anthropic/claude-opus-4-6",
     "anthropic/claude-sonnet-4-6",
-    "openai-codex/gpt-5.4"
+    "openai-codex/gpt-5.5"
   ],
   "packages": [
     "npm:pi-web-access",
