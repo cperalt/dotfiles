@@ -23,7 +23,9 @@ return {
       if herdr == nil or herdr == "" then
         herdr = "herdr"
       end
-      vim.fn.system({ herdr, "pane", "focus", "--direction", direction, "--current" })
+      -- Name our own pane explicitly: `--current` resolves the server-side
+      -- focused pane and ignores $HERDR_PANE_ID (fragile under focus races).
+      vim.fn.system({ herdr, "pane", "focus", "--direction", direction, "--pane", vim.env.HERDR_PANE_ID })
     end
 
     local directions = {
