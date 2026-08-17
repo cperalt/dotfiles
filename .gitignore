@@ -5,10 +5,13 @@ docs/
 .omp/
 !omp/.omp/
 !omp/.omp/**
+omp/.omp/agent/extensions/aws-guardrail.ts
+omp/.omp/agent/extensions/newrelic-guardrail.ts
 omp/.omp/agent/extensions/node_modules/
 omp/.omp/agent/extensions/bun.lock
 omp/.omp/agent/extensions/tsconfig.json
 omp/.omp/agent/extensions/package.json
+omp/.omp/agent/tools
 .pi/specs/
 .pi/plans/
 .pi/runs/
