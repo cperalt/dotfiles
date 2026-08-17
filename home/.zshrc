@@ -12,7 +12,9 @@ export ENABLE_TOOL_SEARCH=true
 # export COMPOSE_PROJECT_NAME=mortgage-pos
 
 # --- Mise (runtime/env manager) ---
+# Installed via mise.run into ~/.local/bin (self-updating; not brew-managed).
 # Activated early: fzf/eza/bat/zoxide below are mise-managed and must be on PATH.
+export PATH="$HOME/.local/bin:$PATH"
 eval "$(mise activate zsh)"
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
@@ -132,10 +134,6 @@ _fzf_comprun() {
     *)            fzf --preview "$show_file_or_dir_preview" "$@" ;;
   esac
 }
-
-# thefuck alias
-eval $(thefuck --alias)
-eval $(thefuck --alias fk)
 
 # --- Alias ---
 alias wtn="WT_SKIP_SERVERS=1 wt switch --create"

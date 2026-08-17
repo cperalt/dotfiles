@@ -35,20 +35,26 @@ info "Installing Homebrew packages from Brewfile..."
 brew bundle --file="$DOTFILES/Brewfile"
 success "Homebrew packages installed"
 
-# --- Step 4: Dotfiles via mise ---
+# --- Step 4: mise (via mise.run, not brew — enables `mise self-update`) ---
+export PATH="$HOME/.local/bin:$PATH"
+if ! command -v mise &>/dev/null; then
+    info "Installing mise via mise.run..."
+    curl -fsSL https://mise.run | sh
+    success "mise installed to ~/.local/bin"
+else
+    success "mise already installed"
+fi
+
+# --- Step 5: Dotfiles via mise ---
 # The global mise config normally lives at ~/.config/mise/config.toml, but that
 # symlink is itself created by the apply below — so bootstrap by pointing mise
 # at the repo copy explicitly for this one invocation.
-if ! command -v mise &>/dev/null; then
-    error "mise not found — it should have been installed from the Brewfile"
-    exit 1
-fi
 info "Applying dotfiles with mise..."
 MISE_GLOBAL_CONFIG_FILE="$DOTFILES/home/.config/mise/config.toml" \
     mise bootstrap dotfiles apply --yes
 success "Dotfiles applied"
 
-# --- Step 5: GitHub CLI extensions ---
+# --- Step 6: GitHub CLI extensions ---
 info "Installing gh extensions..."
 if command -v gh &>/dev/null; then
     if ! gh extension list 2>/dev/null | grep -q "dlvhdr/gh-dash"; then
@@ -61,7 +67,7 @@ else
     warn "gh not installed or not authenticated — skipping gh-dash"
 fi
 
-# --- Step 5b: herdr plugins ---
+# --- Step 6b: herdr plugins ---
 HERDR_PLUGIN="paulbkim-dev/vim-herdr-navigation"
 if command -v herdr &>/dev/null; then
     if ! herdr plugin list 2>/dev/null | grep -q "vim-herdr-navigation"; then
@@ -75,7 +81,7 @@ else
     warn "herdr not installed — skipping vim-herdr-navigation"
 fi
 
-# --- Step 6: Tmux Plugin Manager ---
+# --- Step 7: Tmux Plugin Manager ---
 TPM_DIR="$HOME/.tmux/plugins/tpm"
 if [[ ! -d "$TPM_DIR" ]]; then
     info "Installing tmux plugin manager (tpm)..."
@@ -85,7 +91,7 @@ else
     success "tpm already installed"
 fi
 
-# --- Step 7: fzf-git.sh ---
+# --- Step 8: fzf-git.sh ---
 FZF_GIT_DIR="$HOME/fzf-git.sh"
 if [[ ! -d "$FZF_GIT_DIR" ]]; then
     info "Cloning fzf-git.sh..."
@@ -95,7 +101,7 @@ else
     success "fzf-git.sh already present"
 fi
 
-# --- Step 8: Mise runtimes ---
+# --- Step 9: Mise tools & runtimes ---
 if command -v mise &>/dev/null; then
     info "Installing mise runtimes..."
     mise install
@@ -104,7 +110,7 @@ else
     warn "mise not found — skipping runtime install"
 fi
 
-# --- Step 9: .env.zsh template ---
+# --- Step 10: .env.zsh template ---
 ENV_FILE="$DOTFILES/home/.env.zsh"
 if [[ ! -f "$ENV_FILE" ]]; then
     info "Creating .env.zsh template..."
@@ -121,7 +127,7 @@ else
     success ".env.zsh already exists"
 fi
 
-# --- Step 10: Default shell ---
+# --- Step 11: Default shell ---
 ZSH_PATH="$(brew --prefix)/bin/zsh"
 if [[ ! -f "$ZSH_PATH" ]]; then
     warn "Homebrew zsh not found at $ZSH_PATH — skipping shell change"
