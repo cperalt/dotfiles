@@ -77,3 +77,8 @@ agent_panel_sort = "priority"
 [ui.sidebar.spaces]
 # One line per space; branch is redundant with worktrunk branch-named workspaces.
 rows = [["state_icon", "workspace", "git_status"]]
+
+[experimental]
+# Kitty graphics passthrough so yazi/image previews render; ghostty (outer
+# terminal) supports KGP.
+kitty_graphics = true
