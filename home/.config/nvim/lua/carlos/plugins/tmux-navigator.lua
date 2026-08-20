@@ -23,9 +23,13 @@ return {
       if herdr == nil or herdr == "" then
         herdr = "herdr"
       end
-      -- Name our own pane explicitly: `--current` resolves the server-side
-      -- focused pane and ignores $HERDR_PANE_ID (fragile under focus races).
-      vim.fn.system({ herdr, "pane", "focus", "--direction", direction, "--pane", vim.env.HERDR_PANE_ID })
+      -- Use `--current` (server-side focused pane), NOT `--pane $HERDR_PANE_ID`:
+      -- the env var is a launch-time snapshot and herdr reassigns pane ids when
+      -- a pane is moved between tabs/workspaces, so it rots under long-lived
+      -- nvim instances. `--current` is always right here — these chords only
+      -- reach nvim because its pane is the focused one (vim-herdr-navigation
+      -- forwards to the focused pane).
+      vim.fn.system({ herdr, "pane", "focus", "--direction", direction, "--current" })
     end
 
     local directions = {
