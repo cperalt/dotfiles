@@ -207,27 +207,22 @@ unalias lg 2>/dev/null
 export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
 
 lg() {
-    local start_dir="$PWD"
-    #
-    # # Auto-pull the main worktree before launching lazygit
-    # _lg_pull_main_worktree
-    #
-    lazygit "$@"
+    # Per-instance cd-on-exit: lazygit writes ITS repo dir to this file.
+    # (Reading the global state.yml races with other lazygit instances in
+    # other herdr panes and can cd this shell into the wrong worktree.)
+    local dir_file
+    dir_file=$(mktemp -t lazygit-newdir) || { lazygit "$@"; return }
 
-    # # Auto-pull main worktree again after exiting (picks up any remote changes)
-    # _lg_pull_main_worktree
-    #
-    # Read the most recent repo from lazygit's state file
-    local state_file="${HOME}/Library/Application Support/lazygit/state.yml"
-    if [[ -f "$state_file" ]]; then
-        # Extract the first entry under recentrepos (the last repo lazygit was in)
+    LAZYGIT_NEW_DIR_FILE="$dir_file" lazygit "$@"
+
+    if [[ -s "$dir_file" ]]; then
         local new_dir
-        new_dir=$(awk '/^recentrepos:/{found=1; next} found && /^    - /{gsub(/^    - /,""); print; exit}' "$state_file")
-
-        if [[ -n "$new_dir" && -d "$new_dir" && "$new_dir" != "$start_dir" ]]; then
+        new_dir=$(<"$dir_file")
+        if [[ -d "$new_dir" && "$new_dir" != "$PWD" ]]; then
             cd "$new_dir"
         fi
     fi
+    rm -f "$dir_file"
 }
 
 autoload -Uz compinit && compinit
