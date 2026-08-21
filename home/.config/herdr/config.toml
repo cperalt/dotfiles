@@ -72,6 +72,7 @@ description = "recent workspaces (MRU)"
 pane_borders = false
 pane_gaps = true
 hide_tab_bar_when_single_tab = true
+status_indicators = "symbols"
 
 agent_panel_sort = "priority"
 [ui.sidebar.spaces]
