@@ -49,6 +49,13 @@ fi
 # The global mise config normally lives at ~/.config/mise/config.toml, but that
 # symlink is itself created by the apply below — so bootstrap by pointing mise
 # at the repo copy explicitly for this one invocation.
+# symlink-each targets need their parent dirs to exist; mise won't create them.
+# A leftover dangling symlink (e.g. from the old stow layout) blocks mkdir -p,
+# so clear those first.
+for dir in "$HOME/.config/gh-dash" "$HOME/.config/herdr" "$HOME/.pi/agent" "$HOME/.omp/agent"; do
+    [[ -L "$dir" && ! -e "$dir" ]] && rm "$dir"
+    mkdir -p "$dir"
+done
 info "Applying dotfiles with mise..."
 MISE_GLOBAL_CONFIG_FILE="$DOTFILES/home/.config/mise/config.toml" \
     mise bootstrap dotfiles apply --yes
