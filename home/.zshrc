@@ -156,7 +156,7 @@ alias cc="claude"
 alias ccc="claude --continue"
 alias nv="nvim"
 alias dfa="mise bootstrap dotfiles apply"
-alias c="clear"
+alias c='printf "\e[H\e[2J"' # clear screen but keep scrollback (no E3 \e[3J)
 alias q="exit"
 
 # Create worktree and launch claude with a prompt in its tmux session

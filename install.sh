@@ -115,19 +115,13 @@ else
     warn "mise not found — skipping runtime install"
 fi
 
-# --- Step 9b: bun + omp (oh-my-pi) ---
+# --- Step 9b: omp (oh-my-pi) ---
+# bun is mise-managed; global packages still land in ~/.bun/bin
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
-if ! command -v bun &>/dev/null; then
-    info "Installing bun..."
-    curl -fsSL https://bun.sh/install | bash
-    success "bun installed to ~/.bun"
-else
-    success "bun already installed"
-fi
 if ! command -v omp &>/dev/null; then
     info "Installing omp (oh-my-pi)..."
-    curl -fsSL https://omp.sh/install | sh
+    curl -fsSL https://omp.sh/install | mise exec -- sh
     success "omp installed"
 else
     success "omp already installed"

@@ -65,7 +65,7 @@ Theme: Catppuccin Mocha (consistent across nvim, tmux, wezterm, yazi).
 - **Shell**: zsh + Powerlevel10k + zsh-autosuggestions + zsh-syntax-highlighting
 - **Multiplexer**: herdr (replaced tmux day-to-day; tmux config kept, prefix `Ctrl-a`)
 - **Window manager**: AeroSpace
-- **Version manager**: mise — installed via `mise.run` into `~/.local/bin` (self-updates with `mise self-update`; not brew-managed). Also installs the CLI tools `.zshrc`/configs depend on (`bat`, `eza`, `fd`, `fzf`, `jq`, `lazygit`, `ripgrep`, `worktrunk`, `yazi`, `zoxide`) via `[tools]` in `home/.config/mise/config.toml`; update with `mise outdated` / `mise upgrade`. Everything else (deps, services, GUI apps) stays in the `Brewfile`
+- **Version manager**: mise — installed via `mise.run` into `~/.local/bin` (self-updates with `mise self-update`; not brew-managed). Also installs bun and the CLI tools `.zshrc`/configs depend on (`bat`, `eza`, `fd`, `fzf`, `jq`, `lazygit`, `ripgrep`, `worktrunk`, `yazi`, `zoxide`) via `[tools]` in `home/.config/mise/config.toml`; update with `mise outdated` / `mise upgrade`. Everything else (deps, services, GUI apps) stays in the `Brewfile`
 - **Git UI**: lazygit — config at `~/.config/lazygit/config.yml` via `LG_CONFIG_FILE` exported in `.zshrc` (macOS default would be `~/Library/Application Support/`)
 - **File explorer**: yazi + nvim-tree
 

@@ -3,6 +3,7 @@ node = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 "npm:typescript-language-server" = "latest"
 rust = "1.97.1"
+bun = "latest"
 # CLI tools .zshrc depends on (migrated from Brewfile)
 bat = "latest"
 eza = "latest"
