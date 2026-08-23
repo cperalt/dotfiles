@@ -13,6 +13,12 @@
                         "description": "Caps Lock as Control",
                         "manipulators": [
                             {
+                                "conditions": [
+                                    {
+                                        "type": "device_unless",
+                                        "identifiers": [{ "vendor_id": 12815, "product_id": 20565 }]
+                                    }
+                                ],
                                 "from": {
                                     "key_code": "caps_lock",
                                     "modifiers": { "optional": ["any"] }
@@ -26,6 +32,12 @@
                         "description": "Left Control as Caps Lock",
                         "manipulators": [
                             {
+                                "conditions": [
+                                    {
+                                        "type": "device_unless",
+                                        "identifiers": [{ "vendor_id": 12815, "product_id": 20565 }]
+                                    }
+                                ],
                                 "from": {
                                     "key_code": "left_control",
                                     "modifiers": { "optional": ["any"] }
