@@ -20,6 +20,10 @@ require("lazy").setup({
     { import = "carlos.plugins" },
     { import = "carlos.plugins.lsp" },
   },
+  dev = {
+    path = "~/code",
+    fallback = true, -- machines without a local checkout fetch from GitHub
+  },
   checker = {
     enabled = true,
     notify = false,
