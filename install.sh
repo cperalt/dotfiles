@@ -118,8 +118,10 @@ else
 fi
 
 # --- Step 9b: bun + omp (oh-my-pi) ---
-# bun installs to ~/.bun via bun.sh (self-updates with `bun upgrade`);
-# omp is a bun global package (self-updates with `omp update`).
+# bun installs to ~/.bun via bun.sh (self-updates with `bun upgrade`).
+# omp uses the official installer (https://omp.sh/install): with bun present it
+# does `bun install -g @oh-my-pi/pi-coding-agent` plus bun-version and arch
+# guards. omp self-updates with `omp update`.
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 if ! command -v bun &>/dev/null; then
@@ -131,7 +133,7 @@ else
 fi
 if ! command -v omp &>/dev/null; then
     info "Installing omp (oh-my-pi)..."
-    bun install -g @oh-my-pi/pi-coding-agent
+    curl -fsSL https://omp.sh/install | sh
     success "omp installed"
 else
     success "omp already installed"
