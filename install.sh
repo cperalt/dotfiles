@@ -49,9 +49,7 @@ fi
 # The global mise config normally lives at ~/.config/mise/config.toml, but that
 # symlink is itself created by the apply below — so bootstrap by pointing mise
 # at the repo copy explicitly for this one invocation.
-# symlink-each targets need their parent dirs to exist; mise won't create them.
-# A leftover dangling symlink (e.g. from the old stow layout) blocks mkdir -p,
-# so clear those first.
+# symlink-each targets need existing parent dirs (clear stale dangling symlinks first)
 for dir in "$HOME/.config/gh-dash" "$HOME/.config/herdr" "$HOME/.pi/agent" "$HOME/.omp/agent"; do
     [[ -L "$dir" && ! -e "$dir" ]] && rm "$dir"
     mkdir -p "$dir"
@@ -118,10 +116,6 @@ else
 fi
 
 # --- Step 9b: bun + omp (oh-my-pi) ---
-# bun installs to ~/.bun via bun.sh (self-updates with `bun upgrade`).
-# omp uses the official installer (https://omp.sh/install): with bun present it
-# does `bun install -g @oh-my-pi/pi-coding-agent` plus bun-version and arch
-# guards. omp self-updates with `omp update`.
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 if ! command -v bun &>/dev/null; then
