@@ -117,6 +117,26 @@ else
     warn "mise not found — skipping runtime install"
 fi
 
+# --- Step 9b: bun + omp (oh-my-pi) ---
+# bun installs to ~/.bun via bun.sh (self-updates with `bun upgrade`);
+# omp is a bun global package (self-updates with `omp update`).
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+if ! command -v bun &>/dev/null; then
+    info "Installing bun..."
+    curl -fsSL https://bun.sh/install | bash
+    success "bun installed to ~/.bun"
+else
+    success "bun already installed"
+fi
+if ! command -v omp &>/dev/null; then
+    info "Installing omp (oh-my-pi)..."
+    bun install -g @oh-my-pi/pi-coding-agent
+    success "omp installed"
+else
+    success "omp already installed"
+fi
+
 # --- Step 10: .env.zsh template ---
 ENV_FILE="$DOTFILES/home/.env.zsh"
 if [[ ! -f "$ENV_FILE" ]]; then
