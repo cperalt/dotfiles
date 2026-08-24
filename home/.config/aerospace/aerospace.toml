@@ -19,7 +19,7 @@ start-at-login = true
 # List of workspaces that should stay alive even when they contain no windows,
 # even when they are invisible.
 # In config-version 1 this was inferred from keybindings; v2 requires it explicitly.
-persistent-workspaces = ['1', '2', 'B', 'D', 'M', 'O', 'S', 'T', 'V', 'Z']
+persistent-workspaces = ['1', '2', 'B', 'D', 'M', 'O', 'S', 'T', 'V']
 
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
 enable-normalization-flatten-containers = true
@@ -139,7 +139,7 @@ alt-v = 'workspace V' # for Cursor
 # alt-w = 'workspace W'
 # alt-x = 'workspace X'
 # alt-y = 'workspace Y'
-alt-z = 'workspace Z'
+# alt-z = 'workspace Z'
 
 # See: https://nikitabobko.github.io/AeroSpace/commands#move-node-to-workspace
 alt-shift-1 = 'move-node-to-workspace 1'
@@ -229,9 +229,9 @@ run = "move-node-to-workspace V"
 if.app-id = 'com.spotify.client'
 run = "move-node-to-workspace M"
 
-[[on-window-detected]]
-if.app-id = 'us.zoom.xos'
-run = "move-node-to-workspace Z"
+# [[on-window-detected]]
+# if.app-id = 'us.zoom.xos'
+# run = "move-node-to-workspace Z"
 
 [[on-window-detected]]
 if.app-id = 'com.amazon.workspaces'
