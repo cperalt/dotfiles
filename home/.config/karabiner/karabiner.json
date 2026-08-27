@@ -16,7 +16,7 @@
                                 "conditions": [
                                     {
                                         "type": "device_unless",
-                                        "identifiers": [{ "vendor_id": 12815, "product_id": 20565 }]
+                                        "identifiers": [{ "vendor_id": 12815 }]
                                     }
                                 ],
                                 "from": {
@@ -35,7 +35,7 @@
                                 "conditions": [
                                     {
                                         "type": "device_unless",
-                                        "identifiers": [{ "vendor_id": 12815, "product_id": 20565 }]
+                                        "identifiers": [{ "vendor_id": 12815 }]
                                     }
                                 ],
                                 "from": {
