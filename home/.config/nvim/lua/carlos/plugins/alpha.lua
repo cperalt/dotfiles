@@ -1,157 +1,165 @@
+local show_catppuccin_cat = false
+
 return {
   "goolord/alpha-nvim",
   event = "VimEnter",
-  dependencies = {
+  dependencies = show_catppuccin_cat and {
     "catppuccin/nvim",
-  },
+  } or {},
   config = function()
-    local function getLen(str, start_pos)
-      local byte = string.byte(str, start_pos)
-      if not byte then
-        return nil
+    local alpha = require("alpha")
+    local dashboard = require("alpha.themes.dashboard")
+    local apply_responsive_header
+
+    if show_catppuccin_cat then
+      local function getLen(str, start_pos)
+        local byte = string.byte(str, start_pos)
+        if not byte then
+          return nil
+        end
+
+        return (byte < 0x80 and 1) or (byte < 0xE0 and 2) or (byte < 0xF0 and 3) or (byte < 0xF8 and 4) or 1
       end
 
-      return (byte < 0x80 and 1) or (byte < 0xE0 and 2) or (byte < 0xF0 and 3) or (byte < 0xF8 and 4) or 1
-    end
+      local function colorize(header, header_color_map, colors)
+        for letter, color in pairs(colors) do
+          local color_name = "AlphaHeaderColor" .. letter
+          vim.api.nvim_set_hl(0, color_name, color)
+          colors[letter] = color_name
+        end
 
-    local function colorize(header, header_color_map, colors)
-      for letter, color in pairs(colors) do
-        local color_name = "AlphaHeaderColor" .. letter
-        vim.api.nvim_set_hl(0, color_name, color)
-        colors[letter] = color_name
+        local colorized = {}
+
+        for i, line in ipairs(header_color_map) do
+          local colorized_line = {}
+          local pos = 0
+
+          for j = 1, #line do
+            local start = pos
+            pos = pos + getLen(header[i], start + 1)
+
+            local color_name = colors[line:sub(j, j)]
+            if color_name then
+              table.insert(colorized_line, { color_name, start, pos })
+            end
+          end
+
+          table.insert(colorized, colorized_line)
+        end
+
+        return colorized
       end
 
-      local colorized = {}
+      local mocha = require("catppuccin.palettes").get_palette("mocha")
 
-      for i, line in ipairs(header_color_map) do
-        local colorized_line = {}
-        local pos = 0
+      local header = {
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ███████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ███████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+        [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
+      }
 
-        for j = 1, #line do
-          local start = pos
-          pos = pos + getLen(header[i], start + 1)
+      local color_map = {
+        [[ WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWWWWWWWWWW ]],
+        [[ RRRRWWWWWWWWWWWWWWWWRRRRRRRRRRRRRRRRWWWWWWWWWWWWWWWWBBPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPBBWWWWWWWWWWWW ]],
+        [[ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBPPPPPPHHHHHHHHHHHHHHHHHHHHHHHHHHPPPPPPBBWWWWWWWWWW ]],
+        [[ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBPPPPHHHHHHHHHHHHFFHHHHFFHHHHHHHHHHPPPPBBWWWWWWWWWW ]],
+        [[ OOOORRRRRRRRRRRRRRRROOOOOOOOOOOOOOOORRRRRRRRRRRRRRBBPPHHHHFFHHHHHHHHHHHHHHHHHHHHHHHHHHHHPPBBWWWWWWWWWW ]],
+        [[ OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOBBPPHHHHHHHHHHHHHHHHHHHHBBBBHHHHFFHHHHPPBBWWBBBBWWWW ]],
+        [[ OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOBBPPHHHHHHHHHHHHHHHHHHBBMMMMBBHHHHHHHHPPBBBBMMMMBBWW ]],
+        [[ YYYYOOOOOOOOOOOOOOOOYYYYYYYYYYYYYYYYOOBBBBBBBBOOOOBBPPHHHHHHHHHHHHFFHHHHBBMMMMMMBBHHHHHHPPBBMMMMMMBBWW ]],
+        [[ YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYBBMMMMBBBBOOBBPPHHHHHHHHHHHHHHHHHHBBMMMMMMMMBBBBBBBBMMMMMMMMBBWW ]],
+        [[ YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYBBBBMMMMBBBBBBPPHHHHHHFFHHHHHHHHHHBBMMMMMMMMMMMMMMMMMMMMMMMMBBWW ]],
+        [[ GGGGYYYYYYYYYYYYYYYYGGGGGGGGGGGGGGGGYYYYBBBBMMMMBBBBPPHHHHHHHHHHHHHHFFBBMMMMMMMMMMMMMMMMMMMMMMMMMMMMBB ]],
+        [[ GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGBBBBMMMMBBPPHHFFHHHHHHHHHHHHBBMMMMMMCCBBMMMMMMMMMMCCBBMMMMBB ]],
+        [[ GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGBBBBBBBBPPHHHHHHHHHHHHHHHHBBMMMMMMBBBBMMMMMMBBMMBBBBMMMMBB ]],
+        [[ UUUUGGGGGGGGGGGGGGGGUUUUUUUUUUUUUUUUGGGGGGGGGGGGBBBBPPHHHHHHHHHHFFHHHHBBMMrrrrMMMMMMMMMMMMMMMMrrrrBB ]],
+        [[ UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUBBPPPPHHFFHHHHHHHHHHBBMMrrrrMMBBMMMMBBMMMMBBMMrrrrBB ]],
+        [[ UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUBBPPPPPPHHHHHHHHHHHHHHBBMMMMMMBBBBBBBBBBBBBBMMMMBBWW ]],
+        [[ VVVVUUUUUUUUUUUUUUUUVVVVVVVVVVVVVVVVUUUUUUUUUUUUBBBBBBPPPPPPPPPPPPPPPPPPPPBBMMMMMMMMMMMMMMMMMMMMBBWWWW ]],
+        [[ VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVBBMMMMMMBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWW ]],
+        [[ VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVBBMMMMBBBBWWBBMMMMBBWWWWWWWWWWBBMMMMBBWWBBMMMMBBWWWWWWWW ]],
+        [[ WWWWVVVVVVVVVVVVVVVVWWWWWWWWWWWWWWWWVVVVVVVVVVBBBBBBBBWWWWBBBBBBWWWWWWWWWWWWWWBBBBBBWWWWBBBBWWWWWWWWWW ]],
+      }
 
-          local color_name = colors[line:sub(j, j)]
-          if color_name then
-            table.insert(colorized_line, { color_name, start, pos })
+      local function alpha_colors()
+        return {
+          ["W"] = { fg = mocha.base },
+          ["C"] = { fg = mocha.text },
+          ["B"] = { fg = mocha.crust },
+          ["R"] = { fg = mocha.red },
+          ["O"] = { fg = mocha.peach },
+          ["Y"] = { fg = mocha.yellow },
+          ["G"] = { fg = mocha.green },
+          ["U"] = { fg = mocha.blue },
+          ["P"] = { fg = mocha.yellow },
+          ["H"] = { fg = mocha.pink },
+          ["F"] = { fg = mocha.red },
+          ["M"] = { fg = mocha.overlay0 },
+          ["V"] = { fg = mocha.lavender },
+          ["r"] = { fg = mocha.red },
+          ["c"] = { fg = mocha.text },
+        }
+      end
+
+      local function sample_line(line, step)
+        local out = {}
+        local chars = vim.fn.strchars(line)
+
+        for i = 0, chars - 1, step do
+          out[#out + 1] = vim.fn.strcharpart(line, i, 1)
+        end
+
+        return table.concat(out)
+      end
+
+      local function compact_lines(lines, step, keep_every)
+        local out = {}
+        for i, line in ipairs(lines) do
+          if (i - 1) % keep_every == 0 then
+            out[#out + 1] = sample_line(line, step)
           end
         end
-
-        table.insert(colorized, colorized_line)
+        return out
       end
 
-      return colorized
-    end
+      apply_responsive_header = function()
+        local width = vim.o.columns
+        local active_header = header
+        local active_color_map = color_map
 
-    local alpha = require("alpha")
-    local mocha = require("catppuccin.palettes").get_palette("mocha")
-    local dashboard = require("alpha.themes.dashboard")
-
-    local header = {
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ███████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ███████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-      [[ ██████████████████████████████████████████████████████████████████████████████████████████████████████ ]],
-    }
-
-    local color_map = {
-      [[ WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWWWWWWWWWW ]],
-      [[ RRRRWWWWWWWWWWWWWWWWRRRRRRRRRRRRRRRRWWWWWWWWWWWWWWWWBBPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPBBWWWWWWWWWWWW ]],
-      [[ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBPPPPPPHHHHHHHHHHHHHHHHHHHHHHHHHHPPPPPPBBWWWWWWWWWW ]],
-      [[ RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRBBPPPPHHHHHHHHHHHHFFHHHHFFHHHHHHHHHHPPPPBBWWWWWWWWWW ]],
-      [[ OOOORRRRRRRRRRRRRRRROOOOOOOOOOOOOOOORRRRRRRRRRRRRRBBPPHHHHFFHHHHHHHHHHHHHHHHHHHHHHHHHHHHPPBBWWWWWWWWWW ]],
-      [[ OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOBBPPHHHHHHHHHHHHHHHHHHHHBBBBHHHHFFHHHHPPBBWWBBBBWWWW ]],
-      [[ OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOBBPPHHHHHHHHHHHHHHHHHHBBMMMMBBHHHHHHHHPPBBBBMMMMBBWW ]],
-      [[ YYYYOOOOOOOOOOOOOOOOYYYYYYYYYYYYYYYYOOBBBBBBBBOOOOBBPPHHHHHHHHHHHHFFHHHHBBMMMMMMBBHHHHHHPPBBMMMMMMBBWW ]],
-      [[ YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYBBMMMMBBBBOOBBPPHHHHHHHHHHHHHHHHHHBBMMMMMMMMBBBBBBBBMMMMMMMMBBWW ]],
-      [[ YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYBBBBMMMMBBBBBBPPHHHHHHFFHHHHHHHHHHBBMMMMMMMMMMMMMMMMMMMMMMMMBBWW ]],
-      [[ GGGGYYYYYYYYYYYYYYYYGGGGGGGGGGGGGGGGYYYYBBBBMMMMBBBBPPHHHHHHHHHHHHHHFFBBMMMMMMMMMMMMMMMMMMMMMMMMMMMMBB ]],
-      [[ GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGBBBBMMMMBBPPHHFFHHHHHHHHHHHHBBMMMMMMCCBBMMMMMMMMMMCCBBMMMMBB ]],
-      [[ GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGBBBBBBBBPPHHHHHHHHHHHHHHHHBBMMMMMMBBBBMMMMMMBBMMBBBBMMMMBB ]],
-      [[ UUUUGGGGGGGGGGGGGGGGUUUUUUUUUUUUUUUUGGGGGGGGGGGGBBBBPPHHHHHHHHHHFFHHHHBBMMrrrrMMMMMMMMMMMMMMMMrrrrBB ]],
-      [[ UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUBBPPPPHHFFHHHHHHHHHHBBMMrrrrMMBBMMMMBBMMMMBBMMrrrrBB ]],
-      [[ UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUBBPPPPPPHHHHHHHHHHHHHHBBMMMMMMBBBBBBBBBBBBBBMMMMBBWW ]],
-      [[ VVVVUUUUUUUUUUUUUUUUVVVVVVVVVVVVVVVVUUUUUUUUUUUUBBBBBBPPPPPPPPPPPPPPPPPPPPBBMMMMMMMMMMMMMMMMMMMMBBWWWW ]],
-      [[ VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVBBMMMMMMBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWW ]],
-      [[ VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVBBMMMMBBBBWWBBMMMMBBWWWWWWWWWWBBMMMMBBWWBBMMMMBBWWWWWWWW ]],
-      [[ WWWWVVVVVVVVVVVVVVVVWWWWWWWWWWWWWWWWVVVVVVVVVVBBBBBBBBWWWWBBBBBBWWWWWWWWWWWWWWBBBBBBWWWWBBBBWWWWWWWWWW ]],
-    }
-
-    local function alpha_colors()
-      return {
-        ["W"] = { fg = mocha.base },
-        ["C"] = { fg = mocha.text },
-        ["B"] = { fg = mocha.crust },
-        ["R"] = { fg = mocha.red },
-        ["O"] = { fg = mocha.peach },
-        ["Y"] = { fg = mocha.yellow },
-        ["G"] = { fg = mocha.green },
-        ["U"] = { fg = mocha.blue },
-        ["P"] = { fg = mocha.yellow },
-        ["H"] = { fg = mocha.pink },
-        ["F"] = { fg = mocha.red },
-        ["M"] = { fg = mocha.overlay0 },
-        ["V"] = { fg = mocha.lavender },
-        ["r"] = { fg = mocha.red },
-        ["c"] = { fg = mocha.text },
-      }
-    end
-
-    local function sample_line(line, step)
-      local out = {}
-      local chars = vim.fn.strchars(line)
-
-      for i = 0, chars - 1, step do
-        out[#out + 1] = vim.fn.strcharpart(line, i, 1)
-      end
-
-      return table.concat(out)
-    end
-
-    local function compact_lines(lines, step, keep_every)
-      local out = {}
-      for i, line in ipairs(lines) do
-        if (i - 1) % keep_every == 0 then
-          out[#out + 1] = sample_line(line, step)
+        if width < 100 then
+          active_header = compact_lines(header, 2, 2)
+          active_color_map = compact_lines(color_map, 2, 2)
         end
-      end
-      return out
-    end
 
-    local function apply_responsive_header()
-      local width = vim.o.columns
-      local active_header = header
-      local active_color_map = color_map
-
-      if width < 100 then
-        active_header = compact_lines(header, 2, 2)
-        active_color_map = compact_lines(color_map, 2, 2)
+        dashboard.section.header.val = active_header
+        dashboard.section.header.opts = {
+          hl = colorize(active_header, active_color_map, alpha_colors()),
+          position = "center",
+        }
       end
 
-      dashboard.section.header.val = active_header
-      dashboard.section.header.opts = {
-        hl = colorize(active_header, active_color_map, alpha_colors()),
-        position = "center",
-      }
+      apply_responsive_header()
+    else
+      dashboard.section.header.val = {}
     end
-
-    apply_responsive_header()
 
     -- stylua: ignore
     dashboard.section.buttons.val = {
@@ -170,6 +178,36 @@ return {
     dashboard.section.buttons.opts.hl = "AlphaButtons"
     dashboard.section.footer.opts.hl = "AlphaFooter"
 
+    local theta = require("alpha.themes.theta")
+    local recent_files = {
+      type = "group",
+      val = {
+        {
+          type = "text",
+          val = "Recent files",
+          opts = { hl = "SpecialComment", shrink_margin = false, position = "center" },
+        },
+        { type = "padding", val = 1 },
+        {
+          type = "group",
+          val = function()
+            return { theta.mru(1, vim.fn.getcwd(), 5) }
+          end,
+          opts = { shrink_margin = false },
+        },
+      },
+    }
+
+    local layout = dashboard.opts.layout
+    for i, el in ipairs(layout) do
+      if el == dashboard.section.buttons then
+        table.insert(layout, i + 1, { type = "padding", val = 1 })
+        table.insert(layout, i + 1, recent_files)
+        table.insert(layout, i + 1, { type = "padding", val = 2 })
+        break
+      end
+    end
+
     -- close Lazy and re-open when the dashboard is ready
     if vim.o.filetype == "lazy" then
       vim.cmd.close()
@@ -184,23 +222,25 @@ return {
 
     alpha.setup(dashboard.opts)
 
-    vim.api.nvim_create_autocmd("VimResized", {
-      callback = function()
-        apply_responsive_header()
-        if vim.bo.filetype == "alpha" then
-          pcall(vim.cmd.AlphaRedraw)
-        end
-      end,
-    })
+    if show_catppuccin_cat then
+      vim.api.nvim_create_autocmd("VimResized", {
+        callback = function()
+          apply_responsive_header()
+          if vim.bo.filetype == "alpha" then
+            pcall(vim.cmd.AlphaRedraw)
+          end
+        end,
+      })
 
-    vim.api.nvim_create_autocmd("User", {
-      once = true,
-      pattern = "AlphaReady",
-      callback = function()
-        apply_responsive_header()
-        pcall(vim.cmd.AlphaRedraw)
-      end,
-    })
+      vim.api.nvim_create_autocmd("User", {
+        once = true,
+        pattern = "AlphaReady",
+        callback = function()
+          apply_responsive_header()
+          pcall(vim.cmd.AlphaRedraw)
+        end,
+      })
+    end
 
     vim.api.nvim_create_autocmd("User", {
       once = true,
