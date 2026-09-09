@@ -12,7 +12,9 @@ cd = false
 # herdr workspace label: per-branch override via
 #   wt config state vars set session=<nickname> --branch=<branch>
 # (main in mortgage-pos = "mpos", main in sagehomeloans.com = "sage-website");
-# falls back to the sanitized branch name.
+# falls back to the worktree DIRECTORY name, not the branch. gh-stack checks
+# out layer branches inside one worktree, so HEAD's branch drifts from the
+# directory; the directory is the stable key for the workspace and the DB.
 #
 # Workspaces are addressed by label -> workspace_id via `herdr workspace list`
 # (the CLI only takes ids). All herdr calls go over the socket API, so hooks
@@ -26,7 +28,7 @@ copyIgnore = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; wt step copy-ignored'
 
 [[pre-start]]
 herdr = """
-LABEL="{{ vars.session | default(branch | sanitize) }}"
+LABEL="{{ vars.session | default(worktree_name) }}"
 WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
 if [ -z "$WS" ]; then
   WS=$(herdr workspace create --cwd {{ worktree_path }} --label "$LABEL" --no-focus | jq -r '.result.workspace.workspace_id')
@@ -43,7 +45,7 @@ fi
 # Focus the herdr workspace (instant, separate background process)
 switchHerdr = """
 [ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
-LABEL="{{ vars.session | default(branch | sanitize) }}"
+LABEL="{{ vars.session | default(worktree_name) }}"
 WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
 [ -n "$WS" ] && herdr workspace focus "$WS" >/dev/null
 """
@@ -63,9 +65,18 @@ done
 # tears down its panes, which SIGHUPs anything still running in them
 # (including manually started dev servers).
 herdr = """
-LABEL="{{ vars.session | default(branch | sanitize) }}"
+LABEL="{{ vars.session | default(worktree_name) }}"
 WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
 [ -n "$WS" ] && herdr workspace close "$WS" >/dev/null || true
+"""
+
+# gh-stack leaves the `wtn`-created root branch (named after the directory)
+# parked on main with no commits once layers take over. `-d` (safe delete)
+# removes it only if fully merged, and is a no-op when it was the checked-out
+# branch that `wt remove -D` already deleted.
+rootBranch = """
+[ "{{ worktree_name }}" = "{{ branch }}" ] && exit 0
+git -C {{ primary_worktree_path }} branch -d "{{ worktree_name }}" 2>/dev/null || true
 """
 
 # ============================================================================
@@ -121,18 +132,27 @@ echo "Isolated DB ready: $DB (cloned from mortgage_pos). If this branch adds mig
 # deps install in parallel.
 reviewDeps = """
 [ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
-LABEL="{{ vars.session | default(branch | sanitize) }}"
+LABEL="{{ vars.session | default(worktree_name) }}"
 WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
 PANE=$(herdr pane list --workspace "$WS" | jq -r '.result.panes[-1].pane_id')
 [ -n "$PANE" ] && herdr pane run "$PANE" pnpm install
 """
 
 [[projects."github.com/SageHomeLoans/mortgage-pos".pre-remove]]
-# Drop this worktree's isolated DB if one exists. IF EXISTS => no-op for shared-DB
-# worktrees; the branch-derived name can never match the shared base.
+# Drop this worktree's isolated DB if one exists. The name is read back from
+# the mise.local.toml the isolatedDb hook wrote, never recomputed from HEAD's
+# branch (stacks move HEAD). No file => shared-DB worktree => no-op.
+#
+# Not done here: deleting the other gh-stack layer branches (<dir>-1-*, <dir>-2-*,
+# ...). `wt remove -D` only deletes the checked-out branch; the rest are bare
+# refs with no dir/DB/workspace behind them. `gh stack sync --prune` from the
+# worktree deletes merged ones. If leftovers get annoying, add a hook here that
+# deletes local branches prefixed "$(basename {{ worktree_path }})-" whose PR is MERGED.
 dropDb = '''
-DB="mortgage_pos_{{ branch | sanitize_db }}"
-[ "$DB" = "mortgage_pos" ] && exit 0
+MISE={{ worktree_path }}/mise.local.toml
+[ -f "$MISE" ] || exit 0
+DB=$(sed -n 's/^POSTGRES_DB = "\(.*\)"$/\1/p' "$MISE")
+[ -z "$DB" ] || [ "$DB" = "mortgage_pos" ] && exit 0
 PGPASSWORD=pass psql -h 127.0.0.1 -p 54320 -U user -d postgres -c "DROP DATABASE IF EXISTS \"$DB\" WITH (FORCE);"
 '''
 
@@ -157,5 +177,5 @@ summary = false    # Enable LLM branch summaries (requires [commit.generation])
 full = false       # Show CI status and LLM summaries (--full)
 branches = false   # Include branches without worktrees (--branches)
 remotes = false    # Include remote-only branches (--remotes)
-columns = ["branch", "status", "ci", "age", "message"]   # Columns to show, in order — built-ins or custom headers (omit for the default set)
+columns = ["branch", "path", "status", "ci", "age", "message"]   # path shows the worktree dir; for stacks it differs from branch
 timeout-ms = 0     # Wall-clock budget for the entire collect phase; 0 disables
