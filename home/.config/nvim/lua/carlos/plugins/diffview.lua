@@ -12,6 +12,35 @@ return {
   config = function()
     local actions = require("diffview.actions")
 
+    -- Diffview remaps all z* fold commands in diff buffers so folds stay
+    -- synced across both diff windows, but labels them "diffview_ignore"
+    -- (hidden in its g? panel, ugly in which-key). Re-register the same
+    -- synced wrappers with human-readable descriptions.
+    local fold_descs = {
+      za = "Toggle fold (synced)",
+      zA = "Toggle fold recursively (synced)",
+      zo = "Open fold (synced)",
+      zO = "Open fold recursively (synced)",
+      zc = "Close fold (synced)",
+      zC = "Close fold recursively (synced)",
+      zv = "Reveal cursor line (synced)",
+      zR = "Open all folds (synced)",
+      zM = "Close all folds (synced)",
+      zr = "Fold less (synced)",
+      zm = "Fold more (synced)",
+      zx = "Update folds (synced)",
+      zX = "Undo manual folds (synced)",
+      ze = "Scroll cursor to right edge (synced)",
+      zE = "Eliminate all folds (synced)",
+      zn = "Disable folding (synced)",
+      zN = "Enable folding (synced)",
+      zi = "Toggle foldenable (synced)",
+    }
+    local fold_maps = {}
+    for _, m in ipairs(actions.compat.fold_cmds) do
+      table.insert(fold_maps, { m[1], m[2], m[3], { desc = fold_descs[m[2]] or ("Fold: " .. m[2]) } })
+    end
+
     require("diffview").setup({
       diff_binaries = false, -- Show diffs for binaries
       enhanced_diff_hl = true, -- See |diffview-config-enhanced_diff_hl|
@@ -80,7 +109,7 @@ return {
       hooks = {},
       keymaps = {
         disable_defaults = false,
-        view = {
+        view = vim.list_extend(fold_maps, {
           { "n", "<tab>", actions.select_next_entry, { desc = "Open the diff for the next file" } },
           { "n", "<s-tab>", actions.select_prev_entry, { desc = "Open the diff for the previous file" } },
           { "n", "[F", actions.select_first_entry, { desc = "Open the diff for the first file" } },
@@ -133,7 +162,7 @@ return {
             actions.conflict_choose_all("none"),
             { desc = "Delete the conflict region for the whole file" },
           },
-        },
+        }),
         diff1 = {
           { "n", "g?", actions.help({ "view", "diff1" }), { desc = "Open the help panel" } },
         },
