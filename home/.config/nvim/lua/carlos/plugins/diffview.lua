@@ -6,7 +6,8 @@ return {
     { "<leader>gv", "<cmd>DiffviewOpen<cr>", desc = "Diffview open" },
     { "<leader>gh", "<cmd>DiffviewFileHistory %<cr>", desc = "Diffview file history" },
     { "<leader>gH", "<cmd>DiffviewFileHistory<cr>", desc = "Diffview branch history" },
-    { "<leader>gp", "<cmd>DiffviewOpen origin/HEAD...HEAD<cr>", desc = "Diffview PR review (vs default branch)" },
+    -- --imply-local: HEAD side uses the real working-tree file so LSP (gd, hover, ...) works.
+    { "<leader>gp", "<cmd>DiffviewOpen origin/HEAD...HEAD --imply-local<cr>", desc = "Diffview PR review (vs default branch)" },
     { "<leader>gc", "<cmd>DiffviewClose<cr>", desc = "Diffview close" },
   },
   config = function()
