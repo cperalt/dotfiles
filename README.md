@@ -76,3 +76,7 @@ Theme: Catppuccin Mocha (consistent across nvim, tmux, wezterm, yazi).
 ## install.sh Notes
 
 - `install.sh` clones the repo via SSH (`git@github.com`). On a fresh machine, SSH keys must be configured before running the script, otherwise the clone step will fail. This is a known limitation — set up your SSH key first, or clone manually via HTTPS then run the rest of the script.
+
+## Nice to Have
+
+- **Diffview: search across all files in a PR diff.** Diffview shows one file at a time; no built-in way to grep every changed file (upstream [#596](https://github.com/sindrets/diffview.nvim/issues/596), maintainer says use the shell). Ideas: one `ft=diff` buffer of the whole range, or Telescope `live_grep` over `git diff --name-only <range>`.
