@@ -6,6 +6,10 @@ return {
     vim.o.timeoutlen = 500
   end,
   opts = {
+    -- Diffview labels its internal z* fold wrappers "diffview_ignore"; hide them.
+    filter = function(mapping)
+      return mapping.desc ~= "diffview_ignore"
+    end,
     plugins = {
       marks = true,
       registers = true,
@@ -15,7 +19,7 @@ return {
         text_objects = false,
         windows = false,
         nav = false,
-        z = true,
+        z = false,
         g = false,
       },
     },

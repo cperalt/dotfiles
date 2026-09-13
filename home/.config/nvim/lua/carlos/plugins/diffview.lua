@@ -12,33 +12,21 @@ return {
   config = function()
     local actions = require("diffview.actions")
 
-    -- Diffview remaps all z* fold commands in diff buffers so folds stay
-    -- synced across both diff windows, but labels them "diffview_ignore"
-    -- (hidden in its g? panel, ugly in which-key). Re-register the same
-    -- synced wrappers with human-readable descriptions.
+    -- Diffview remaps every z* fold command in diff buffers so folds stay
+    -- synced across both diff windows, but labels them all "diffview_ignore"
+    -- (which-key hides that desc, see which-key.lua). Give the handful worth
+    -- knowing a real label; the rest stay functional but hidden.
     local fold_descs = {
-      za = "Toggle fold (synced)",
-      zA = "Toggle fold recursively (synced)",
-      zo = "Open fold (synced)",
-      zO = "Open fold recursively (synced)",
-      zc = "Close fold (synced)",
-      zC = "Close fold recursively (synced)",
-      zv = "Reveal cursor line (synced)",
-      zR = "Open all folds (synced)",
-      zM = "Close all folds (synced)",
-      zr = "Fold less (synced)",
-      zm = "Fold more (synced)",
-      zx = "Update folds (synced)",
-      zX = "Undo manual folds (synced)",
-      ze = "Scroll cursor to right edge (synced)",
-      zE = "Eliminate all folds (synced)",
-      zn = "Disable folding (synced)",
-      zN = "Enable folding (synced)",
-      zi = "Toggle foldenable (synced)",
+      zo = "Open fold",
+      zc = "Close fold",
+      za = "Toggle fold",
+      zR = "Open all folds",
+      zM = "Close all folds",
     }
     local fold_maps = {}
     for _, m in ipairs(actions.compat.fold_cmds) do
-      table.insert(fold_maps, { m[1], m[2], m[3], { desc = fold_descs[m[2]] or ("Fold: " .. m[2]) } })
+      local desc = fold_descs[m[2]]
+      table.insert(fold_maps, { m[1], m[2], m[3], desc and { desc = desc .. " (synced)" } or m[4] })
     end
 
     require("diffview").setup({
@@ -116,7 +104,7 @@ return {
           { "n", "]F", actions.select_last_entry, { desc = "Open the diff for the last file" } },
           { "n", "gf", actions.goto_file_edit, { desc = "Open the file in the previous tabpage" } },
           { "n", "<C-w><C-f>", actions.goto_file_split, { desc = "Open the file in a new split" } },
-          { "n", "<C-w>gf", actions.goto_file_tab, { desc = "Open the file in a new tabpage" } },
+          { "n", "gF", actions.goto_file_tab, { desc = "Open the file in a new tabpage" } },
           { "n", "<leader>e", actions.focus_files, { desc = "Bring focus to the file panel" } },
           { "n", "<leader>b", actions.toggle_files, { desc = "Toggle the file panel." } },
           { "n", "g<C-x>", actions.cycle_layout, { desc = "Cycle through available layouts." } },
@@ -234,7 +222,7 @@ return {
           { "n", "]F", actions.select_last_entry, { desc = "Open the diff for the last file" } },
           { "n", "gf", actions.goto_file_edit, { desc = "Open the file in the previous tabpage" } },
           { "n", "<C-w><C-f>", actions.goto_file_split, { desc = "Open the file in a new split" } },
-          { "n", "<C-w>gf", actions.goto_file_tab, { desc = "Open the file in a new tabpage" } },
+          { "n", "gF", actions.goto_file_tab, { desc = "Open the file in a new tabpage" } },
           { "n", "i", actions.listing_style, { desc = "Toggle between 'list' and 'tree' views" } },
           { "n", "f", actions.toggle_flatten_dirs, { desc = "Flatten empty subdirectories in tree listing style" } },
           { "n", "R", actions.refresh_files, { desc = "Update stats and entries in the file list" } },
@@ -303,7 +291,7 @@ return {
           { "n", "]F", actions.select_last_entry, { desc = "Open the diff for the last file" } },
           { "n", "gf", actions.goto_file_edit, { desc = "Open the file in the previous tabpage" } },
           { "n", "<C-w><C-f>", actions.goto_file_split, { desc = "Open the file in a new split" } },
-          { "n", "<C-w>gf", actions.goto_file_tab, { desc = "Open the file in a new tabpage" } },
+          { "n", "gF", actions.goto_file_tab, { desc = "Open the file in a new tabpage" } },
           { "n", "<leader>e", actions.focus_files, { desc = "Bring focus to the file panel" } },
           { "n", "<leader>b", actions.toggle_files, { desc = "Toggle the file panel" } },
           { "n", "g<C-x>", actions.cycle_layout, { desc = "Cycle available layouts" } },
