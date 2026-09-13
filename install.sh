@@ -50,7 +50,9 @@ fi
 # symlink is itself created by the apply below — so bootstrap by pointing mise
 # at the repo copy explicitly for this one invocation.
 # symlink-each targets need existing parent dirs (clear stale dangling symlinks first)
-for dir in "$HOME/.config/gh-dash" "$HOME/.config/herdr" "$HOME/.pi/agent" "$HOME/.omp/agent"; do
+for dir in "$HOME/.config/gh-dash" "$HOME/.config/herdr" \
+           "$HOME/.config/herdr/plugins/config/beyondlex.herdr-recent-navigator" \
+           "$HOME/.pi/agent" "$HOME/.omp/agent"; do
     [[ -L "$dir" && ! -e "$dir" ]] && rm "$dir"
     mkdir -p "$dir"
 done
@@ -73,8 +75,8 @@ else
 fi
 
 # --- Step 6b: herdr plugins ---
-HERDR_PLUGIN="paulbkim-dev/vim-herdr-navigation"
 if command -v herdr &>/dev/null; then
+    HERDR_PLUGIN="paulbkim-dev/vim-herdr-navigation"
     if ! herdr plugin list 2>/dev/null | grep -q "vim-herdr-navigation"; then
         info "Installing herdr plugin: $HERDR_PLUGIN"
         herdr plugin install "$HERDR_PLUGIN" -y
@@ -82,8 +84,18 @@ if command -v herdr &>/dev/null; then
     else
         success "vim-herdr-navigation already installed"
     fi
+
+    # Prebuilt binary via upstream installer (no Rust toolchain needed). Its
+    # settings are the dotfiles-managed config.toml linked in Step 5.
+    if ! herdr plugin list 2>/dev/null | grep -q "herdr-recent-navigator"; then
+        info "Installing herdr plugin: beyondlex/herdr-recent-navigator"
+        curl -fsSL https://raw.githubusercontent.com/beyondlex/herdr-recent-navigator/main/install.sh | bash
+        success "herdr-recent-navigator installed"
+    else
+        success "herdr-recent-navigator already installed"
+    fi
 else
-    warn "herdr not installed — skipping vim-herdr-navigation"
+    warn "herdr not installed — skipping herdr plugins"
 fi
 
 # --- Step 7: Tmux Plugin Manager ---

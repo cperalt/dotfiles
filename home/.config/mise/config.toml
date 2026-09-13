@@ -43,6 +43,7 @@ dotfiles.root = "~/.dotfiles/home"
 "~/.config/lazygit" = {}
 # shared target dirs: link each file, leave unmanaged neighbors alone
 "~/.config/herdr" = { mode = "symlink-each" }
+"~/.config/herdr/plugins/config/beyondlex.herdr-recent-navigator" = { mode = "symlink-each" }
 "~/.config/gh-dash" = { mode = "symlink-each" }
 "~/.pi/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }
 "~/.omp/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }
