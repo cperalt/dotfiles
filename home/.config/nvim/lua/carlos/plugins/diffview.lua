@@ -8,6 +8,27 @@ return {
     { "<leader>gH", "<cmd>DiffviewFileHistory<cr>", desc = "Diffview branch history" },
     -- --imply-local: HEAD side uses the real working-tree file so LSP (gd, hover, ...) works.
     { "<leader>gp", "<cmd>DiffviewOpen origin/HEAD...HEAD --imply-local<cr>", desc = "Diffview PR review (vs default branch)" },
+    {
+      "<leader>gl",
+      function()
+        -- Diff only the current gh-stack layer: parent branch (or trunk) ... HEAD.
+        local res = vim.system({ "gh", "stack", "view", "--json" }, { text = true }):wait()
+        if res.code ~= 0 then
+          vim.notify(res.code == 2 and "Not in a gh stack" or ("gh stack view failed: " .. vim.trim(res.stderr)), vim.log.levels.WARN)
+          return
+        end
+        local stack = vim.json.decode(res.stdout)
+        local parent = "origin/" .. stack.trunk
+        for _, b in ipairs(stack.branches) do
+          if b.isCurrent then
+            break
+          end
+          parent = b.name
+        end
+        vim.cmd(("DiffviewOpen %s...HEAD --imply-local"):format(parent))
+      end,
+      desc = "Diffview stack layer (vs parent branch)",
+    },
     { "<leader>gc", "<cmd>DiffviewClose<cr>", desc = "Diffview close" },
   },
   config = function()
