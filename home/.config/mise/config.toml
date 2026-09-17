@@ -15,6 +15,12 @@ jq = "latest"
 ripgrep = "latest"
 worktrunk = "latest"
 yazi = "latest"
+rclone = "latest"
+
+[env]
+# Obsidian vault of plans/bugs/area notes, read and written by the `brain`
+# agent skill (~/.agents/skills/brain). Local git only, no remote.
+BRAIN_VAULT = "{{env.HOME}}/Development/brain"
 
 [hooks]
 postinstall = "hash -r"
