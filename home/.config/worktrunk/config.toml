@@ -91,10 +91,14 @@ git -C {{ primary_worktree_path }} branch -d "{{ worktree_name }}" 2>/dev/null |
 
 [projects."github.com/SageHomeLoans/mortgage-pos"]
 # node_modules is symlinked from main (below), keep it out of the reflink copy.
-# .nx/workspace-data holds the daemon pointer + outputs-tracking DB — sharing it
-# cross-wires worktrees to main's daemon and breaks cache restores; .nx/cache is
-# content-addressed and stays copied for warm starts.
-step.copy-ignored.exclude = ["node_modules/", ".nx/workspace-data/"]
+# .nx is one gitignored entry, so copy-ignored copies it whole; a nested
+# ".nx/workspace-data/" exclude never matches. The nxWorkspaceData hook below
+# removes it after the copy instead (it holds the daemon socket pointer, which
+# cross-wires the worktree to main's daemon). .nx/cache stays for warm starts.
+step.copy-ignored.exclude = ["node_modules/"]
+
+[[projects."github.com/SageHomeLoans/mortgage-pos".pre-start]]
+nxWorkspaceData = 'rm -rf {{ worktree_path }}/.nx/workspace-data'
 
 [[projects."github.com/SageHomeLoans/mortgage-pos".pre-start]]
 # Symlink node_modules from main worktree (shared deps, no install needed)
