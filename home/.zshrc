@@ -201,7 +201,7 @@ alias cc="claude"
 alias ccc="claude --continue"
 alias nv="nvim"
 alias dfa="mise bootstrap dotfiles apply"
-alias c='printf "\e[H\e[2J"' # clear screen but keep scrollback (no E3 \e[3J)
+alias c="clear"
 alias q="exit"
 
 # === Worktree + Claude helper functions ===
