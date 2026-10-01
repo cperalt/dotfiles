@@ -192,6 +192,9 @@ alias tmx="nvim ~/.tmux.conf"
 alias tma="tmux attach-session"
 alias her="herdr"
 alias hdx="nvim ~/.config/herdr/config.toml"
+# Run before a macOS shutdown/update so herdr saves agent session refs while
+# omp is still alive; otherwise macOS may kill omp first and nothing resumes.
+alias hstop="herdr server stop"
 alias gs="git status"
 alias nrd="npm run dev"
 alias nrl="npm run dev:live"
