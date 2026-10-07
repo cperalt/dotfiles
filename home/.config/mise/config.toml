@@ -1,5 +1,6 @@
 [tools]
 node = "latest"
+"aqua:temporalio/cli" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 "npm:typescript-language-server" = "latest"
 rust = "1.97.1"
@@ -16,6 +17,7 @@ ripgrep = "latest"
 worktrunk = "latest"
 yazi = "latest"
 rclone = "latest"
+"npm:postman-cli" = "latest"
 
 [env]
 # Obsidian vault of plans/bugs/area notes, read and written by the `brain`
