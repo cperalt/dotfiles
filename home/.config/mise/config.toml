@@ -34,24 +34,25 @@ experimental = true
 dotfiles.root = "~/.dotfiles/home"
 
 [dotfiles]
-# $HOME-root files
-"~/.zshrc" = {}
-"~/.p10k.zsh" = {}
-"~/.tmux.conf" = {}
-"~/.wezterm.lua" = {}
+"~/.config/aerospace" = {}
+"~/.config/gh-dash" = { mode = "symlink-each" }
+"~/.config/ghostty" = {}
+# shared target dirs: link each file, leave unmanaged neighbors alone
+"~/.config/herdr" = { mode = "symlink-each" }
+"~/.config/herdr-automatic-rename/config.sh" = {}
+"~/.config/herdr/plugins/config/beyondlex.herdr-recent-navigator" = { mode = "symlink-each" }
+"~/.config/karabiner" = {}
+"~/.config/lazygit" = {}
 # ~/.config dirs owned wholesale
 "~/.config/mise" = {}
 "~/.config/nvim" = {}
-"~/.config/ghostty" = {}
-"~/.config/aerospace" = {}
-"~/.config/yazi" = {}
-"~/.config/karabiner" = {}
 "~/.config/sesh" = {}
 "~/.config/worktrunk" = {}
-"~/.config/lazygit" = {}
-# shared target dirs: link each file, leave unmanaged neighbors alone
-"~/.config/herdr" = { mode = "symlink-each" }
-"~/.config/herdr/plugins/config/beyondlex.herdr-recent-navigator" = { mode = "symlink-each" }
-"~/.config/gh-dash" = { mode = "symlink-each" }
-"~/.pi/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }
+"~/.config/yazi" = {}
 "~/.omp/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }
+"~/.p10k.zsh" = {}
+"~/.pi/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }
+"~/.tmux.conf" = {}
+"~/.wezterm.lua" = {}
+# $HOME-root files
+"~/.zshrc" = {}

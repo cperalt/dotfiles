@@ -53,6 +53,13 @@ if [[ -n "$HERDR_ENV" && -n "$HERDR_WORKSPACE_ID" ]]; then
   }
 fi
 
+# herdr-automatic-rename: hook renames the tab the instant a command starts
+for _f in ${HOME}/.config/herdr/plugins/github-installations/herdr-automatic-rename-*/*/checkout/shell/hook.zsh(N) \
+          ${HOME}/.config/herdr/plugins/github/herdr-automatic-rename-*/shell/hook.zsh(N); do
+  source $_f; break
+done
+unset _f
+
 # === Key bindings & line editing ===
 bindkey '^[[A' up-line-or-search # arrow-key history search, multiline-safe
 bindkey '^[[B' down-line-or-search

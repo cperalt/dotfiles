@@ -79,6 +79,8 @@ description = "ports popup"
 pane_borders = false
 pane_gaps = true
 hide_tab_bar_when_single_tab = true
+# herdr-automatic-rename plugin names tabs; skip the new-tab name prompt
+prompt_new_tab_name = false
 status_indicators = "symbols"
 
 agent_panel_sort = "priority"
