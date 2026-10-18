@@ -87,6 +87,9 @@ agent_panel_sort = "priority"
 [ui.sidebar.spaces]
 # One line per space; branch is redundant with worktrunk branch-named workspaces.
 rows = [["state_icon", "workspace", "git_status", "$ports"]]
+[ui.sidebar.agents]
+# Tab name (the agent's task via automatic-rename) first; workspace after.
+rows = [["state_icon", "tab"], ["workspace", "agent"]]
 
 [experimental]
 # Kitty graphics passthrough so yazi/image previews render; ghostty (outer
