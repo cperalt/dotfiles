@@ -9,6 +9,7 @@ scripts/
 !home/.omp/**
 home/.omp/agent/extensions/aws-guardrail.ts
 home/.omp/agent/extensions/newrelic-guardrail.ts
+home/.omp/agent/extensions/databricks-guardrail.ts
 home/.omp/agent/extensions/node_modules/
 home/.omp/agent/extensions/bun.lock
 home/.omp/agent/extensions/tsconfig.json
