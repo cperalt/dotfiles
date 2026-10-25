@@ -19,7 +19,8 @@ interface NrqlRenderDetails {
 	wallTimeMs?: number;
 }
 
-const NRQL_PREFIX = /^\s*(SELECT|FROM|WITH)\b/i;
+// SHOW EVENT TYPES is NRQL's only SHOW form and is read-only (schema discovery).
+const NRQL_PREFIX = /^\s*(SELECT|FROM|WITH|SHOW\s+EVENT\s+TYPES)\b/i;
 
 /** The CLI line shown above the query in the TUI. */
 function nrqlCommand(accountId: number | null | undefined, format: string | undefined): string {
@@ -46,10 +47,15 @@ const factory: CustomToolFactory = (pi) => {
 	label: "New Relic NRQL",
 	description:
 		"Run a read-only New Relic NRQL query via the `newrelic` CLI. " +
-		"Only NRQL `SELECT` / `FROM` / `WITH` queries are accepted; no other " +
-		"newrelic subcommands are reachable through this tool. Output is JSON " +
-		"unless `format` is set. Uses the default CLI profile and its account " +
-		"unless `accountId` is provided.",
+		"Only NRQL `SELECT` / `FROM` / `WITH` / `SHOW EVENT TYPES` queries are " +
+		"accepted; no other newrelic subcommands are reachable through this tool. " +
+		"Output is JSON unless `format` is set. Uses the default CLI profile and " +
+		"its account unless `accountId` is provided. Skills that call " +
+		"`execute_nrql_query` mean this tool; the New Relic MCP trace/entity/log " +
+		"tools (`get_distributed_trace_details`, `analyze_entity_logs`, " +
+		"`list_available_new_relic_accounts`, ...) are not available here, so use " +
+		"NRQL on `Span` / `Log` / `TransactionError` instead and say so when a " +
+		"step cannot be completed.",
 	parameters: pi.zod.object({
 		query: pi.zod
 			.string()
