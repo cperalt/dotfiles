@@ -7,14 +7,17 @@ scripts/
 .omp/
 !home/.omp/
 !home/.omp/**
+# omp guardrails/tools that name work accounts or profiles stay local
 home/.omp/agent/extensions/aws-guardrail.ts
-home/.omp/agent/extensions/newrelic-guardrail.ts
 home/.omp/agent/extensions/databricks-guardrail.ts
 home/.omp/agent/extensions/node_modules/
 home/.omp/agent/extensions/bun.lock
 home/.omp/agent/extensions/tsconfig.json
 home/.omp/agent/extensions/package.json
-home/.omp/agent/tools
+home/.omp/agent/tools/aws/
+home/.omp/agent/tools/databricks/
+home/.omp/agent/tools/databricks-sql/
+home/.omp/agent/tools/rollbar/
 home/.omp/agent/config.yml.lock
 .pi/specs/
 .pi/plans/
