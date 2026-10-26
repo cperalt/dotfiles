@@ -235,6 +235,30 @@ wtac() {
   tmux send-keys -t "${branch}:0.0" "claude --model claude-sonnet-4-6 '/address-comments ${pr}'" Enter
 }
 
+# === omp: keep `/resume` "current folder" scoped to this worktree ===
+# Since omp 18.8.6 the current-folder resume scope merges sessions from every
+# git worktree of the repo (can1357/oh-my-pi#15435). omp skips that merge when
+# the session dir is not the cwd-derived default (resolveManagedSessionRoot in
+# session-paths.ts compares the dir's basename to the encoded cwd). So in repos
+# with more than one worktree, point it at a symlink alias of the real bucket:
+# same files on disk, different directory name. Tab (all projects) still works.
+# Drop this once the issue is fixed upstream.
+omp() {
+  [[ -z "$PI_CODING_AGENT_SESSION_DIR" ]] || { command omp "$@"; return }
+  local n
+  n=$(git worktree list --porcelain 2>/dev/null | grep -c '^worktree ')
+  (( n > 1 )) || { command omp "$@"; return }
+  local cwd home rel bucket link
+  cwd=$(pwd -P); home=$(cd ~ && pwd -P)
+  [[ "$cwd" == "$home"/* ]] || { command omp "$@"; return }
+  rel=${cwd#$home/}
+  bucket="$HOME/.omp/agent/sessions/-${rel//\//-}"
+  link="$HOME/.omp/agent/session-aliases/-${rel//\//-}.dir"
+  mkdir -p "$bucket" "${link:h}" || { command omp "$@"; return }
+  [[ -L "$link" ]] || ln -s "$bucket" "$link"
+  PI_CODING_AGENT_SESSION_DIR="$link" command omp "$@"
+}
+
 # === Sensitive env vars / local overrides — sourced last so it can override
 # anything above ===
 [[ -f "${HOME}/.dotfiles/home/.env.zsh" ]] && source "${HOME}/.dotfiles/home/.env.zsh"
