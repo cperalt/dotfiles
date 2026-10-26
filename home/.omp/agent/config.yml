@@ -1,65 +1,74 @@
-modelRoles: 
-  slow: anthropic/claude-fable-5:xhigh
-  designer: openai-codex/gpt-5.6-sol:high
-  vision: openai-codex/gpt-5.6-sol:auto
-  plan: anthropic/claude-fable-5:high
-  default: anthropic/claude-fable-5:medium
-  smol: anthropic/claude-sonnet-5:auto
+modelRoles:
+  slow: anthropic/claude-fable-5-1:auto
+  designer: openai-codex/gpt-6-sol:auto
+  vision: openai-codex/gpt-6-sol:auto
+  plan: anthropic/claude-fable-5-1:auto
+  default: anthropic/claude-opus-5-5
+  smol: openai-codex/gpt-6-luna:auto
   task: openai-codex/gpt-5.6-sol:high
-  commit: anthropic/claude-sonnet-5:auto
+  commit: anthropic/claude-sonnet-5-5:auto
   advisor: openai-codex/gpt-5.6-sol:high
-theme: 
+  web: openai-codex/gpt-5.6-luna
+  tiny: openai-codex/gpt-6-luna
+theme:
   dark: titanium
-edit: 
+edit:
   mode: hashline
-providers: 
-  webSearchOrder: 
-    - codex
-    - perplexity
-    - gemini
-    - anthropic
-    - xai
-    - zai
-    - exa
-    - tinyfish
-    - jina
-    - kagi
-    - tavily
-    - firecrawl
-    - brave
-    - kimi
-    - parallel
-    - synthetic
-    - searxng
-    - startpage
-    - duckduckgo
-    - ecosia
-    - google
-    - mojeek
-    - public
 symbolPreset: nerd
 setupVersion: 2
 defaultThinkingLevel: auto
-memory: 
+memory:
   backend: "off"
-autolearn: 
+autolearn:
   enabled: false
   autoContinue: true
-mnemopi: 
+mnemopi:
   enhancedRecall: true
   proactiveLinking: true
   scoping: global
-advisor: 
+advisor:
   enabled: false
-dev: 
+dev:
   autoqaConsent: denied
-statusLine: 
+statusLine:
   compactThinkingLevel: false
-hideThinkingBlock: true
-task: 
-  agentAdvisor: 
+hideThinkingBlock: false
+task:
+  agentAdvisor:
     task: "on"
-github: 
+github:
   enabled: true
-composer: 
+composer:
   shape: rule
+display:
+  hideToolActivity: false
+retry:
+  fallbackChains:
+    web:
+      - web/perplexity
+      - google-gemini-cli/gemini-2.5-flash
+      - google-antigravity/gemini-2.5-flash
+      - google/gemini-2.5-flash
+      - anthropic/claude-haiku-4-5
+      - xai/grok-4.5
+      - web/zai
+      - web/exa
+      - web/tinyfish
+      - web/jina
+      - web/kagi
+      - web/tavily
+      - web/firecrawl
+      - web/brave
+      - web/kimi
+      - web/parallel
+      - web/synthetic
+      - web/searxng
+      - web/startpage
+      - web/duckduckgo
+      - web/ecosia
+      - web/google
+      - web/mojeek
+      - web/public
+      - web/hosted
+browser:
+  relay: true
