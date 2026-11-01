@@ -72,3 +72,5 @@ retry:
       - web/hosted
 browser:
   relay: true
+session:
+  worktreeScope: directory
