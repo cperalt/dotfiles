@@ -9,10 +9,24 @@ rex.bind("ctrl+a>-", "pane.split", { direction = "down" })
 -- client.tab.next/previous walk every session's tabs in the sidebar, so these
 -- cycle within the current session only (wrapping at the ends).
 rex.bind("ctrl+a>,", "client.tab.rename")
+-- The Mac app tracks its shown tab separately from the server's active window,
+-- so after moving the server side we also tell the client which window to show.
+local function cycle_tab(ctx, step)
+  local v = rex.session.view{}
+  local n = #v.windows
+  if n < 2 then return end
+  local cur = 1
+  for i, w in ipairs(v.windows) do
+    if w.window_id == v.active_window_id then cur = i end
+  end
+  local target = v.windows[((cur - 1 + step) % n) + 1].window_id
+  rex.session.focus_window{ window_id = target }
+  rex.client.queue("session.select", { session_id = ctx.session_id, window_id = target })
+end
 rex.action{ name = "tab_next", title = "Next Tab (this session)", category = "Tabs",
-  run = function(ctx) rex.session.focus_next_window{ wrap = true } end }
+  run = function(ctx) cycle_tab(ctx, 1) end }
 rex.action{ name = "tab_prev", title = "Previous Tab (this session)", category = "Tabs",
-  run = function(ctx) rex.session.focus_previous_window{ wrap = true } end }
+  run = function(ctx) cycle_tab(ctx, -1) end }
 rex.bind("ctrl+a>n", "tab_next")
 rex.bind("ctrl+a>p", "tab_prev")
 
