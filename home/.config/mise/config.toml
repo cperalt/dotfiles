@@ -46,6 +46,7 @@ dotfiles.root = "~/.dotfiles/home"
 # ~/.config dirs owned wholesale
 "~/.config/mise" = {}
 "~/.config/nvim" = {}
+"~/.config/rex/init.lua" = {}
 "~/.config/sesh" = {}
 "~/.config/worktrunk" = {}
 "~/.config/yazi" = {}

@@ -1,6 +1,9 @@
+-- pi bridge, kept for sessions outside Rex (Herdr/Ghostty with pi). Inside Rex,
+-- rex.nvim owns :Rex and the <leader>pa / <leader>pp keys.
 return {
   "cperalt/pi-nvim",
   dev = true,
+  enabled = vim.env.REX_BLOCK == nil,
   config = function()
     require("pi-nvim").setup({
       context_format = "reference", -- send @file:L1-L10 refs instead of embedding contents
