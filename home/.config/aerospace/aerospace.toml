@@ -207,6 +207,10 @@ run = "move-node-to-workspace T"
 
 
 [[on-window-detected]]
+if.app-id = 'com.superlogical.rex'
+run = "move-node-to-workspace T"
+
+[[on-window-detected]]
 if.app-id = 'com.google.Chrome'
 run = "move-node-to-workspace B"
 
