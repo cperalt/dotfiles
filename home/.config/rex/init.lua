@@ -5,13 +5,21 @@
 rex.bind("ctrl+a>shift+\\", "pane.split", { direction = "right" })
 rex.bind("ctrl+a>-", "pane.split", { direction = "down" })
 
--- Herdr: rename_tab = "prefix+comma"; defaults next_tab = "prefix+n", previous_tab = "prefix+p"
+-- Herdr: rename_tab = "prefix+comma"; defaults next_tab = "prefix+n", previous_tab = "prefix+p".
+-- client.tab.next/previous walk every session's tabs in the sidebar, so these
+-- cycle within the current session only (wrapping at the ends).
 rex.bind("ctrl+a>,", "client.tab.rename")
-rex.bind("ctrl+a>n", "client.tab.next")
-rex.bind("ctrl+a>p", "client.tab.previous")
+rex.action{ name = "tab_next", title = "Next Tab (this session)", category = "Tabs",
+  run = function(ctx) rex.session.focus_next_window{ wrap = true } end }
+rex.action{ name = "tab_prev", title = "Previous Tab (this session)", category = "Tabs",
+  run = function(ctx) rex.session.focus_previous_window{ wrap = true } end }
+rex.bind("ctrl+a>n", "tab_next")
+rex.bind("ctrl+a>p", "tab_prev")
 
 -- Herdr default: prefix+b toggles the sidebar. cmd+/ (Rex default) still works too.
 rex.bind("ctrl+a>b", "client.sidebar.toggle")
+-- Fold every other session in the sidebar; the current one stays open.
+rex.bind("ctrl+a>o", "session.collapse_others")
 
 -- Herdr: zoom = "prefix+m" (maximize / restore the focused pane)
 rex.bind("ctrl+a>m", "pane.zoom")

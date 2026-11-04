@@ -75,7 +75,12 @@ case "$cmd" in
     ;;
   focus)
     case "$(detect)" in
-      rex) id=$(rex_session_id); [ -n "$id" ] && rex do session.select session_id="$id" >/dev/null ;;
+      rex)
+        id=$(rex_session_id)
+        [ -n "$id" ] || exit 0
+        rex do session.select session_id="$id" >/dev/null
+        rex do session.collapse_others session_id="$id" >/dev/null
+        ;;
       herdr) ws=$(herdr_workspace_id); [ -n "$ws" ] && herdr workspace focus "$ws" >/dev/null ;;
     esac
     ;;
