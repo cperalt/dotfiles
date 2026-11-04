@@ -9,16 +9,17 @@ cd = false
 # Global hooks — repo-agnostic. Repo-specific steps live under [projects.*]
 # below and APPEND after these (global first, then per-project).
 #
-# herdr workspace label: per-branch override via
+# Space label (Rex session / Herdr workspace): per-branch override via
 #   wt config state vars set session=<nickname> --branch=<branch>
 # (main in mortgage-pos = "mpos", main in sagehomeloans.com = "sage-website");
 # falls back to the worktree DIRECTORY name, not the branch. gh-stack checks
 # out layer branches inside one worktree, so HEAD's branch drifts from the
-# directory; the directory is the stable key for the workspace and the DB.
+# directory; the directory is the stable key for the space and the DB.
 #
-# Workspaces are addressed by label -> workspace_id via `herdr workspace list`
-# (the CLI only takes ids). All herdr calls go over the socket API, so hooks
-# work whether or not the shell is inside a herdr client.
+# Multiplexer calls go through wt-mux.sh next to this file. It creates the
+# space in whichever multiplexer the hook runs inside (Rex or Herdr) and
+# closes it from both, so a worktree removed from the other side is still
+# cleaned up.
 # ============================================================================
 
 [[pre-start]]
@@ -27,27 +28,16 @@ cd = false
 copyIgnore = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; wt step copy-ignored'
 
 [[pre-start]]
-herdr = """
-LABEL="{{ vars.session | default(worktree_name) }}"
-WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
-if [ -z "$WS" ]; then
-  WS=$(herdr workspace create --cwd {{ worktree_path }} --label "$LABEL" --no-focus | jq -r '.result.workspace.workspace_id')
-  if [ -n "${WT_REVIEW_ONLY:-}" ]; then
-    # 25/75 split plus small bottom pane for deps (mirrors the old tmux review layout)
-    P0=$(herdr pane list --workspace "$WS" | jq -r '.result.panes[0].pane_id')
-    P1=$(herdr pane split --pane "$P0" --direction right --ratio 0.75 --cwd {{ worktree_path }} --no-focus | jq -r '.result.pane.pane_id')
-    herdr pane split --pane "$P1" --direction down --ratio 0.2 --cwd {{ worktree_path }} --no-focus >/dev/null
-  fi
-fi
+mux = """
+[ -n "${WT_REVIEW_ONLY:-}" ] && REVIEW=review || REVIEW=
+~/.config/worktrunk/wt-mux.sh ensure "{{ vars.session | default(worktree_name) }}" {{ worktree_path }} $REVIEW
 """
 
 [post-switch]
-# Focus the herdr workspace (instant, separate background process)
-switchHerdr = """
+# Focus the space (instant, separate background process)
+switchMux = """
 [ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
-LABEL="{{ vars.session | default(worktree_name) }}"
-WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
-[ -n "$WS" ] && herdr workspace focus "$WS" >/dev/null
+~/.config/worktrunk/wt-mux.sh focus "{{ vars.session | default(worktree_name) }}"
 """
 
 [[pre-remove]]
@@ -61,13 +51,11 @@ done
 """
 
 [post-remove]
-# Close the herdr workspace for the removed worktree. Closing a workspace
+# Close the space for the removed worktree, in Rex and Herdr alike. Closing
 # tears down its panes, which SIGHUPs anything still running in them
 # (including manually started dev servers).
-herdr = """
-LABEL="{{ vars.session | default(worktree_name) }}"
-WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
-[ -n "$WS" ] && herdr workspace close "$WS" >/dev/null || true
+mux = """
+~/.config/worktrunk/wt-mux.sh close "{{ vars.session | default(worktree_name) }}"
 """
 
 # gh-stack leaves the `wtn`-created root branch (named after the directory)
@@ -136,10 +124,7 @@ echo "Isolated DB ready: $DB (cloned from mortgage_pos). If this branch adds mig
 # deps install in parallel.
 reviewDeps = """
 [ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
-LABEL="{{ vars.session | default(worktree_name) }}"
-WS=$(herdr workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label==$l) | .workspace_id' | head -1)
-PANE=$(herdr pane list --workspace "$WS" | jq -r '.result.panes[-1].pane_id')
-[ -n "$PANE" ] && herdr pane run "$PANE" pnpm install
+~/.config/worktrunk/wt-mux.sh run "{{ vars.session | default(worktree_name) }}" pnpm install
 """
 
 [[projects."github.com/SageHomeLoans/mortgage-pos".pre-remove]]
