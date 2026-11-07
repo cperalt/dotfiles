@@ -11,7 +11,7 @@
  * Then restart pi or run /reload.
  */
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 function isGitHubUrl(value: unknown): value is string {
   if (typeof value !== "string") return false;
@@ -52,7 +52,7 @@ export default function githubFetchGuard(pi: ExtensionAPI) {
   });
 
   pi.on("before_agent_start", async (event) => {
-    if (!mentionsGitHub(event.prompt)) {
+    if (event.messageType !== "user" || !mentionsGitHub(event.prompt)) {
       return undefined;
     }
 
