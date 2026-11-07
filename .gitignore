@@ -23,6 +23,7 @@ home/.omp/agent/config.yml.lock
 .pi/plans/
 .pi/runs/
 home/.config/nvim/lazy-lock.json
+home/.pi/agent/extensions/work-tools/
 # Local editor-only TypeScript support for Pi extensions
 home/.pi/agent/extensions/package.json
 home/.pi/agent/extensions/package-lock.json

@@ -53,6 +53,8 @@ dotfiles.root = "~/.dotfiles/home"
 "~/.omp/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }
 "~/.p10k.zsh" = {}
 "~/.pi/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }
+# shared instructions live in the separate ~/.agents repo
+"~/.pi/agent/AGENTS.md" = { source = "~/.agents/AGENTS.md" }
 "~/.tmux.conf" = {}
 "~/.wezterm.lua" = {}
 # $HOME-root files
