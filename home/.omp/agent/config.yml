@@ -15,7 +15,7 @@ theme:
 edit:
   mode: hashline
 symbolPreset: nerd
-setupVersion: 2
+setupVersion: 3
 defaultThinkingLevel: auto
 memory:
   backend: "off"
@@ -74,3 +74,9 @@ browser:
   relay: true
 session:
   worktreeScope: directory
+update:
+  auto: true
+tools:
+  approval:
+    aws-write: prompt
+    databricks-write: prompt

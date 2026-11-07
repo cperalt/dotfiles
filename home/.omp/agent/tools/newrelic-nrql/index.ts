@@ -78,22 +78,20 @@ const factory: CustomToolFactory = (pi) => {
 			.describe("Output format (default JSON)."),
 	}),
 
-	async execute(_toolCallId, params, _onUpdate, _ctx, signal) {
-		const { query, accountId, format } = params;
-
-		if (!NRQL_PREFIX.test(query)) {
+	approval(args: unknown) {
+		const query = (args as { query?: unknown } | undefined)?.query;
+		if (typeof query !== "string" || !NRQL_PREFIX.test(query)) {
 			return {
-				content: [
-					{
-						type: "text",
-						text:
-							"Refused: NRQL query must start with SELECT, FROM, or WITH. " +
-							"This tool only runs read-only NRQL queries.",
-					},
-				],
-				isError: true,
+				tier: "read" as const,
+				policy: "deny" as const,
+				reason: "NRQL query must start with SELECT, FROM, WITH, or SHOW EVENT TYPES; this tool only runs read-only NRQL",
 			};
 		}
+		return "read" as const;
+	},
+
+	async execute(_toolCallId, params, _onUpdate, _ctx, signal) {
+		const { query, accountId, format } = params;
 
 		const args: string[] = ["nrql", "query", "--query", query];
 		if (accountId !== undefined) {
