@@ -47,6 +47,7 @@ dotfiles.root = "~/.dotfiles/home"
 "~/.config/mise" = {}
 "~/.config/nvim" = {}
 "~/.config/rex/init.lua" = {}
+"~/.config/rextrace" = {}
 "~/.config/sesh" = {}
 "~/.config/worktrunk" = {}
 "~/.config/yazi" = {}

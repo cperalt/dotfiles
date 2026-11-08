@@ -1,0 +1,39 @@
+# rextrace (~/Development/rex-tool-trace): tool-call pane for omp in Rex.
+# Data sources only; shell commands that are not psql/aws/databricks/newrelic
+# calls stay out of the pane. Drop `show` to see everything the emitter writes.
+show: [sql.postgres, sql.databricks, cloud.aws, cloud.databricks, nrql, rollbar]
+
+# By-name matchers for the custom omp tools in ~/.omp/agent/tools. Shell
+# forms (psql -c, aws ..., databricks api post .../sql/statements, newrelic
+# nrql query) are covered by the built-ins and land in the same kinds.
+matchers:
+  - name: pg_query
+    tool: pg_query
+    kind: sql.postgres
+    label: "{env}"
+    command: { field: statement }
+  - name: databricks_sql
+    tool: databricks_sql
+    kind: sql.databricks
+    label: "{catalog}"
+    command: { field: statement }
+  - name: databricks
+    tool: databricks
+    kind: cloud.databricks
+    label: "{command.0} {command.1}"
+    command: { template: "databricks {command} --profile {profile}" }
+  - name: aws
+    tool: aws
+    kind: cloud.aws
+    label: "{command.0} {command.1}"
+    command: { template: "aws {command} --profile {profile}" }
+  - name: newrelic_nrql
+    tool: newrelic_nrql
+    kind: nrql
+    label: "{accountId}"
+    command: { field: query }
+  - name: rollbar_search
+    tool: rollbar_search
+    kind: rollbar
+    label: "{env}"
+    command: { whole: true }
