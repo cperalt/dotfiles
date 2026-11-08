@@ -65,3 +65,29 @@ rex.bind("ctrl+h", "vim_focus", { direction = "left" })
 rex.bind("ctrl+j", "vim_focus", { direction = "down" })
 rex.bind("ctrl+k", "vim_focus", { direction = "up" })
 rex.bind("ctrl+l", "vim_focus", { direction = "right" })
+
+-- rextrace (~/Development/rex-tool-trace): toggle the tool-call pane for the
+-- focused agent, from the agent's pane or the tool-call pane itself.
+local REXTRACE = os.getenv("HOME") .. "/.local/bin/rextrace"
+rex.action{
+  name = "rextrace_toggle",
+  title = "Toggle Tool Calls Pane",
+  description = "Open or close the rextrace pane beside the focused agent's block",
+  category = "rextrace",
+  run = function(ctx)
+    if ctx.block_id == nil then error("no focused block", 0) end
+    local argv = { REXTRACE, "pane", "toggle", "--rex-block", ctx.block_id }
+    if ctx.session_id ~= nil then
+      table.insert(argv, "--rex-session")
+      table.insert(argv, ctx.session_id)
+    end
+    local r, err = rex.exec(argv, { timeout = 15 })
+    if r == nil then error("rextrace: " .. tostring(err), 0) end
+    if not r.ok then
+      local msg = r.stderr ~= "" and r.stderr or r.stdout
+      error((msg:gsub("%s+$", "")), 0)
+    end
+    return { pane = (r.stdout:gsub("%s+$", "")) }
+  end,
+}
+rex.bind("ctrl+a>t", "rextrace_toggle")
