@@ -80,3 +80,5 @@ tools:
   approval:
     aws-write: prompt
     databricks-write: prompt
+tui:
+  vimMode: true
