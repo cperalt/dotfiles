@@ -34,9 +34,10 @@ mux = """
 """
 
 [post-switch]
-# Focus the space (instant, separate background process)
+# Focus the space (instant, separate background process). WT_SKIP_FOCUS=1
+# creates it without stealing focus, e.g. from gh-dash's P/U keys.
 switchMux = """
-[ -n "${WT_SKIP_TMUX_SWITCH:-}" ] && exit 0
+[ -n "${WT_SKIP_FOCUS:-}" ] && exit 0
 ~/.config/worktrunk/wt-mux.sh focus "{{ vars.session | default(worktree_name) }}"
 """
 

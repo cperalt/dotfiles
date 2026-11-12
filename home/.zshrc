@@ -188,7 +188,7 @@ lg() {
 if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
 
 # === Aliases ===
-alias wtn="WT_SKIP_SERVERS=1 wt switch --create"
+alias wtn="wt switch --create"
 alias wtr="wt remove --force -D"
 alias wtl="wt list"
 alias wts="wt switch"
