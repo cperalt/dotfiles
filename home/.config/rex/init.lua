@@ -1,5 +1,5 @@
--- Rex config, migrated from Herdr (~/.config/herdr/config.toml) and tmux (~/.tmux.conf).
--- Prefix is ctrl+a, as in both sources. Everything not listed here uses Rex's defaults.
+-- Rex config. "Herdr:" notes below record the key each binding was carried over from.
+-- Prefix is ctrl+a. Everything not listed here uses Rex's defaults.
 
 -- Herdr: split_vertical = "prefix+|", split_horizontal = "prefix+minus"
 rex.bind("ctrl+a>shift+\\", "pane.split", { direction = "right" })

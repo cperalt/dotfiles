@@ -33,32 +33,8 @@ setopt hist_expire_dups_first
 setopt hist_ignore_dups
 setopt hist_verify
 
-# don't exit the shell (and kill the tmux pane/session) on a stray Ctrl+D
+# don't exit the shell (and close the Rex pane) on a stray Ctrl+D
 setopt ignore_eof
-
-# herdr: confirm before `exit` in a workspace's last pane — process-exit
-# closes the whole workspace with no confirmation (herdr #1385).
-if [[ -n "$HERDR_ENV" && -n "$HERDR_WORKSPACE_ID" ]]; then
-  exit() {
-    local info
-    info=$(herdr api snapshot 2>/dev/null | jq -r --arg ws "$HERDR_WORKSPACE_ID" \
-      '.result.snapshot.workspaces[] | select(.workspace_id == $ws) | "\(.pane_count)\t\(.label)"' 2>/dev/null)
-    if [[ "${info%%$'\t'*}" == "1" ]]; then
-      local reply
-      read -q "reply?Last pane in herdr workspace '${info#*$'\t'}' — exiting closes the workspace. Exit anyway? [y/N] "
-      print
-      [[ "$reply" == "y" ]] || return 1
-    fi
-    builtin exit "$@"
-  }
-fi
-
-# herdr-automatic-rename: hook renames the tab the instant a command starts
-for _f in ${HOME}/.config/herdr/plugins/github-installations/herdr-automatic-rename-*/*/checkout/shell/hook.zsh(N) \
-          ${HOME}/.config/herdr/plugins/github/herdr-automatic-rename-*/shell/hook.zsh(N); do
-  source $_f; break
-done
-unset _f
 
 # === Key bindings & line editing ===
 bindkey '^[[A' up-line-or-search # arrow-key history search, multiline-safe
@@ -168,7 +144,7 @@ export LG_CONFIG_FILE="$HOME/.config/lazygit/config.yml"
 
 lg() {
     # per-instance cd-on-exit: avoids racing other lazygit instances (other
-    # herdr panes) reading/writing the global state.yml
+    # Rex panes) reading/writing the global state.yml
     local dir_file
     dir_file=$(mktemp -t lazygit-newdir) || { lazygit "$@"; return }
 
@@ -195,13 +171,6 @@ alias wts="wt switch"
 alias zsh="nvim ~/.zshrc"
 alias zshr="source ~/.zshrc"
 alias boo="nvim ~/.config/ghostty/config"
-alias tmx="nvim ~/.tmux.conf"
-alias tma="tmux attach-session"
-alias her="herdr"
-alias hdx="nvim ~/.config/herdr/config.toml"
-# Run before a macOS shutdown/update so herdr saves agent session refs while
-# omp is still alive; otherwise macOS may kill omp first and nothing resumes.
-alias hstop="herdr server stop"
 alias gs="git status"
 alias nrd="npm run dev"
 alias nrl="npm run dev:live"
@@ -213,30 +182,6 @@ alias nv="nvim"
 alias dfa="mise bootstrap dotfiles apply"
 alias c="clear"
 alias q="exit"
-
-# === Worktree + Claude helper functions ===
-# Disabled: tmux-era helpers, broken under Rex/Herdr and currently unused.
-# To revive, replace the tmux send-keys line with
-#   ~/.config/worktrunk/wt-mux.sh run "$branch" <command>
-
-# # create worktree, launch claude with a prompt in its tmux session
-# # usage: wtnc my-branch 'Fix the login bug'
-# wtnc() {
-#   local branch="$1"
-#   shift
-#   WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch --create "$branch"
-#   tmux send-keys -t "${branch}:0.0" "claude '$*'" Enter
-# }
-#
-# # address PR review comments in an existing worktree's tmux session
-# # usage: wtac 123
-# wtac() {
-#   local pr="$1"
-#   local branch
-#   branch="$(gh pr view "$pr" --json headRefName -q .headRefName)"
-#   WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch "$branch"
-#   tmux send-keys -t "${branch}:0.0" "claude --model claude-sonnet-4-6 '/address-comments ${pr}'" Enter
-# }
 
 # === Sensitive env vars / local overrides — sourced last so it can override
 # anything above ===

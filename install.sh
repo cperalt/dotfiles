@@ -50,9 +50,7 @@ fi
 # symlink is itself created by the apply below — so bootstrap by pointing mise
 # at the repo copy explicitly for this one invocation.
 # symlink-each targets need existing parent dirs (clear stale dangling symlinks first)
-for dir in "$HOME/.config/gh-dash" "$HOME/.config/herdr" \
-           "$HOME/.config/herdr/plugins/config/beyondlex.herdr-recent-navigator" \
-           "$HOME/.pi/agent" "$HOME/.omp/agent"; do
+for dir in "$HOME/.config/gh-dash" "$HOME/.pi/agent" "$HOME/.omp/agent"; do
     [[ -L "$dir" && ! -e "$dir" ]] && rm "$dir"
     mkdir -p "$dir"
 done
@@ -72,40 +70,6 @@ if command -v gh &>/dev/null; then
     fi
 else
     warn "gh not installed or not authenticated — skipping gh-dash"
-fi
-
-# --- Step 6b: herdr plugins ---
-if command -v herdr &>/dev/null; then
-    HERDR_PLUGIN="paulbkim-dev/vim-herdr-navigation"
-    if ! herdr plugin list 2>/dev/null | grep -q "vim-herdr-navigation"; then
-        info "Installing herdr plugin: $HERDR_PLUGIN"
-        herdr plugin install "$HERDR_PLUGIN" -y
-        success "vim-herdr-navigation installed"
-    else
-        success "vim-herdr-navigation already installed"
-    fi
-
-    # Prebuilt binary via upstream installer (no Rust toolchain needed). Its
-    # settings are the dotfiles-managed config.toml linked in Step 5.
-    if ! herdr plugin list 2>/dev/null | grep -q "herdr-recent-navigator"; then
-        info "Installing herdr plugin: beyondlex/herdr-recent-navigator"
-        curl -fsSL https://raw.githubusercontent.com/beyondlex/herdr-recent-navigator/main/install.sh | bash
-        success "herdr-recent-navigator installed"
-    else
-        success "herdr-recent-navigator already installed"
-    fi
-else
-    warn "herdr not installed — skipping herdr plugins"
-fi
-
-# --- Step 7: Tmux Plugin Manager ---
-TPM_DIR="$HOME/.tmux/plugins/tpm"
-if [[ ! -d "$TPM_DIR" ]]; then
-    info "Installing tmux plugin manager (tpm)..."
-    git clone https://github.com/tmux-plugins/tpm "$TPM_DIR"
-    success "tpm installed"
-else
-    success "tpm already installed"
 fi
 
 # --- Step 8: fzf-git.sh ---
@@ -175,7 +139,6 @@ fi
 echo ""
 success "Setup complete!"
 info "Remaining manual steps:"
-echo "  1. Open tmux and press prefix + I to install tmux plugins"
-echo "  2. Open Neovim — Lazy will auto-install plugins on first launch"
-echo "  3. Fill in $DOTFILES/home/.env.zsh with your sensitive values (if new machine)"
-echo "  4. Restart your terminal or run: source ~/.zshrc"
+echo "  1. Open Neovim — Lazy will auto-install plugins on first launch"
+echo "  2. Fill in $DOTFILES/home/.env.zsh with your sensitive values (if new machine)"
+echo "  3. Restart your terminal or run: source ~/.zshrc"

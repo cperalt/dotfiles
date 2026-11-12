@@ -9,17 +9,15 @@ cd = false
 # Global hooks — repo-agnostic. Repo-specific steps live under [projects.*]
 # below and APPEND after these (global first, then per-project).
 #
-# Space label (Rex session / Herdr workspace): per-branch override via
+# Space label (the worktree's Rex session): per-branch override via
 #   wt config state vars set session=<nickname> --branch=<branch>
 # (main in mortgage-pos = "mpos", main in sagehomeloans.com = "sage-website");
 # falls back to the worktree DIRECTORY name, not the branch. gh-stack checks
 # out layer branches inside one worktree, so HEAD's branch drifts from the
 # directory; the directory is the stable key for the space and the DB.
 #
-# Multiplexer calls go through wt-mux.sh next to this file. It creates the
-# space in whichever multiplexer the hook runs inside (Rex or Herdr) and
-# closes it from both, so a worktree removed from the other side is still
-# cleaned up.
+# Rex calls go through wt-mux.sh next to this file. It never starts a Rex
+# server, and skips quietly when none is running.
 # ============================================================================
 
 [[pre-start]]
@@ -41,6 +39,15 @@ switchMux = """
 ~/.config/worktrunk/wt-mux.sh focus "{{ vars.session | default(worktree_name) }}"
 """
 
+[post-start]
+# PR review (gh-dash P): start omp on the PR in the review layout's main block.
+reviewAgent = """
+{% if pr_number %}
+[ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
+~/.config/worktrunk/wt-mux.sh run "{{ vars.session | default(worktree_name) }}" first "omp 'code review this pr: {{ pr_number }}'"
+{% endif %}
+"""
+
 [[pre-remove]]
 killNvim = """
 for pid in $(ps -eo pid,comm | awk '/nvim/{print $1}'); do
@@ -52,9 +59,9 @@ done
 """
 
 [post-remove]
-# Close the space for the removed worktree, in Rex and Herdr alike. Closing
-# tears down its panes, which SIGHUPs anything still running in them
-# (including manually started dev servers).
+# Close the Rex session for the removed worktree. Killing it tears down its
+# blocks, which SIGHUPs anything still running in them (including manually
+# started dev servers).
 mux = """
 ~/.config/worktrunk/wt-mux.sh close "{{ vars.session | default(worktree_name) }}"
 """
@@ -72,10 +79,10 @@ git -C {{ primary_worktree_path }} branch -d "{{ worktree_name }}" 2>/dev/null |
 # mortgage-pos — pnpm monorepo, symlinked node_modules, per-worktree DB
 # opt-in.
 #
-# NOTE (herdr migration): the tmux Servers-window automation (serversWindow,
-# killOtherServers, killServers, the `wt servers` alias) was intentionally
-# dropped for now — start servers manually in a herdr tab. Closing the
-# workspace on removal kills whatever is running in its panes.
+# NOTE: the old tmux Servers-window automation (serversWindow,
+# killOtherServers, killServers, the `wt servers` alias) was dropped — start
+# servers manually in a Rex tab. Killing the session on removal kills
+# whatever is running in its blocks.
 # ============================================================================
 
 [projects."github.com/SageHomeLoans/mortgage-pos"]
@@ -120,12 +127,11 @@ echo "Isolated DB ready: $DB (cloned from mortgage_pos). If this branch adds mig
 '''
 
 [projects."github.com/SageHomeLoans/mortgage-pos".post-start]
-# For PR review flow, run pnpm install in the small bottom pane created by
-# the global review layout. Claude starts immediately in the left pane while
-# deps install in parallel.
+# For PR review flow, run pnpm install in the small bottom block created by
+# the global review layout, while omp (reviewAgent) starts in the main block.
 reviewDeps = """
 [ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
-~/.config/worktrunk/wt-mux.sh run "{{ vars.session | default(worktree_name) }}" pnpm install
+~/.config/worktrunk/wt-mux.sh run "{{ vars.session | default(worktree_name) }}" last pnpm install
 """
 
 [[projects."github.com/SageHomeLoans/mortgage-pos".pre-remove]]
@@ -156,10 +162,10 @@ PGPASSWORD=pass psql -h 127.0.0.1 -p 54320 -U user -d postgres -c "DROP DATABASE
 # global copy-ignored pre-start step reflink-copies it from main (APFS —
 # seconds, near-zero disk). No project-specific pre-start hook needed.
 #
-# NOTE (herdr migration): the tmux Dev-window automation (devWindow,
-# killRespawnDev, killDev) was intentionally dropped for now — run
-# `pnpm dev` manually in a herdr tab. :3000 single-owner enforcement is
-# gone with it; stop the other worktree's server before starting a new one.
+# NOTE: the old tmux Dev-window automation (devWindow, killRespawnDev,
+# killDev) was dropped — run `pnpm dev` manually in a Rex tab. :3000
+# single-owner enforcement is gone with it; stop the other worktree's server
+# before starting a new one.
 # ============================================================================
 
 [list]

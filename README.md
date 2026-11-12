@@ -16,7 +16,7 @@ macOS dotfiles repo for a development environment. Configs are managed by [mise 
 brew bundle --file=Brewfile
 ```
 
-After install, manual steps: `prefix + I` in tmux for plugins, open Neovim for lazy.nvim auto-install.
+After install, open Neovim for lazy.nvim auto-install.
 
 ## Homebrew Tap Trust
 
@@ -33,10 +33,10 @@ Homebrew 6.0+ requires explicit trust for third-party (non-official) taps before
 | Target                                        | Mode           | Notes                                              |
 |-----------------------------------------------|----------------|----------------------------------------------------|
 | `~/.zshrc`, `~/.p10k.zsh`                     | symlink        |                                                    |
-| `~/.tmux.conf`, `~/.wezterm.lua`              | symlink        |                                                    |
-| `~/.config/{mise,nvim,ghostty,aerospace,yazi,karabiner,sesh,worktrunk,lazygit}` | symlink | whole-directory links            |
-| `~/.config/herdr`, `~/.config/gh-dash`        | symlink-each   | target dirs hold unmanaged files                   |
-| `~/.pi/agent`, `~/.omp/agent`                 | symlink-each   | target dirs hold unmanaged files                   |
+| `~/.wezterm.lua`                              | symlink        |                                                    |
+| `~/.config/{mise,nvim,ghostty,aerospace,yazi,karabiner,worktrunk,lazygit,rextrace}` | symlink | whole-directory links |
+| `~/.config/rex/init.lua`                      | symlink        |                                                    |
+| `~/.config/gh-dash`, `~/.pi/agent`, `~/.omp/agent` | symlink-each | target dirs hold unmanaged files                |
 
 Useful commands:
 
@@ -57,13 +57,12 @@ Plugin structure:
 - `lua/carlos/plugins/lsp/` — LSP and Mason configs
 - `lua/carlos/lsp.lua` — shared LSP configuration
 
-Theme: Catppuccin Mocha (consistent across nvim, tmux, wezterm, yazi).
+Theme: Catppuccin Mocha (consistent across nvim, wezterm, yazi).
 
 ## Key Tool Choices
 
-- **Terminal + multiplexer**: Rex (one tool for both; prefix `Ctrl-a`, config at `~/.config/rex/init.lua`) — Maple Mono NF font. Ghostty, WezTerm, and herdr configs are kept but no longer used day-to-day
+- **Terminal + multiplexer**: Rex (one tool for both; prefix `Ctrl-a`, config at `~/.config/rex/init.lua`) — Maple Mono NF font. Ghostty and WezTerm configs are kept but no longer used day-to-day
 - **Shell**: zsh + Powerlevel10k + zsh-autosuggestions + zsh-syntax-highlighting
-- **Fallback multiplexer**: tmux (config kept, prefix `Ctrl-a`)
 - **Window manager**: AeroSpace
 - **Version manager**: mise — installed via `mise.run` into `~/.local/bin` (self-updates with `mise self-update`; not brew-managed). Also installs bun and the CLI tools `.zshrc`/configs depend on (`bat`, `eza`, `fd`, `fzf`, `jq`, `lazygit`, `ripgrep`, `worktrunk`, `yazi`, `zoxide`) via `[tools]` in `home/.config/mise/config.toml`; update with `mise outdated` / `mise upgrade`. Everything else (deps, services, GUI apps) stays in the `Brewfile`
 - **Git UI**: lazygit — config at `~/.config/lazygit/config.yml` via `LG_CONFIG_FILE` exported in `.zshrc` (macOS default would be `~/Library/Application Support/`)

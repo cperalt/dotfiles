@@ -5,7 +5,7 @@
 return {
   "cperalt/rex.nvim",
   dev = true,
-  enabled = vim.env.REX_BLOCK ~= nil, -- outside Rex, pi-nvim / herdr-navigation take over
+  enabled = vim.env.REX_BLOCK ~= nil, -- outside Rex, pi-nvim takes over
   lazy = false,
   main = "rex-nvim",
   opts = {

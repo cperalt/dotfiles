@@ -1,4 +1,4 @@
--- pi bridge, kept for sessions outside Rex (Herdr/Ghostty with pi). Inside Rex,
+-- pi bridge, kept for sessions outside Rex (e.g. pi in plain Ghostty). Inside Rex,
 -- rex.nvim owns :Rex and the <leader>pa / <leader>pp keys.
 return {
   "cperalt/pi-nvim",

@@ -37,10 +37,6 @@ dotfiles.root = "~/.dotfiles/home"
 "~/.config/aerospace" = {}
 "~/.config/gh-dash" = { mode = "symlink-each" }
 "~/.config/ghostty" = {}
-# shared target dirs: link each file, leave unmanaged neighbors alone
-"~/.config/herdr" = { mode = "symlink-each" }
-"~/.config/herdr-automatic-rename/config.sh" = {}
-"~/.config/herdr/plugins/config/beyondlex.herdr-recent-navigator" = { mode = "symlink-each" }
 "~/.config/karabiner" = {}
 "~/.config/lazygit" = {}
 # ~/.config dirs owned wholesale
@@ -48,7 +44,6 @@ dotfiles.root = "~/.dotfiles/home"
 "~/.config/nvim" = {}
 "~/.config/rex/init.lua" = {}
 "~/.config/rextrace" = {}
-"~/.config/sesh" = {}
 "~/.config/worktrunk" = {}
 "~/.config/yazi" = {}
 "~/.omp/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }
@@ -56,7 +51,6 @@ dotfiles.root = "~/.dotfiles/home"
 "~/.pi/agent" = { mode = "symlink-each", exclude = ["node_modules", ".DS_Store"] }
 # shared instructions live in the separate ~/.agents repo
 "~/.pi/agent/AGENTS.md" = { source = "~/.agents/AGENTS.md" }
-"~/.tmux.conf" = {}
 "~/.wezterm.lua" = {}
 # $HOME-root files
 "~/.zshrc" = {}
