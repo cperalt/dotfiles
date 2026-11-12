@@ -39,7 +39,7 @@ statusLine:
   compactThinkingLevel: false
   sessionAccent: true
   transparent: false
-hideThinkingBlock: true
+hideThinkingBlock: false
 task:
   agentAdvisor:
     task: "on"

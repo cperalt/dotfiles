@@ -33,7 +33,7 @@
   ],
   "extensionChangelogVersions": {
     "{\"source\":\"npm:pi-web-access\",\"scope\":\"user\"}": "0.47.0",
-    "{\"source\":\"npm:pi-subagents\",\"scope\":\"user\"}": "0.87.0",
+    "{\"source\":\"npm:pi-subagents\",\"scope\":\"user\"}": "0.88.0",
     "{\"source\":\"npm:pi-prompt-template-model\",\"scope\":\"user\"}": "0.12.3"
   },
   "deviceId": "25bdffa5-f71a-4c76-b22c-8b61a95436e8",
