@@ -1,32 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/can1357/oh-my-pi/main/packages/coding-agent/src/config/mcp-schema.json",
-  "mcpServers": {
-    "Figma": {
-      "type": "http",
-      "url": "http://127.0.0.1:3845/mcp"
-    },
-    "storyblok": {
-      "type": "http",
-      "url": "https://mcp.labs.storyblok.com/mcp",
-      "headers": {
-        "Authorization": "Bearer ${STORYBLOK_MCP_TOKEN}"
-      }
-    },
-    "jira": {
-      "type": "http",
-      "url": "https://mcp.atlassian.com/v1/mcp/authv2"
-    },
-    "iterable": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@iterable/mcp@latest"
-      ]
-    }
-  },
+  "mcpServers": {},
   "disabledServers": [
     "langfuse",
     "postgres",
-    "cursor-search"
+    "Figma"
   ]
 }
