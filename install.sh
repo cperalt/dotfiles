@@ -54,10 +54,21 @@ for dir in "$HOME/.config/gh-dash" "$HOME/.pi/agent" "$HOME/.omp/agent"; do
     [[ -L "$dir" && ! -e "$dir" ]] && rm "$dir"
     mkdir -p "$dir"
 done
+# Some entries link into repos this script doesn't clone (e.g. ~/.agents).
+# Apply every entry whose source exists and list the rest instead of failing.
+export MISE_GLOBAL_CONFIG_FILE="$DOTFILES/home/.config/mise/config.toml"
+status_json=$(mise bootstrap dotfiles status --json)
+missing=$(jq -r '.files[] | select(.state == "source_missing") | "\(.target) <- \(.source)"' <<<"$status_json")
+targets=()
+while IFS= read -r t; do targets+=("$t"); done < <(jq -r '.files[] | select(.state != "source_missing") | .target' <<<"$status_json")
 info "Applying dotfiles with mise..."
-MISE_GLOBAL_CONFIG_FILE="$DOTFILES/home/.config/mise/config.toml" \
-    mise bootstrap dotfiles apply --yes
+mise bootstrap dotfiles apply --yes "${targets[@]}"
+unset MISE_GLOBAL_CONFIG_FILE
 success "Dotfiles applied"
+if [[ -n "$missing" ]]; then
+    warn "Skipped dotfiles whose source is missing (clone it, then run 'mise bootstrap dotfiles apply'):"
+    sed 's/^/    /' <<<"$missing"
+fi
 
 # --- Step 6: GitHub CLI extensions ---
 info "Installing gh extensions..."
