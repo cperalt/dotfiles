@@ -62,17 +62,19 @@ success "Dotfiles applied"
 # --- Step 6: GitHub CLI extensions ---
 info "Installing gh extensions..."
 if command -v gh &>/dev/null; then
-    if ! gh extension list 2>/dev/null | grep -q "dlvhdr/gh-dash"; then
-        gh extension install dlvhdr/gh-dash
-        success "gh-dash installed"
-    else
-        success "gh-dash already installed"
-    fi
+    for ext in dlvhdr/gh-dash github/gh-stack; do
+        if ! gh extension list 2>/dev/null | grep -q "$ext"; then
+            gh extension install "$ext"
+            success "$ext installed"
+        else
+            success "$ext already installed"
+        fi
+    done
 else
-    warn "gh not installed or not authenticated — skipping gh-dash"
+    warn "gh not installed or not authenticated — skipping gh extensions"
 fi
 
-# --- Step 8: fzf-git.sh ---
+# --- Step 7: fzf-git.sh ---
 FZF_GIT_DIR="$HOME/fzf-git.sh"
 if [[ ! -d "$FZF_GIT_DIR" ]]; then
     info "Cloning fzf-git.sh..."
@@ -82,7 +84,7 @@ else
     success "fzf-git.sh already present"
 fi
 
-# --- Step 9: Mise tools & runtimes ---
+# --- Step 8: Mise tools & runtimes ---
 if command -v mise &>/dev/null; then
     info "Installing mise runtimes..."
     mise install
@@ -91,7 +93,7 @@ else
     warn "mise not found — skipping runtime install"
 fi
 
-# --- Step 9b: omp (oh-my-pi) ---
+# --- Step 9: omp (oh-my-pi) ---
 # bun is mise-managed; global packages still land in ~/.bun/bin
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
@@ -139,6 +141,7 @@ fi
 echo ""
 success "Setup complete!"
 info "Remaining manual steps:"
-echo "  1. Open Neovim — Lazy will auto-install plugins on first launch"
-echo "  2. Fill in $DOTFILES/home/.env.zsh with your sensitive values (if new machine)"
-echo "  3. Restart your terminal or run: source ~/.zshrc"
+echo "  1. Install Rex (beta) manually; the worktrunk hooks and nvim Rex integration need it"
+echo "  2. Open Neovim — Lazy will auto-install plugins on first launch"
+echo "  3. Fill in $DOTFILES/home/.env.zsh with your sensitive values (if new machine)"
+echo "  4. Restart your terminal or run: source ~/.zshrc"
