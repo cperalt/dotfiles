@@ -215,25 +215,28 @@ alias c="clear"
 alias q="exit"
 
 # === Worktree + Claude helper functions ===
+# Disabled: tmux-era helpers, broken under Rex/Herdr and currently unused.
+# To revive, replace the tmux send-keys line with
+#   ~/.config/worktrunk/wt-mux.sh run "$branch" <command>
 
-# create worktree, launch claude with a prompt in its tmux session
-# usage: wtnc my-branch 'Fix the login bug'
-wtnc() {
-  local branch="$1"
-  shift
-  WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch --create "$branch"
-  tmux send-keys -t "${branch}:0.0" "claude '$*'" Enter
-}
-
-# address PR review comments in an existing worktree's tmux session
-# usage: wtac 123
-wtac() {
-  local pr="$1"
-  local branch
-  branch="$(gh pr view "$pr" --json headRefName -q .headRefName)"
-  WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch "$branch"
-  tmux send-keys -t "${branch}:0.0" "claude --model claude-sonnet-4-6 '/address-comments ${pr}'" Enter
-}
+# # create worktree, launch claude with a prompt in its tmux session
+# # usage: wtnc my-branch 'Fix the login bug'
+# wtnc() {
+#   local branch="$1"
+#   shift
+#   WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch --create "$branch"
+#   tmux send-keys -t "${branch}:0.0" "claude '$*'" Enter
+# }
+#
+# # address PR review comments in an existing worktree's tmux session
+# # usage: wtac 123
+# wtac() {
+#   local pr="$1"
+#   local branch
+#   branch="$(gh pr view "$pr" --json headRefName -q .headRefName)"
+#   WT_SKIP_TMUX_SWITCH=1 WT_SKIP_SERVERS=1 WT_SKIP_CLAUDE=1 wt switch "$branch"
+#   tmux send-keys -t "${branch}:0.0" "claude --model claude-sonnet-4-6 '/address-comments ${pr}'" Enter
+# }
 
 # === Sensitive env vars / local overrides — sourced last so it can override
 # anything above ===
