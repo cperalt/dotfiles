@@ -4,12 +4,17 @@ modelRoles:
   vision: openai-codex/gpt-6-sol:auto
   plan: anthropic/claude-fable-5-1:auto
   default: anthropic/claude-opus-5-5
-  smol: openai-codex/gpt-6-luna:auto
+  smol: openai-codex/gpt-6.1-sol:auto
   task: openai-codex/gpt-5.6-sol:high
   commit: anthropic/claude-sonnet-5-5:auto
-  advisor: openai-codex/gpt-5.6-sol:high
-  web: openai-codex/gpt-5.6-luna
+  advisor: openai-codex/gpt-6.1-sol:auto
+  web: openai-codex/gpt-6.1-sol:auto
   tiny: openai-codex/gpt-6-luna
+cycleOrder:
+  - tiny
+  - smol
+  - default
+  - slow
 theme:
   dark: titanium
 edit:
@@ -32,7 +37,9 @@ dev:
   autoqaConsent: denied
 statusLine:
   compactThinkingLevel: false
-hideThinkingBlock: false
+  sessionAccent: true
+  transparent: false
+hideThinkingBlock: true
 task:
   agentAdvisor:
     task: "on"
@@ -40,6 +47,7 @@ github:
   enabled: true
 composer:
   shape: rule
+  predictions: false
 display:
   hideToolActivity: false
 retry:
@@ -82,3 +90,19 @@ tools:
     databricks-write: prompt
 tui:
   vimMode: true
+  resizeScrollback: rebuild
+  completeScrollback: false
+  titleState: false
+terminal:
+  showProgress: false
+steeringMode: one-at-a-time
+followUpMode: one-at-a-time
+spelling:
+  autocomplete: auto
+  autocorrect: false
+completion:
+  notify: "off"
+read:
+  renderMarkdown: false
+vault:
+  enabled: true
