@@ -15,12 +15,6 @@ opt.autoindent = true -- copy indent from current line when starting new one
 -- line wrapping
 opt.wrap = false -- disable line wrapping
 
--- folding: derive folds from treesitter syntax, keep everything open on load
-opt.foldmethod = "expr"
-opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-opt.foldlevel = 99
-opt.foldlevelstart = 99
-opt.foldtext = "" -- show the folded line with normal highlighting
 
 -- search settings
 opt.ignorecase = true -- ignore case when searching
