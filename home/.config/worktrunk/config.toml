@@ -9,14 +9,14 @@ cd = false
 # Global hooks — repo-agnostic. Repo-specific steps live under [projects.*]
 # below and APPEND after these (global first, then per-project).
 #
-# Space label (the worktree's Rex session): per-branch override via
+# Session label (the worktree's Rex session): per-branch override via
 #   wt config state vars set session=<nickname> --branch=<branch>
 # (main in mortgage-pos = "mpos", main in sagehomeloans.com = "sage-website");
 # falls back to the worktree DIRECTORY name, not the branch. gh-stack checks
 # out layer branches inside one worktree, so HEAD's branch drifts from the
-# directory; the directory is the stable key for the space and the DB.
+# directory; the directory is the stable key for the session and the DB.
 #
-# Rex calls go through wt-mux.sh next to this file. It never starts a Rex
+# Rex calls go through wt-rex.sh next to this file. It never starts a Rex
 # server, and skips quietly when none is running.
 # ============================================================================
 
@@ -26,17 +26,14 @@ cd = false
 copyIgnore = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; wt step copy-ignored'
 
 [[pre-start]]
-mux = """
-[ -n "${WT_REVIEW_ONLY:-}" ] && REVIEW=review || REVIEW=
-~/.config/worktrunk/wt-mux.sh ensure "{{ vars.session | default(worktree_name) }}" {{ worktree_path }} $REVIEW
-"""
+rex = '~/.config/worktrunk/wt-rex.sh ensure "{{ vars.session | default(worktree_name) }}" {{ worktree_path }} ${WT_REVIEW_ONLY:+review}'
 
 [post-switch]
-# Focus the space (instant, separate background process). WT_SKIP_FOCUS=1
+# Focus the session (instant, separate background process). WT_SKIP_FOCUS=1
 # creates it without stealing focus, e.g. from gh-dash's P/U keys.
-switchMux = """
+rex = """
 [ -n "${WT_SKIP_FOCUS:-}" ] && exit 0
-~/.config/worktrunk/wt-mux.sh focus "{{ vars.session | default(worktree_name) }}"
+~/.config/worktrunk/wt-rex.sh focus "{{ vars.session | default(worktree_name) }}"
 """
 
 [post-start]
@@ -44,7 +41,7 @@ switchMux = """
 reviewAgent = """
 {% if pr_number %}
 [ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
-~/.config/worktrunk/wt-mux.sh run "{{ vars.session | default(worktree_name) }}" first "omp 'code review this pr: {{ pr_number }}'"
+~/.config/worktrunk/wt-rex.sh run "{{ vars.session | default(worktree_name) }}" first "omp 'code review this pr: {{ pr_number }}'"
 {% endif %}
 """
 
@@ -62,8 +59,8 @@ done
 # Close the Rex session for the removed worktree. Killing it tears down its
 # blocks, which SIGHUPs anything still running in them (including manually
 # started dev servers).
-mux = """
-~/.config/worktrunk/wt-mux.sh close "{{ vars.session | default(worktree_name) }}"
+rex = """
+~/.config/worktrunk/wt-rex.sh close "{{ vars.session | default(worktree_name) }}"
 """
 
 # gh-stack leaves the `wtn`-created root branch (named after the directory)
@@ -77,12 +74,8 @@ git -C {{ primary_worktree_path }} branch -d "{{ worktree_name }}" 2>/dev/null |
 
 # ============================================================================
 # mortgage-pos — pnpm monorepo, symlinked node_modules, per-worktree DB
-# opt-in.
-#
-# NOTE: the old tmux Servers-window automation (serversWindow,
-# killOtherServers, killServers, the `wt servers` alias) was dropped — start
-# servers manually in a Rex tab. Killing the session on removal kills
-# whatever is running in its blocks.
+# opt-in. Dev servers run manually in a Rex tab; removing the worktree kills
+# its session and whatever is running in it.
 # ============================================================================
 
 [projects."github.com/SageHomeLoans/mortgage-pos"]
@@ -131,7 +124,7 @@ echo "Isolated DB ready: $DB (cloned from mortgage_pos). If this branch adds mig
 # the global review layout, while omp (reviewAgent) starts in the main block.
 reviewDeps = """
 [ -z "${WT_REVIEW_ONLY:-}" ] && exit 0
-~/.config/worktrunk/wt-mux.sh run "{{ vars.session | default(worktree_name) }}" last pnpm install
+~/.config/worktrunk/wt-rex.sh run "{{ vars.session | default(worktree_name) }}" last pnpm install
 """
 
 [[projects."github.com/SageHomeLoans/mortgage-pos".pre-remove]]
@@ -162,10 +155,8 @@ PGPASSWORD=pass psql -h 127.0.0.1 -p 54320 -U user -d postgres -c "DROP DATABASE
 # global copy-ignored pre-start step reflink-copies it from main (APFS —
 # seconds, near-zero disk). No project-specific pre-start hook needed.
 #
-# NOTE: the old tmux Dev-window automation (devWindow, killRespawnDev,
-# killDev) was dropped — run `pnpm dev` manually in a Rex tab. :3000
-# single-owner enforcement is gone with it; stop the other worktree's server
-# before starting a new one.
+# `pnpm dev` runs manually in a Rex tab and binds :3000, so only one
+# worktree's server can run at a time; stop the other one first.
 # ============================================================================
 
 [list]

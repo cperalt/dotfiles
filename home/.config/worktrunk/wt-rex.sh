@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Rex glue for the worktrunk hooks in config.toml. A worktree's "space" is a
-# Rex session labelled after it.
+# Rex glue for the worktrunk hooks in config.toml. Each worktree gets a Rex
+# session labelled after it.
 #
-#   wt-mux.sh ensure LABEL PATH [review]       create the session if missing
-#   wt-mux.sh focus  LABEL                     show it on the client
-#   wt-mux.sh run    LABEL first|last CMD...   type CMD into its first or last block
-#   wt-mux.sh close  LABEL                     kill it
+#   wt-rex.sh ensure LABEL PATH [review]       create the session if missing
+#   wt-rex.sh focus  LABEL                     show it on the client
+#   wt-rex.sh run    LABEL first|last CMD...   type CMD into its first or last block
+#   wt-rex.sh close  LABEL                     kill it
 #
 # A missing Rex server or session is not an error: hooks skip quietly.
 set -euo pipefail
 
-cmd=${1:?usage: wt-mux.sh ensure|focus|run|close LABEL ...}
+cmd=${1:?usage: wt-rex.sh ensure|focus|run|close LABEL ...}
 label=${2:?label required}
 shift 2
 
@@ -18,7 +18,7 @@ shift 2
 rex() { command rex --autostart=false "$@"; }
 
 if ! rex ls >/dev/null 2>&1; then
-  [ "$cmd" = ensure ] && echo "wt-mux: no Rex server running; skipping session creation" >&2
+  [ "$cmd" = ensure ] && echo "wt-rex: no Rex server running; skipping session creation" >&2
   exit 0
 fi
 
@@ -43,12 +43,12 @@ case "$cmd" in
     ;;
   run)
     which=${1:?first|last required}; shift
-    [ $# -gt 0 ] || { echo "wt-mux run: command required" >&2; exit 2; }
+    [ $# -gt 0 ] || { echo "wt-rex run: command required" >&2; exit 2; }
     [ -n "$session_id" ] || exit 0
     case "$which" in
       first) idx=0 ;;
       last) idx=-1 ;;
-      *) echo "wt-mux run: expected first or last, got '$which'" >&2; exit 2 ;;
+      *) echo "wt-rex run: expected first or last, got '$which'" >&2; exit 2 ;;
     esac
     # Blocks list in creation order, so first is the main block and last the
     # newest split (the deps block in the review layout).
@@ -64,5 +64,5 @@ case "$cmd" in
     rex session kill "$session_id" >/dev/null
     ;;
   *)
-    echo "wt-mux: unknown command '$cmd'" >&2; exit 2 ;;
+    echo "wt-rex: unknown command '$cmd'" >&2; exit 2 ;;
 esac
