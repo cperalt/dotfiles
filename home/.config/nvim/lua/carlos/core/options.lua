@@ -15,6 +15,13 @@ opt.autoindent = true -- copy indent from current line when starting new one
 -- line wrapping
 opt.wrap = false -- disable line wrapping
 
+-- folding: derive folds from treesitter syntax, keep everything open on load
+opt.foldmethod = "expr"
+opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+opt.foldlevel = 99
+opt.foldlevelstart = 99
+opt.foldtext = "" -- show the folded line with normal highlighting
+
 -- search settings
 opt.ignorecase = true -- ignore case when searching
 opt.smartcase = true -- if you include mixed case in your search, assumes you want case-sensitive
@@ -23,7 +30,8 @@ opt.smartcase = true -- if you include mixed case in your search, assumes you wa
 opt.cursorline = true -- highlight the current cursor line
 
 -- blinking cursor
-opt.guicursor = "n-v-c:block-blinkon500-blinkoff500,i-ci-ve:ver25-blinkon500-blinkoff500,r-cr:hor20-blinkon500-blinkoff500"
+opt.guicursor =
+  "n-v-c:block-blinkon500-blinkoff500,i-ci-ve:ver25-blinkon500-blinkoff500,r-cr:hor20-blinkon500-blinkoff500"
 
 -- appearance
 

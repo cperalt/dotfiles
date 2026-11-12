@@ -1,17 +1,10 @@
 return {
   "neovim/nvim-lspconfig",
   config = function()
-    local util = require("lspconfig.util")
-
-    local capabilities = vim.lsp.protocol.make_client_capabilities()
-    local ok_cmp, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
-    if ok_cmp then
-      capabilities = cmp_nvim_lsp.default_capabilities(capabilities)
-    end
-
+    -- Narrow the bundled tailwindcss config: fewer filetypes, and only activate
+    -- when a Tailwind/PostCSS config exists (the bundled root_dir falls back to
+    -- `.git`, which would start the server in every TS repo).
     vim.lsp.config("tailwindcss", {
-      capabilities = capabilities,
-      single_file_support = false,
       filetypes = {
         "html",
         "css",
@@ -20,18 +13,21 @@ return {
         "typescriptreact",
         "svelte",
       },
-      root_dir = util.root_pattern(
-        "tailwind.config.js",
-        "tailwind.config.cjs",
-        "tailwind.config.mjs",
-        "tailwind.config.ts",
-        "postcss.config.js",
-        "postcss.config.cjs",
-        "postcss.config.mjs",
-        "postcss.config.ts"
-      ),
+      root_dir = function(bufnr, on_dir)
+        local root = vim.fs.root(bufnr, {
+          "tailwind.config.js",
+          "tailwind.config.cjs",
+          "tailwind.config.mjs",
+          "tailwind.config.ts",
+          "postcss.config.js",
+          "postcss.config.cjs",
+          "postcss.config.mjs",
+          "postcss.config.ts",
+        })
+        if root then
+          on_dir(root)
+        end
+      end,
     })
-
-    vim.lsp.enable("tailwindcss")
   end,
 }
