@@ -28,6 +28,9 @@ require("lazy").setup({
     enabled = true,
     notify = false,
   },
+  rocks = {
+    enabled = false, -- no plugin needs luarocks
+  },
   change_detection = {
     notify = false,
   },

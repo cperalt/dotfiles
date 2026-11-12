@@ -32,6 +32,7 @@ return {
       "dockerfile",
       "gitignore",
       "query",
+      "regex",
       "vimdoc",
       "c",
       "python",

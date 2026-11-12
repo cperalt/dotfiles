@@ -98,7 +98,7 @@ return {
     end, { desc = "Open mini.files (directory of current file)" })
 
     keymap.set("n", "<leader>eE", function()
-      require("mini.files").open(vim.loop.cwd(), true)
+      require("mini.files").open(vim.uv.cwd(), true)
     end, { desc = "Open mini.files (cwd)" })
   end,
 }

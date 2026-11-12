@@ -15,6 +15,8 @@ opt.autoindent = true -- copy indent from current line when starting new one
 -- line wrapping
 opt.wrap = false -- disable line wrapping
 
+-- sessions: localoptions restores filetype/highlighting (recommended by auto-session)
+opt.sessionoptions = "blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions"
 
 -- search settings
 opt.ignorecase = true -- ignore case when searching
