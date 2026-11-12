@@ -111,9 +111,7 @@ return {
             return { value = path .. ":" .. row, context = { row = row, col = 0 } }
           end
           local buf = vim.api.nvim_get_current_buf()
-          local path = require("plenary.path")
-            :new(vim.api.nvim_buf_get_name(buf))
-            :make_relative(config.get_root_dir())
+          local path = require("plenary.path"):new(vim.api.nvim_buf_get_name(buf)):make_relative(config.get_root_dir())
           local pos = vim.api.nvim_win_get_cursor(0)
           local item = {
             value = path .. ":" .. pos[1],
@@ -135,8 +133,7 @@ return {
           -- (:edit on the current modified buffer would mean reload -> E37)
           local target
           for _, b in ipairs(vim.api.nvim_list_bufs()) do
-            if vim.api.nvim_buf_is_loaded(b)
-              and buf_matches(vim.api.nvim_buf_get_name(b), path) then
+            if vim.api.nvim_buf_is_loaded(b) and buf_matches(vim.api.nvim_buf_get_name(b), path) then
               target = b
               break
             end
@@ -199,7 +196,6 @@ return {
     -- Combined Telescope picker over both harpoon lists.
     -- [F] = file list entry, [M] = line mark; both carry filename+lnum,
     -- so <CR> opens the file at the right line either way.
-    local conf = require("telescope.config").values
     local function collect_entries(harpoon_files, tag, entries)
       for i = 1, harpoon_files._length or #harpoon_files.items do
         local item = harpoon_files.items[i]
@@ -219,6 +215,7 @@ return {
     end
 
     local function toggle_telescope()
+      local conf = require("telescope.config").values
       local entries = collect_entries(harpoon:list(), "F", {})
       collect_entries(harpoon:list("marks"), "M", entries)
 
@@ -244,8 +241,7 @@ return {
     end
 
     -- ── Keymaps: one <leader>m group; lowercase = files, capital = line marks
-    keymap.set("n", "<leader>mm", toggle_telescope,
-      { desc = "Harpoon: Menu — files + line marks (Telescope)" })
+    keymap.set("n", "<leader>mm", toggle_telescope, { desc = "Harpoon: Menu — files + line marks (Telescope)" })
 
     -- Files
     keymap.set("n", "<leader>ma", function()

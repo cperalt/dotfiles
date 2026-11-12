@@ -1,10 +1,12 @@
 return {
   "williamboman/mason-lspconfig.nvim",
   opts = {
-    -- Every server here is auto-enabled. tailwindcss is narrowed in
-    -- lsp/tailwindcss.lua so it only starts where a Tailwind config exists.
-    automatic_enable = true,
-    --     -- list of servers for mason to install
+    -- Every installed server is auto-enabled except those excluded here.
+    -- tailwindcss is narrowed in lsp/tailwindcss.lua so it only starts where a
+    -- Tailwind config exists. graphql needs a .graphqlrc to do anything (none in
+    -- our repos) and emmet abbreviations go unused, yet both started on every
+    -- .tsx buffer.
+    automatic_enable = { exclude = { "graphql", "emmet_ls" } },
     ensure_installed = {
       "ts_ls",
       "html",
@@ -12,8 +14,6 @@ return {
       "tailwindcss",
       "svelte",
       "lua_ls",
-      "graphql",
-      "emmet_ls",
       "prismals",
       "pyright",
       "terraformls",

@@ -1,3 +1,7 @@
+-- Populated by config() so the lazily-registered keys below can reach the
+-- test-file toggle state that lives inside config.
+local M = {}
+
 return {
   "nvim-telescope/telescope.nvim",
   dependencies = {
@@ -5,6 +9,45 @@ return {
     { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
     "nvim-tree/nvim-web-devicons",
     "folke/todo-comments.nvim",
+  },
+  cmd = "Telescope",
+  keys = {
+    {
+      "<leader>ff",
+      function()
+        require("telescope.builtin").find_files()
+      end,
+      desc = "Fuzzy find files in cwd",
+    },
+    {
+      "<leader>fr",
+      function()
+        M.recent_files()
+      end,
+      desc = "Fuzzy find recent files (project)",
+    },
+    {
+      "<leader>fs",
+      function()
+        require("telescope.builtin").live_grep()
+      end,
+      desc = "Find string in cwd",
+    },
+    {
+      "<leader>fc",
+      function()
+        require("telescope.builtin").grep_string()
+      end,
+      desc = "Find string under cursor in cwd",
+    },
+    { "<leader>ft", "<cmd>TodoTelescope<cr>", desc = "Find todos" },
+    {
+      "<leader>fT",
+      function()
+        M.toggle_tests()
+      end,
+      desc = "Toggle hiding test files",
+    },
   },
   config = function()
     local telescope = require("telescope")
@@ -94,26 +137,17 @@ return {
 
     telescope.load_extension("fzf")
 
-    local builtin = require("telescope.builtin")
-
-    -- set keymaps
-    local keymap = vim.keymap -- for conciseness
-
-    keymap.set("n", "<leader>ff", builtin.find_files, { desc = "Fuzzy find files in cwd" })
-    keymap.set("n", "<leader>fr", function()
-      builtin.oldfiles({
+    M.recent_files = function()
+      require("telescope.builtin").oldfiles({
         cwd_only = true,
         file_ignore_patterns = hide_tests and test_lua_patterns or {},
       })
-    end, { desc = "Fuzzy find recent files (project)" })
-    keymap.set("n", "<leader>fs", builtin.live_grep, { desc = "Find string in cwd" })
-    keymap.set("n", "<leader>fc", builtin.grep_string, { desc = "Find string under cursor in cwd" })
-    keymap.set("n", "<leader>ft", "<cmd>TodoTelescope<cr>", { desc = "Find todos" })
+    end
 
     -- Toggle test-file visibility in Telescope pickers
-    keymap.set("n", "<leader>fT", function()
+    M.toggle_tests = function()
       hide_tests = not hide_tests
       vim.notify("Telescope: tests " .. (hide_tests and "hidden" or "shown"), vim.log.levels.INFO)
-    end, { desc = "Toggle hiding test files" })
+    end
   end,
 }

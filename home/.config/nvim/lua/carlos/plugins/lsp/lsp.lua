@@ -15,5 +15,5 @@ return {
     end,
   },
   { "antosha417/nvim-lsp-file-operations", config = {} },
-  { "folke/lazydev.nvim", opts = {} },
+  { "folke/lazydev.nvim", ft = "lua", opts = {} },
 }

@@ -4,12 +4,10 @@ return {
   config = function()
     local lint = require("lint")
 
+    -- JS/TS linting comes from the eslint language server (mason), which lints
+    -- as you type and offers fix-all/disable-rule code actions. Running eslint_d
+    -- here as well doubled every diagnostic and cost ~160ms per buffer switch.
     lint.linters_by_ft = {
-      javascript = { "eslint_d" },
-      typescript = { "eslint_d" },
-      javascriptreact = { "eslint_d" },
-      typescriptreact = { "eslint_d" },
-      svelte = { "eslint_d" },
       python = { "pylint" },
     }
 
