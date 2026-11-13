@@ -97,6 +97,13 @@ ln -sf {{ primary_worktree_path }}/node_modules {{ worktree_path }}/node_modules
 """
 
 [[projects."github.com/SageHomeLoans/mortgage-pos".pre-start]]
+# Symlink omp MCP config from main (all worktrees, review included)
+symMcpConfig = """
+mkdir -p {{ worktree_path }}/.omp
+ln -sfn {{ primary_worktree_path }}/.omp/mcp.json {{ worktree_path }}/.omp/mcp.json
+"""
+
+[[projects."github.com/SageHomeLoans/mortgage-pos".pre-start]]
 migrations = '[ -n "${WT_REVIEW_ONLY:-}" ] && exit 0; [ -f {{ primary_worktree_path }}/db/migrations-index.ts ] && cp {{ primary_worktree_path }}/db/migrations-index.ts {{ worktree_path }}/db/migrations-index.ts || true'
 
 [[projects."github.com/SageHomeLoans/mortgage-pos".pre-start]]
